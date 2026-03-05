@@ -29,7 +29,7 @@
 
 > *"마블의 설계자들은 단순히 건물을 짓는 사람이 아니라, 우주의 흐름을 정의하는 사람들입니다."*
 
-**Loom**은 MCU 드라마 <로키>의 **Temporal Loom(시간의 직조기)** 에서 영감을 받았습니다. 베틀(Loom)이 실을 엮어 천을 만들듯, 이 도구는 인프라 구성요소를 엮어 아키텍처를 직조합니다.
+**Loom**은 MCU 드라마 <로키>의 **Temporal Loom(시간의 직조기)** 에서 영감을 받았습니다.
 
 Kubernetes 인프라 아키텍처를 빠르게 설계하기 위한 **단일 HTML 파일** 기반 에디터입니다. 설치 없이 브라우저에서 바로 실행되며, 인터넷이 차단된 **보안망(에어갭 환경)에서도 즉시 사용** 가능합니다.
 
@@ -44,7 +44,7 @@ K8s 클러스터의 리소스(CPU, Memory, Disk, GPU) 사용량을 노드별로 
 | **보안망** | 즉시 사용 가능 | 인터넷 필요 |
 | **K8s 리소스 관리** | 실시간 대시보드 내장 | 별도 도구 필요 |
 | **AI 생성** | 로컬 LLM (Ollama) 지원 | 클라우드 API만 지원 |
-| **내보내기** | JSON / Excel / PDF / PNG | 제한적 |
+| **내보내기** | JSON / Excel / PDF / PNG / K8s YAML / Terraform / Helm | 제한적 |
 
 ### 주요 기능
 
@@ -54,9 +54,48 @@ K8s 클러스터의 리소스(CPU, Memory, Disk, GPU) 사용량을 노드별로 
 - **인프라 완성도 체크** — 필수 구성요소 누락, 네트워크 연결, 리소스 초과 자동 감지
 - **AI 다이어그램 생성** — 텍스트 설명으로 아키텍처 자동 생성 (Claude / OpenAI / Gemini / Ollama)
 - **다양한 내보내기** — JSON, Excel (리소스 시트 포함), PDF (표지+다이어그램+상세표), PNG
+- **IaC 코드 내보내기** — K8s YAML, Terraform (HCL), Helm Values를 노드별 또는 전체 인프라로 생성
 - **연결선 Waypoint** — 연결선 경로를 꺾어서 세밀하게 제어
 - **자동 레이아웃** — 노드 자동 배치
+- **다크/라이트 테마** — 사용 환경에 맞는 테마 전환
+- **한국어/영어 지원** — UI 전체 다국어 전환
 - **Undo/Redo** — 전체 작업 이력 관리
+
+---
+
+## 🖼 스크린샷
+
+### AI 프롬프트로 아키텍처 설계
+
+AI에게 텍스트로 아키텍처를 설명하면 다이어그램을 자동 생성합니다.
+
+<p align="center">
+  <img src="sample/prompt_example.png" alt="AI Prompt Example" width="500" />
+</p>
+
+### 설계 결과 다이어그램
+
+AI가 생성한 CI/CD 파이프라인 아키텍처 — 그룹으로 구성된 전체 흐름을 한눈에 확인할 수 있습니다.
+
+<p align="center">
+  <img src="sample/diagram_example.png" alt="Diagram Example" width="800" />
+</p>
+
+### K8s 클러스터 설정
+
+워커 노드의 CPU, Memory, Disk, GPU 사양과 시스템 예약 리소스를 설정합니다. 총 할당 가능 리소스가 자동으로 계산됩니다.
+
+<p align="center">
+  <img src="sample/k8s_setting_example.png" alt="K8s Cluster Settings" width="500" />
+</p>
+
+### K8s 리소스 현황 대시보드
+
+설정된 클러스터 리소스와 다이어그램 내 노드들의 리소스 요구사항을 비교하여 사용률과 상태를 실시간으로 보여줍니다.
+
+<p align="center">
+  <img src="sample/k8s_resource_example.png" alt="K8s Resource Dashboard" width="300" />
+</p>
 
 ---
 
@@ -73,10 +112,10 @@ K8s 클러스터의 리소스(CPU, Memory, Disk, GPU) 사용량을 노드별로 
 git clone https://github.com/flyingcatstudio/loom.git
 
 # 브라우저에서 열기
-open arch-editor-v2.html
+open index.html
 ```
 
-또는 `arch-editor-v2.html` 파일 하나만 다운로드하여 브라우저에서 열면 됩니다.
+또는 `index.html` 파일 하나만 다운로드하여 브라우저에서 열면 됩니다.
 
 > **보안망(에어갭) 환경**: HTML 파일을 USB 등으로 복사 후 브라우저에서 열면 됩니다. 외부 의존성 없이 동작합니다. (폰트만 CDN 사용 — 오프라인에서는 시스템 폰트로 대체됩니다)
 
@@ -141,6 +180,10 @@ Loom의 **✦ AI 생성** 패널에서 서비스를 `Ollama`로 선택하면 로
 - **하드웨어 탭**: 워커 노드 수, 노드당 CPU/Memory/Disk, GPU 노드, 시스템 예약 리소스
 - **스케줄링 탭**: 네임스페이스, Taint, 노드 라벨 설정
 
+<p align="center">
+  <img src="sample/k8s_setting_example.png" alt="K8s Cluster Settings" width="450" />
+</p>
+
 #### 2. 노드별 리소스 할당
 
 인프라 노드 (Server, Database 등)를 선택하면 우측 패널에 나타나는 항목:
@@ -156,6 +199,10 @@ Loom의 **✦ AI 생성** 패널에서 서비스를 `Ollama`로 선택하면 로
 - 상태 뱃지: `OK` `Warning` `Critical` `Over`
 - 캔버스 위 각 노드에도 CPU 미니바 표시
 
+<p align="center">
+  <img src="sample/k8s_resource_example.png" alt="K8s Resource Dashboard" width="250" />
+</p>
+
 #### 4. 인프라 완성도 체크
 
 상단 **✅ 인프라 체크** 버튼으로 아키텍처 검증:
@@ -168,6 +215,10 @@ Loom의 **✦ AI 생성** 패널에서 서비스를 `Ollama`로 선택하면 로
 ### AI 다이어그램 생성
 
 상단 **✦ AI 생성** 버튼으로 AI 패널을 엽니다.
+
+<p align="center">
+  <img src="sample/prompt_example.png" alt="AI Prompt" width="450" />
+</p>
 
 #### 지원 AI 서비스
 
@@ -188,6 +239,10 @@ Loom의 **✦ AI 생성** 패널에서 서비스를 `Ollama`로 선택하면 로
 3. 텍스트로 아키텍처 설명 입력 (예: *"K8s 마이크로서비스: API Gateway, 서비스 3개, PostgreSQL, Redis, Kafka"*)
 4. `Ctrl+Enter`로 전송
 
+<p align="center">
+  <img src="sample/diagram_example.png" alt="Generated Diagram" width="800" />
+</p>
+
 ### 내보내기 / 가져오기
 
 상단 **Import/Export** 드롭다운 메뉴:
@@ -198,8 +253,28 @@ Loom의 **✦ AI 생성** 패널에서 서비스를 `Ollama`로 선택하면 로
 | **Excel** 📊 | 노드 목록 + K8s 리소스 요약 시트 |
 | **PDF** 📄 | 표지 + 다이어그램 + 노드 상세표 + 리소스 요약 |
 | **PNG** 📷 | 다이어그램 이미지 캡처 |
+| **K8s YAML** ☸ | Deployment / StatefulSet / Service / PVC 매니페스트 |
+| **Terraform** ⛅ | HCL 형식의 kubernetes provider 리소스 코드 |
+| **Helm Values** ⎈ | values.yaml 형식의 서비스별 설정 |
 
 > JSON 형식은 자동 저장(localStorage)되며, v1 → v2 마이그레이션을 자동으로 지원합니다.
+
+#### IaC 코드 내보내기
+
+설계한 아키텍처를 실제 배포 가능한 IaC(Infrastructure as Code) 코드로 내보낼 수 있습니다.
+
+**전체 내보내기**: Export 드롭다운 메뉴에서 K8s YAML / Terraform / Helm Values 선택
+
+**노드별 내보내기**: 우측 K8s 리소스 대시보드에서 각 노드의 `[Y]` `[T]` `[H]` 미니 버튼 클릭
+
+| 노드 타입 | K8s 리소스 | 서비스 타입 |
+|-----------|-----------|------------|
+| Server, Service, Queue | Deployment + Service(ClusterIP) | ClusterIP |
+| Gateway | Deployment + Service(LoadBalancer) | LoadBalancer |
+| Database | StatefulSet + Service(headless) + PVC | ClusterIP (headless) |
+| Storage | PersistentVolumeClaim | — |
+
+생성된 코드에는 노드에 설정된 리소스 요구사항(CPU/Memory/Disk/GPU), 레플리카 수, Toleration, NodeSelector가 모두 반영됩니다.
 
 ---
 
@@ -207,10 +282,11 @@ Loom의 **✦ AI 생성** 패널에서 서비스를 `Ollama`로 선택하면 로
 
 추후 업데이트 예정인 기능들입니다. 기여와 제안을 환영합니다!
 
-- [ ] 다크/라이트 테마 전환
+- [x] 다크/라이트 테마 전환
+- [x] 한국어/영어 UI 전환
 - [ ] 실시간 협업 (멀티 유저)
-- [ ] Helm Chart / YAML 자동 생성
-- [ ] Terraform 코드 내보내기
+- [x] Helm Values / K8s YAML 자동 생성
+- [x] Terraform 코드 내보내기
 - [ ] 더 많은 클라우드 아이콘 추가
 
 ---

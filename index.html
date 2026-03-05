@@ -1,34 +1,60 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InfraFlow — Architecture Diagram Editor</title>
+<title>Loom — Architecture Weaver</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Pretendard:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap');
 
   :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --surface2: #21262d;
-    --surface3: #30363d;
-    --border: #30363d;
-    --border2: #484f58;
-    --text: #e6edf3;
-    --text2: #8b949e;
-    --text3: #6e7681;
-    --accent: #58a6ff;
-    --accent2: #1f6feb;
-    --green: #3fb950;
-    --yellow: #d29922;
-    --red: #f85149;
-    --purple: #bc8cff;
-    --orange: #ffa657;
-    --teal: #39d353;
-    --pink: #f778ba;
+    --bg: #0b0e14;
+    --surface: #12161e;
+    --surface2: #1a1f2b;
+    --surface3: #242a38;
+    --border: #252b3a;
+    --border2: #3a4256;
+    --text: #e2e8f0;
+    --text2: #8490a5;
+    --text3: #586174;
+    --accent: #5ba0f5;
+    --accent2: #2563eb;
+    --green: #34d399;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --purple: #a78bfa;
+    --orange: #fb923c;
+    --teal: #2dd4bf;
+    --pink: #f472b6;
+  }
+
+  [data-theme="light"] {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --surface2: #f0f1f4;
+    --surface3: #e4e6ec;
+    --border: #d0d5df;
+    --border2: #b8c0d0;
+    --text: #1a2035;
+    --text2: #4a5568;
+    --text3: #718096;
+    --accent: #2563eb;
+    --accent2: #1d4ed8;
+    --green: #059669;
+    --yellow: #d97706;
+    --red: #dc2626;
+    --purple: #7c3aed;
+    --orange: #ea580c;
+    --teal: #0d9488;
+    --pink: #db2777;
   }
 
   * { margin:0; padding:0; box-sizing:border-box; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border2); }
 
   body {
     background: var(--bg);
@@ -42,43 +68,44 @@
 
   /* ── TOP BAR ── */
   #topbar {
-    height: 48px;
+    height: 44px;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
-    padding: 0 12px;
-    gap: 8px;
+    padding: 0 14px;
+    gap: 6px;
     flex-shrink: 0;
     z-index: 100;
   }
   #topbar .logo {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    font-size: 15px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
     color: var(--accent);
-    margin-right: 16px;
+    margin-right: 18px;
     letter-spacing: -0.5px;
   }
   .tbtn {
-    height: 30px;
+    height: 28px;
     padding: 0 10px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
+    background: transparent;
+    border: 1px solid transparent;
     border-radius: 6px;
-    color: var(--text);
-    font-size: 12px;
+    color: var(--text2);
+    font-size: 11.5px;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 5px;
     transition: all .15s;
     white-space: nowrap;
+    font-family: inherit;
   }
-  .tbtn:hover { background: var(--surface3); border-color: var(--border2); }
+  .tbtn:hover { background: var(--surface2); border-color: var(--border); color: var(--text); }
   .tbtn.active { background: var(--accent2); border-color: var(--accent); color: #fff; }
-  .tbtn.danger:hover { background: #5a1e1e; border-color: var(--red); color: var(--red); }
-  .sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+  .tbtn.danger:hover { background: rgba(239,68,68,0.1); border-color: var(--red); color: var(--red); }
+  .sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; opacity: 0.5; }
   .spacer { flex: 1; }
 
   /* ── MAIN LAYOUT ── */
@@ -90,7 +117,7 @@
 
   /* ── LEFT PANEL ── */
   #leftpanel {
-    width: 220px;
+    width: 210px;
     background: var(--surface);
     border-right: 1px solid var(--border);
     display: flex;
@@ -99,16 +126,16 @@
     flex-shrink: 0;
   }
   .panel-section {
-    padding: 6px 8px;
+    padding: 8px 10px;
     border-bottom: 1px solid var(--border);
   }
   .panel-section h3 {
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
     color: var(--text3);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
   }
   .node-palette {
     display: grid;
@@ -116,13 +143,13 @@
     gap: 3px;
   }
   .palette-item {
-    padding: 4px 3px;
-    background: var(--surface2);
+    padding: 6px 3px 4px;
+    background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 6px;
     cursor: grab;
     text-align: center;
-    font-size: 10px;
+    font-size: 9.5px;
     color: var(--text2);
     transition: all .15s;
     user-select: none;
@@ -130,10 +157,11 @@
   .palette-item:hover {
     border-color: var(--accent);
     color: var(--text);
-    background: var(--surface3);
+    background: var(--surface2);
     transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
-  .palette-item .icon { font-size: 14px; margin-bottom: 1px; }
+  .palette-item .icon { font-size: 15px; margin-bottom: 2px; }
 
   /* node type colors */
   .palette-item[data-type="server"] { border-left: 3px solid var(--accent); }
@@ -154,10 +182,7 @@
     flex: 1;
     position: relative;
     overflow: hidden;
-    background:
-      radial-gradient(circle at 20% 20%, rgba(88,166,255,.04) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(188,140,255,.04) 0%, transparent 50%),
-      #0d1117;
+    background: var(--bg);
   }
   #gridCanvas {
     position: absolute;
@@ -174,7 +199,7 @@
 
   /* ── RIGHT PANEL ── */
   #rightpanel {
-    width: 240px;
+    width: 230px;
     background: var(--surface);
     border-left: 1px solid var(--border);
     display: flex;
@@ -244,50 +269,54 @@
 
   /* ── STATUS BAR ── */
   #statusbar {
-    height: 26px;
+    height: 24px;
     background: var(--surface);
     border-top: 1px solid var(--border);
     display: flex;
     align-items: center;
-    padding: 0 12px;
+    padding: 0 14px;
     gap: 16px;
-    font-size: 11px;
+    font-size: 10.5px;
     color: var(--text3);
     flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
   }
   #statusbar span { display: flex; align-items: center; gap: 4px; }
 
   /* ── CONTEXT MENU ── */
   #ctxmenu {
     position: fixed;
-    background: var(--surface2);
+    background: var(--surface);
     border: 1px solid var(--border2);
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 4px;
     z-index: 1000;
-    min-width: 160px;
+    min-width: 170px;
     display: none;
-    box-shadow: 0 8px 24px rgba(0,0,0,.6);
+    box-shadow: 0 12px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,0.03);
+    backdrop-filter: blur(8px);
   }
   .ctx-item {
     padding: 7px 12px;
     font-size: 12px;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     gap: 8px;
     color: var(--text);
+    transition: background .1s;
   }
-  .ctx-item:hover { background: var(--surface3); }
+  .ctx-item:hover { background: var(--surface2); }
   .ctx-item.danger { color: var(--red); }
-  .ctx-item.danger:hover { background: rgba(248,81,73,.1); }
+  .ctx-item.danger:hover { background: rgba(239,68,68,.08); }
   .ctx-sep { height: 1px; background: var(--border); margin: 3px 0; }
 
   /* ── MODAL ── */
   #modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,.7);
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(4px);
     z-index: 2000;
     display: none;
     align-items: center;
@@ -297,35 +326,37 @@
   #modal {
     background: var(--surface);
     border: 1px solid var(--border2);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 24px;
     width: 360px;
-    box-shadow: 0 24px 64px rgba(0,0,0,.8);
+    box-shadow: 0 24px 64px rgba(0,0,0,.6);
   }
-  #modal h2 { font-size: 16px; margin-bottom: 16px; }
+  #modal h2 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
   #modal input {
     width: 100%;
-    background: var(--surface2);
+    background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     color: var(--text);
     font-size: 14px;
-    padding: 8px 12px;
+    padding: 10px 12px;
     margin-bottom: 16px;
   }
-  #modal input:focus { outline: none; border-color: var(--accent); }
+  #modal input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,160,245,0.1); }
   .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
   .mbtn {
-    padding: 7px 16px;
-    border-radius: 6px;
+    padding: 8px 18px;
+    border-radius: 8px;
     font-size: 13px;
     cursor: pointer;
     border: 1px solid var(--border);
     color: var(--text);
     background: var(--surface2);
+    font-family: inherit;
+    transition: all .15s;
   }
   .mbtn:hover { background: var(--surface3); }
-  .mbtn.primary { background: var(--accent2); border-color: var(--accent); }
+  .mbtn.primary { background: var(--accent2); border-color: var(--accent); color: #fff; }
 
   /* ── TOOLTIP ── */
   .tooltip {
@@ -345,9 +376,9 @@
   #minimap {
     position: absolute;
     bottom: 10px; right: 10px;
-    width: 160px; height: 100px;
-    background: rgba(13,17,23,.85);
-    border: 1px solid var(--border2);
+    width: 150px; height: 95px;
+    background: rgba(11,14,20,.9);
+    border: 1px solid var(--border);
     border-radius: 8px;
     z-index: 50;
     overflow: hidden;
@@ -361,127 +392,128 @@
     left: 50%;
     transform: translate(-50%,-50%);
     color: var(--text3);
-    font-size: 13px;
+    font-size: 12px;
     pointer-events: none;
     text-align: center;
-    line-height: 1.8;
+    line-height: 2;
     transition: opacity .3s;
+    letter-spacing: 0.2px;
   }
 
   /* ── K8S RESOURCE PANEL ── */
   #k8sConfigOverlay {
     display:none; position:fixed; inset:0;
-    background:rgba(0,0,0,0.55); z-index:1200;
+    background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1200;
   }
   #k8sConfigPanel {
     display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-    width:620px; max-width:95vw; background:#161b22; border:1px solid #30363d;
-    border-radius:14px; z-index:1201; box-shadow:0 24px 80px rgba(0,0,0,0.7);
+    width:620px; max-width:95vw; background:var(--surface); border:1px solid var(--border2);
+    border-radius:14px; z-index:1201; box-shadow:0 24px 80px rgba(0,0,0,0.5);
     font-family:Pretendard,sans-serif; overflow:hidden;
   }
   #k8sConfigPanel .k8s-header {
     display:flex; align-items:center; justify-content:space-between;
-    padding:16px 20px 12px; border-bottom:1px solid #21262d;
+    padding:16px 20px 12px; border-bottom:1px solid var(--border);
   }
   #k8sConfigPanel .k8s-header h2 {
-    font-size:15px; font-weight:700; color:#e6edf3; display:flex; align-items:center; gap:8px;
+    font-size:15px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px;
   }
   #k8sConfigPanel .k8s-body { padding:20px; }
   .k8s-row {
     display:grid; grid-template-columns:120px 1fr 60px; gap:10px;
     align-items:center; margin-bottom:12px;
   }
-  .k8s-row label { font-size:12px; color:#8b949e; font-weight:500; }
+  .k8s-row label { font-size:12px; color:var(--text2); font-weight:500; }
   .k8s-row input {
-    background:#0d1117; border:1px solid #30363d; border-radius:6px;
-    color:#e6edf3; padding:6px 10px; font-size:13px; font-family:JetBrains Mono,monospace;
+    background:var(--bg); border:1px solid var(--border); border-radius:6px;
+    color:var(--text); padding:6px 10px; font-size:13px; font-family:JetBrains Mono,monospace;
     outline:none; transition:border-color .15s;
   }
-  .k8s-row input:focus { border-color:#58a6ff; }
-  .k8s-row .unit { font-size:11px; color:#6e7681; }
+  .k8s-row input:focus { border-color:var(--accent); }
+  .k8s-row .unit { font-size:11px; color:var(--text3); }
   .k8s-node-row {
     display:grid; grid-template-columns:100px 1fr; gap:8px;
     align-items:center; margin-bottom:8px;
   }
-  .k8s-node-row label { font-size:11px; color:#8b949e; }
+  .k8s-node-row label { font-size:11px; color:var(--text2); }
   .k8s-node-row input {
-    background:#0d1117; border:1px solid #30363d; border-radius:5px;
-    color:#e6edf3; padding:4px 8px; font-size:12px; font-family:JetBrains Mono,monospace;
+    background:var(--bg); border:1px solid var(--border); border-radius:5px;
+    color:var(--text); padding:4px 8px; font-size:12px; font-family:JetBrains Mono,monospace;
     outline:none; width:100%;
   }
-  .k8s-node-row input:focus { border-color:#58a6ff; }
+  .k8s-node-row input:focus { border-color:var(--accent); }
   .k8s-btn-row { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
   .k8s-btn {
-    padding:8px 18px; border-radius:7px; border:1px solid #30363d;
+    padding:8px 18px; border-radius:7px; border:1px solid var(--border);
     font-size:12px; cursor:pointer; font-family:inherit;
   }
-  .k8s-btn.cancel { background:#21262d; color:#8b949e; }
+  .k8s-btn.cancel { background:var(--surface2); color:var(--text2); }
   .k8s-btn.cancel:hover { background:#30363d; }
-  .k8s-btn.primary { background:#1f6feb; color:#fff; border-color:#58a6ff; }
+  .k8s-btn.primary { background:#1f6feb; color:#fff; border-color:var(--accent); }
   .k8s-btn.primary:hover { background:#388bfd; }
   .k8s-tag-list { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
   .k8s-tag {
     display:inline-flex; align-items:center; gap:4px;
-    background:#0d1117; border:1px solid #30363d; border-radius:4px;
-    padding:2px 8px; font-size:11px; color:#e6edf3; font-family:JetBrains Mono,monospace;
+    background:var(--bg); border:1px solid var(--border); border-radius:4px;
+    padding:2px 8px; font-size:11px; color:var(--text); font-family:JetBrains Mono,monospace;
   }
   .k8s-tag .tag-del {
-    cursor:pointer; color:#6e7681; font-size:13px; line-height:1;
+    cursor:pointer; color:var(--text3); font-size:13px; line-height:1;
   }
   .k8s-tag .tag-del:hover { color:#f85149; }
   .k8s-add-row {
     display:flex; gap:4px; margin-top:6px; align-items:center;
   }
   .k8s-add-row input, .k8s-add-row select {
-    background:#0d1117; border:1px solid #30363d; border-radius:4px;
-    color:#e6edf3; padding:3px 6px; font-size:11px; font-family:JetBrains Mono,monospace;
+    background:var(--bg); border:1px solid var(--border); border-radius:4px;
+    color:var(--text); padding:3px 6px; font-size:11px; font-family:JetBrains Mono,monospace;
     outline:none;
   }
-  .k8s-add-row input:focus, .k8s-add-row select:focus { border-color:#58a6ff; }
+  .k8s-add-row input:focus, .k8s-add-row select:focus { border-color:var(--accent); }
   .k8s-add-btn {
-    background:#21262d; border:1px solid #30363d; border-radius:4px;
-    color:#58a6ff; padding:3px 8px; font-size:11px; cursor:pointer;
+    background:var(--surface2); border:1px solid var(--border); border-radius:4px;
+    color:var(--accent); padding:3px 8px; font-size:11px; cursor:pointer;
   }
   .k8s-add-btn:hover { background:#30363d; }
   #k8sConfigPanel .k8s-body { padding:20px; max-height:70vh; overflow-y:auto; }
   .k8s-tabs {
-    display:flex; gap:0; border-bottom:1px solid #21262d; margin-bottom:16px;
+    display:flex; gap:0; border-bottom:1px solid var(--surface2); margin-bottom:16px;
   }
   .k8s-tab {
-    padding:8px 16px; font-size:12px; color:#8b949e; cursor:pointer;
+    padding:8px 16px; font-size:12px; color:var(--text2); cursor:pointer;
     border-bottom:2px solid transparent; font-weight:500; background:none; border-top:none; border-left:none; border-right:none;
   }
-  .k8s-tab.active { color:#58a6ff; border-bottom-color:#58a6ff; }
-  .k8s-tab:hover { color:#e6edf3; }
+  .k8s-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .k8s-tab:hover { color:var(--text); }
   .k8s-tab-content { display:none; }
   .k8s-tab-content.active { display:block; }
-  .node-sched-section { margin-top:8px; padding-top:8px; border-top:1px solid #21262d; }
-  .node-sched-section h4 { font-size:11px; color:#58a6ff; margin:0 0 6px; font-weight:600; }
+  .node-sched-section { margin-top:8px; padding-top:8px; border-top:1px solid var(--surface2); }
+  .node-sched-section h4 { font-size:11px; color:var(--accent); margin:0 0 6px; font-weight:600; }
   .ns-check-list { display:flex; flex-direction:column; gap:3px; margin-top:4px; }
   .ns-check-item {
-    display:flex; align-items:center; gap:4px; font-size:10px; color:#8b949e; cursor:pointer;
+    display:flex; align-items:center; gap:4px; font-size:10px; color:var(--text2); cursor:pointer;
   }
-  .ns-check-item input { margin:0; accent-color:#58a6ff; }
-  .ns-check-item:hover { color:#e6edf3; }
-  .filter-section { margin-top:8px; padding-top:8px; border-top:1px solid #21262d; }
-  .filter-section h4 { font-size:11px; color:#8b949e; margin:0 0 6px; font-weight:600; display:flex; align-items:center; gap:6px; }
+  .ns-check-item input { margin:0; accent-color:var(--accent); }
+  .ns-check-item:hover { color:var(--text); }
+  .filter-section { margin-top:8px; padding-top:8px; border-top:1px solid var(--surface2); }
+  .filter-section h4 { font-size:11px; color:var(--text2); margin:0 0 6px; font-weight:600; display:flex; align-items:center; gap:6px; }
   .filter-row { display:flex; align-items:center; gap:6px; margin-bottom:5px; }
-  .filter-row label { font-size:9px; color:#6e7681; min-width:42px; }
+  .filter-row label { font-size:9px; color:var(--text3); min-width:42px; }
   .filter-row select {
-    flex:1; background:#0d1117; border:1px solid #30363d; border-radius:4px;
-    color:#e6edf3; padding:3px 6px; font-size:10px; outline:none;
+    flex:1; background:var(--bg); border:1px solid var(--border); border-radius:4px;
+    color:var(--text); padding:3px 6px; font-size:10px; outline:none;
     font-family:JetBrains Mono,monospace;
   }
-  .filter-row select:focus { border-color:#58a6ff; }
-  .filter-row select.active-filter { border-color:#58a6ff; background:#0d1a2e; }
+  .filter-row select:focus { border-color:var(--accent); }
+  .filter-row select.active-filter { border-color:var(--accent); background:#0d1a2e; }
   .filter-clear-btn {
-    background:none; border:1px solid #30363d; border-radius:4px;
-    color:#6e7681; font-size:9px; padding:2px 6px; cursor:pointer;
+    background:none; border:1px solid var(--border); border-radius:4px;
+    color:var(--text3); font-size:9px; padding:2px 6px; cursor:pointer;
   }
   .filter-clear-btn:hover { color:#f85149; border-color:#f85149; }
   .filter-active-badge {
     display:inline-block; padding:1px 5px; border-radius:3px;
-    font-size:8px; font-weight:700; background:rgba(88,166,255,0.2); color:#58a6ff;
+    font-size:8px; font-weight:700; background:rgba(88,166,255,0.2); color:var(--accent);
   }
 
   /* ── RESOURCE DASHBOARD ── */
@@ -491,11 +523,11 @@
   .res-bar-label {
     display:flex; justify-content:space-between; font-size:10px; margin-bottom:3px;
   }
-  .res-bar-label .name { color:#8b949e; font-weight:500; }
-  .res-bar-label .val { color:#e6edf3; font-family:JetBrains Mono,monospace; }
+  .res-bar-label .name { color:var(--text2); font-weight:500; }
+  .res-bar-label .val { color:var(--text); font-family:JetBrains Mono,monospace; }
   .res-bar {
-    width:100%; height:14px; background:#0d1117; border-radius:4px; overflow:hidden;
-    position:relative; border:1px solid #21262d;
+    width:100%; height:14px; background:var(--bg); border-radius:4px; overflow:hidden;
+    position:relative; border:1px solid var(--surface2);
   }
   .res-bar-fill {
     height:100%; border-radius:3px; transition:width .3s, background .3s;
@@ -509,42 +541,43 @@
     display:inline-block; padding:2px 8px; border-radius:4px;
     font-size:10px; font-weight:600; letter-spacing:0.5px;
   }
-  .res-status-badge.ok { background:rgba(63,185,80,0.15); color:#3fb950; }
-  .res-status-badge.warn { background:rgba(210,153,34,0.15); color:#d29922; }
-  .res-status-badge.critical { background:rgba(248,81,73,0.15); color:#f85149; }
-  .res-status-badge.over { background:rgba(248,81,73,0.25); color:#ff6b6b; }
+  .res-status-badge.ok { background:rgba(52,211,153,0.12); color:var(--green); }
+  .res-status-badge.warn { background:rgba(245,158,11,0.12); color:var(--yellow); }
+  .res-status-badge.critical { background:rgba(239,68,68,0.12); color:var(--red); }
+  .res-status-badge.over { background:rgba(239,68,68,0.2); color:#ff6b6b; }
 
   /* node resource props in right panel */
-  .node-res-section { margin-top:8px; padding-top:8px; border-top:1px solid #21262d; }
+  .node-res-section { margin-top:8px; padding-top:8px; border-top:1px solid var(--surface2); }
   .node-res-section h4 {
     font-size:9px; text-transform:uppercase; letter-spacing:1px;
-    color:#6e7681; margin-bottom:6px; font-weight:600;
+    color:var(--text3); margin-bottom:6px; font-weight:600;
   }
   .node-res-grid {
     display:grid; grid-template-columns:1fr 1fr; gap:6px;
   }
   .node-res-grid .nr-item { display:flex; flex-direction:column; gap:2px; }
-  .node-res-grid .nr-label { font-size:9px; color:#6e7681; }
+  .node-res-grid .nr-label { font-size:9px; color:var(--text3); }
   .node-res-grid input {
-    background:#0d1117; border:1px solid #21262d; border-radius:4px;
-    color:#e6edf3; padding:3px 6px; font-size:11px; font-family:JetBrains Mono,monospace;
+    background:var(--bg); border:1px solid var(--surface2); border-radius:4px;
+    color:var(--text); padding:3px 6px; font-size:11px; font-family:JetBrains Mono,monospace;
     outline:none; width:100%;
   }
-  .node-res-grid input:focus { border-color:#58a6ff; }
+  .node-res-grid input:focus { border-color:var(--accent); }
 
   /* Export Dropdown */
   .export-dropdown { position:relative; display:inline-block; }
   .export-dropdown-menu {
     display:none; position:absolute; right:0; top:100%; margin-top:4px;
-    background:var(--surface); border:1px solid var(--border); border-radius:8px;
-    min-width:180px; padding:4px 0; z-index:9999;
-    box-shadow:0 8px 24px rgba(0,0,0,.4);
+    background:var(--surface); border:1px solid var(--border2); border-radius:10px;
+    min-width:180px; padding:4px; z-index:9999;
+    box-shadow:0 12px 40px rgba(0,0,0,.4);
   }
   .export-dropdown.open .export-dropdown-menu { display:block; }
   .export-dropdown-item {
-    display:flex; align-items:center; gap:8px; padding:8px 14px;
-    font-size:12px; color:var(--text1); cursor:pointer; border:none;
+    display:flex; align-items:center; gap:8px; padding:8px 12px;
+    font-size:12px; color:var(--text); cursor:pointer; border:none;
     background:none; width:100%; text-align:left; font-family:inherit;
+    border-radius:6px; transition:background .1s;
   }
   .export-dropdown-item:hover { background:var(--surface2); }
   .export-dropdown-item .exp-icon { font-size:14px; width:20px; text-align:center; }
@@ -559,24 +592,23 @@
 
 <!-- TOP BAR -->
 <div id="topbar">
-  <div class="logo">⬡ InfraFlow</div>
+  <div class="logo">◈ Loom</div>
 
-  <button class="tbtn" onclick="newDiagram()" title="새로 만들기">📄 새로 만들기</button>
+  <button class="tbtn" onclick="newDiagram()" title="새로 만들기" data-i18n="tb_new">📄 새로 만들기</button>
   <div class="sep"></div>
 
   <button class="tbtn" id="btnSelect" title="Select (V)" onclick="setTool('select')">
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M1 1l4.5 10 2-4.5L12 4.5z"/></svg> 선택
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M1 1l4.5 10 2-4.5L12 4.5z"/></svg> <span data-i18n="tb_select">선택</span>
   </button>
   <button class="tbtn" id="btnConnect" title="Connect (C)" onclick="setTool('connect')">
-    <svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" fill="none" stroke-width="2"><line x1="2" y1="10" x2="10" y2="2"/><circle cx="2" cy="10" r="1.5" fill="currentColor"/><circle cx="10" cy="2" r="1.5" fill="currentColor"/></svg> 연결
+    <svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" fill="none" stroke-width="2"><line x1="2" y1="10" x2="10" y2="2"/><circle cx="2" cy="10" r="1.5" fill="currentColor"/><circle cx="10" cy="2" r="1.5" fill="currentColor"/></svg> <span data-i18n="tb_connect">연결</span>
   </button>
   <button class="tbtn" id="btnPan" title="Pan (Space)" onclick="setTool('pan')">
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 1v3M6 8v3M1 6h3M8 6h3M3.5 3.5l2 2M8.5 8.5l-2-2M8.5 3.5l-2 2M3.5 8.5l2-2" stroke="currentColor" stroke-width="1.5" fill="none"/></svg> 이동
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 1v3M6 8v3M1 6h3M8 6h3M3.5 3.5l2 2M8.5 8.5l-2-2M8.5 3.5l-2 2M3.5 8.5l2-2" stroke="currentColor" stroke-width="1.5" fill="none"/></svg> <span data-i18n="tb_pan">이동</span>
   </button>
 
   <div class="sep"></div>
 
-  <button class="tbtn" onclick="loadOntologyTemplate()">📐 온톨로지 템플릿 로드</button>
   <button class="tbtn" onclick="autoLayout()">⚡ Auto Layout</button>
 
   <div class="sep"></div>
@@ -592,9 +624,9 @@
 
   <div class="spacer"></div>
 
-  <button class="tbtn" onclick="openK8sConfig()" title="K8s 클러스터 하드웨어 리소스 설정" style="border-color:#326CE5;color:#79b8ff;">☸ K8s 리소스</button>
-  <button class="tbtn" onclick="runInfraCheck()" title="K8s 인프라 완성도 체크" style="border-color:#3fb950;color:#3fb950;">✅ 인프라 체크</button>
-  <button class="tbtn ai-btn" onclick="openAIPanel()" title="AI로 다이어그램 생성">✦ AI 생성</button>
+  <button class="tbtn" onclick="openK8sConfig()" title="K8s 클러스터 하드웨어 리소스 설정" style="color:var(--accent);" data-i18n="tb_k8s">☸ K8s 리소스</button>
+  <button class="tbtn" onclick="runInfraCheck()" title="K8s 인프라 완성도 체크" style="color:var(--green);" data-i18n="tb_infra">✅ 인프라 체크</button>
+  <button class="tbtn" onclick="openAIPanel()" title="AI로 다이어그램 생성" style="color:var(--purple);" data-i18n="tb_ai">✦ AI 생성</button>
   <button class="tbtn" onclick="importJSON()">📥 Import</button>
   <div class="export-dropdown" id="exportDropdown">
     <button class="tbtn" onclick="toggleExportMenu(event)">📤 Export ▾</button>
@@ -610,10 +642,42 @@
       </button>
       <div class="export-dropdown-sep"></div>
       <button class="export-dropdown-item" onclick="exportPNG();closeExportMenu();">
-        <span class="exp-icon">📷</span> PNG (이미지)
+        <span class="exp-icon">📷</span> <span data-i18n="tb_png">PNG (이미지)</span>
+      </button>
+      <div class="export-dropdown-sep"></div>
+      <button class="export-dropdown-item" onclick="generateK8sYAMLAll();closeExportMenu();">
+        <span class="exp-icon">☸</span> <span data-i18n="iac_yaml">K8s YAML</span>
+      </button>
+      <button class="export-dropdown-item" onclick="generateTerraformAll();closeExportMenu();">
+        <span class="exp-icon">⛅</span> <span data-i18n="iac_terraform">Terraform</span>
+      </button>
+      <button class="export-dropdown-item" onclick="generateHelmValues();closeExportMenu();">
+        <span class="exp-icon">⎈</span> <span data-i18n="iac_helm">Helm Values</span>
       </button>
     </div>
   </div>
+  <div class="export-dropdown" id="helpDropdown">
+    <button class="tbtn" onclick="toggleHelpMenu(event)">？ Help ▾</button>
+    <div class="export-dropdown-menu" style="right:0;left:auto;">
+      <a class="export-dropdown-item" href="https://github.com/flyingcatstudio/loom" target="_blank" style="text-decoration:none;color:inherit;">
+        <span class="exp-icon">📦</span> GitHub
+      </a>
+      <a class="export-dropdown-item" href="https://github.com/flyingcatstudio/loom/issues" target="_blank" style="text-decoration:none;color:inherit;">
+        <span class="exp-icon">🐛</span> Issues / Feedback
+      </a>
+      <div class="export-dropdown-sep"></div>
+      <a class="export-dropdown-item" href="https://aiotool.net/" target="_blank" style="text-decoration:none;color:inherit;">
+        <span class="exp-icon">🌐</span> aiotool.net
+      </a>
+      <div class="export-dropdown-sep"></div>
+      <div class="export-dropdown-item" style="cursor:default;opacity:0.6;font-size:10px;justify-content:center;">
+        Built by FCStudio
+      </div>
+    </div>
+  </div>
+  <div class="sep"></div>
+  <button class="tbtn" id="btnLang" onclick="toggleLang()">KO</button>
+  <button class="tbtn" id="btnTheme" onclick="toggleTheme()">☀</button>
 </div>
 
 <!-- MAIN -->
@@ -670,15 +734,15 @@
     </div>
 
     <div class="panel-section">
-      <h3>☁ 클라우드 / 솔루션</h3>
-      <button onclick="openIconPicker()" style="width:100%;background:#21262d;border:1px solid #30363d;
-        color:#e6edf3;border-radius:7px;padding:8px;cursor:pointer;font-size:12px;text-align:left;
+      <h3 data-i18n="lp_cloud">☁ 클라우드 / 솔루션</h3>
+      <button onclick="openIconPicker()" style="width:100%;background:var(--surface2);border:1px solid var(--border);
+        color:var(--text);border-radius:7px;padding:8px;cursor:pointer;font-size:12px;text-align:left;
         display:flex;align-items:center;gap:8px;">
         <span style="font-size:16px;">🏗</span>
-        <span>아이콘 선택 (AWS / GCP / Azure / OSS)</span>
+        <span data-i18n="lp_icon_btn">아이콘 선택 (AWS / GCP / Azure / OSS)</span>
       </button>
       <div id="recentIconsRow" style="display:none;margin-top:8px;">
-        <div style="font-size:10px;color:#8b949e;margin-bottom:4px;">최근 사용</div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:4px;" data-i18n="lp_recent">최근 사용</div>
         <div id="recentIconsList" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
       </div>
     </div>
@@ -686,10 +750,10 @@
     <div class="panel-section">
       <h3>🔗 Quick Connect</h3>
       <div style="font-size:11px; color:var(--text3); line-height:1.7">
-        <div>• 연결 모드 선택 후</div>
-        <div>• 시작 노드 클릭</div>
-        <div>• 끝 노드 클릭</div>
-        <div style="margin-top:6px;color:var(--text2)">화살표 스타일:</div>
+        <div data-i18n="lp_conn_guide">연결 모드 선택 후</div>
+        <div data-i18n="lp_conn1">• 시작 노드 클릭</div>
+        <div data-i18n="lp_conn2">• 끝 노드 클릭</div>
+        <div style="margin-top:6px;color:var(--text2)" data-i18n="lp_arrow_style">화살표 스타일:</div>
       </div>
       <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap">
         <button class="tbtn" style="font-size:10px" onclick="setArrowStyle('solid')" id="as-solid">─→</button>
@@ -699,11 +763,11 @@
     </div>
 
     <div class="panel-section">
-      <h3>📋 레이어</h3>
+      <h3 data-i18n="lp_layers">📋 레이어</h3>
       <div id="layerList" style="display:flex;flex-direction:column;gap:4px;font-size:12px"></div>
       <div style="display:flex;gap:4px;margin-top:6px;">
-        <button onclick="setActiveLayer(null)" id="layerAllBtn" class="tbtn" style="flex:1;justify-content:center;font-size:10px;">전체</button>
-        <button onclick="addLayer()" class="tbtn" style="flex:1;justify-content:center;font-size:10px;">+ 레이어 추가</button>
+        <button onclick="setActiveLayer(null)" id="layerAllBtn" class="tbtn" style="flex:1;justify-content:center;font-size:10px;" data-i18n="lp_all">전체</button>
+        <button onclick="addLayer()" class="tbtn" style="flex:1;justify-content:center;font-size:10px;" data-i18n="lp_add_layer">+ 레이어 추가</button>
       </div>
     </div>
   </div>
@@ -712,39 +776,39 @@
   <div id="canvasWrap">
     <canvas id="gridCanvas"></canvas>
     <canvas id="mainCanvas"></canvas>
-    <div id="hint">팔레트에서 노드를 드래그하거나<br>더블클릭으로 노드 추가<br><br><span style="color:var(--accent);font-size:11px">온톨로지 템플릿 로드로 바로 시작하세요</span></div>
+    <div id="hint"><span data-i18n="hint_1">팔레트에서 노드를 드래그하거나</span><br><span data-i18n="hint_2">더블클릭으로 노드 추가</span></div>
     <div id="minimap"><canvas id="minimapCanvas"></canvas></div>
   </div>
 
   <!-- RIGHT: Resize handle + Properties -->
   <div id="rightResizeHandle" style="width:4px;cursor:col-resize;background:transparent;flex-shrink:0;transition:background .15s;"
-    onmouseenter="this.style.background='#58a6ff'" onmouseleave="if(!window._rpDragging)this.style.background='transparent'"></div>
+    onmouseenter="this.style.background='var(--accent)'" onmouseleave="if(!window._rpDragging)this.style.background='transparent'"></div>
   <div id="rightpanel">
     <!-- Font Size Control -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <span style="font-size:10px;color:var(--text3);font-weight:600;">패널 폰트</span>
+      <span style="font-size:10px;color:var(--text3);font-weight:600;" data-i18n="rp_panel_font">패널 폰트</span>
       <div style="display:flex;align-items:center;gap:4px;">
         <button onclick="changeFontSize(-1)" style="width:24px;height:24px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;">−</button>
         <span id="fontSizeDisplay" style="font-size:11px;color:var(--text);min-width:28px;text-align:center;font-family:'JetBrains Mono',monospace;">12px</span>
         <button onclick="changeFontSize(1)" style="width:24px;height:24px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;">+</button>
-        <button onclick="changeFontSize(0)" title="기본값 복원" style="width:24px;height:24px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text3);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;">↺</button>
+        <button onclick="changeFontSize(0)" title="기본값 복원" data-i18n-title="font_reset_title" style="width:24px;height:24px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text3);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;">↺</button>
       </div>
     </div>
     <div id="panelContent">
     <div class="panel-section">
-      <h3>⚙ 속성</h3>
-      <div id="propEmpty" style="font-size:11px;color:var(--text3)">노드를 선택하세요</div>
+      <h3 data-i18n="rp_props">⚙ 속성</h3>
+      <div id="propEmpty" style="font-size:11px;color:var(--text3)" data-i18n="rp_select_node">노드를 선택하세요</div>
       <div id="propForm" style="display:none">
         <div class="prop-row">
-          <label>이름</label>
-          <input id="propName" type="text" placeholder="노드 이름">
+          <label data-i18n="rp_name">이름</label>
+          <input id="propName" type="text" placeholder="노드 이름" data-i18n-ph="prop_name_ph">
         </div>
         <div class="prop-row">
-          <label>설명</label>
-          <textarea id="propDesc" placeholder="설명..."></textarea>
+          <label data-i18n="rp_desc">설명</label>
+          <textarea id="propDesc" placeholder="설명..." data-i18n-ph="prop_desc_ph"></textarea>
         </div>
         <div class="prop-row">
-          <label>타입</label>
+          <label data-i18n="rp_type">타입</label>
           <select id="propType">
             <option value="server">Server</option>
             <option value="database">Database</option>
@@ -761,59 +825,59 @@
           </select>
         </div>
         <div class="prop-row">
-          <label>배경색</label>
+          <label data-i18n="rp_bg">배경색</label>
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <div class="color-grid" id="colorGrid"></div>
-            <div class="color-swatch transparent-swatch" title="투명 (transparent)" onclick="applyColor('transparent')"></div>
+            <div class="color-swatch transparent-swatch" title="투명 (transparent)" data-i18n-title="transparent" onclick="applyColor('transparent')"></div>
           </div>
         </div>
         <div class="prop-row">
-          <label>글자색</label>
+          <label data-i18n="rp_fg">글자색</label>
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <div class="color-grid" id="fontColorGrid"></div>
-            <input id="propFontColor" type="color" value="#e6edf3" style="width:24px;height:24px;padding:0;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;" title="직접 선택">
+            <input id="propFontColor" type="color" value="#e6edf3" style="width:24px;height:24px;padding:0;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;" title="직접 선택" data-i18n-title="font_color_title">
           </div>
         </div>
         <div class="prop-row">
-          <label>너비</label>
+          <label data-i18n="rp_width">너비</label>
           <input id="propW" type="number" min="80" max="400">
         </div>
         <div class="prop-row">
-          <label>높이</label>
+          <label data-i18n="rp_height">높이</label>
           <input id="propH" type="number" min="40" max="300">
         </div>
         <div class="prop-row">
-          <label>레이어</label>
+          <label data-i18n="rp_layer">레이어</label>
           <select id="propLayer"></select>
         </div>
         <div class="prop-row">
-          <label>경고 표시</label>
+          <label data-i18n="rp_alert">경고 표시</label>
           <select id="propAlert">
-            <option value="">없음</option>
-            <option value="warn">⚠ 경고</option>
-            <option value="error">!! 오류/병목</option>
-            <option value="ok">✓ 정상</option>
+            <option value="" data-i18n="rp_alert_none">없음</option>
+            <option value="warn" data-i18n="rp_alert_warn">⚠ 경고</option>
+            <option value="error" data-i18n="rp_alert_error">!! 오류/병목</option>
+            <option value="ok" data-i18n="rp_alert_ok">✓ 정상</option>
           </select>
         </div>
         <!-- Node Scheduling -->
         <div class="node-sched-section" id="nodeSchedSection">
-          <h4>📦 스케줄링</h4>
+          <h4 data-i18n="rp_sched">📦 스케줄링</h4>
           <div class="prop-row" style="margin-bottom:4px">
             <label style="font-size:10px">Namespace</label>
-            <select id="nrNamespace" style="font-size:11px;padding:3px 6px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e6edf3;"></select>
+            <select id="nrNamespace" style="font-size:11px;padding:3px 6px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);"></select>
           </div>
           <div style="margin-top:4px">
-            <label style="font-size:10px;color:#8b949e;display:block;margin-bottom:2px">Tolerations</label>
+            <label style="font-size:10px;color:var(--text2);display:block;margin-bottom:2px">Tolerations</label>
             <div class="ns-check-list" id="nrTolerationList"></div>
           </div>
           <div style="margin-top:4px">
-            <label style="font-size:10px;color:#8b949e;display:block;margin-bottom:2px">Node Selector</label>
+            <label style="font-size:10px;color:var(--text2);display:block;margin-bottom:2px">Node Selector</label>
             <div class="ns-check-list" id="nrNodeSelectorList"></div>
           </div>
         </div>
         <!-- Node Resource Requirements -->
         <div class="node-res-section" id="nodeResSection">
-          <h4>☸ 리소스 요구사항</h4>
+          <h4 data-i18n="rp_res_req">☸ 리소스 요구사항</h4>
           <div class="node-res-grid">
             <div class="nr-item">
               <span class="nr-label">Min CPU (m)</span>
@@ -850,60 +914,60 @@
           </div>
         </div>
 
-        <button class="tbtn danger" onclick="deleteSelected()" style="width:100%;justify-content:center;margin-top:6px">🗑 삭제</button>
+        <button class="tbtn danger" onclick="deleteSelected()" style="width:100%;justify-content:center;margin-top:6px" data-i18n="rp_delete">🗑 삭제</button>
       </div>
     </div>
 
     <div class="panel-section" id="edgePropSection" style="display:none">
-      <h3>↗ 연결선 속성</h3>
+      <h3 data-i18n="rp_edge_props">↗ 연결선 속성</h3>
       <div class="prop-row">
-        <label>라벨</label>
-        <input id="edgeLabel" type="text" placeholder="연결선 이름">
+        <label data-i18n="rp_edge_label">라벨</label>
+        <input id="edgeLabel" type="text" placeholder="연결선 이름" data-i18n-ph="edge_label_ph">
       </div>
       <div class="prop-row">
-        <label>스타일</label>
+        <label data-i18n="rp_edge_style">스타일</label>
         <select id="edgeStyle">
-          <option value="solid">실선</option>
-          <option value="dashed">점선</option>
-          <option value="both">양방향</option>
+          <option value="solid" data-i18n="rp_solid">실선</option>
+          <option value="dashed" data-i18n="rp_dashed">점선</option>
+          <option value="both" data-i18n="rp_bidir">양방향</option>
         </select>
       </div>
       <div class="prop-row">
-        <label>색상</label>
+        <label data-i18n="rp_edge_color">색상</label>
         <div class="color-grid" id="edgeColorGrid"></div>
       </div>
     </div>
 
     <div class="panel-section">
-      <h3>📊 통계</h3>
+      <h3 data-i18n="rp_stats">📊 통계</h3>
       <div style="font-size:11px; color:var(--text2); line-height:1.9">
-        <div>노드: <span id="statNodes" style="color:var(--accent)">0</span></div>
-        <div>연결선: <span id="statEdges" style="color:var(--green)">0</span></div>
-        <div>그룹: <span id="statGroups" style="color:var(--purple)">0</span></div>
+        <div><span data-i18n="rp_nodes">노드</span>: <span id="statNodes" style="color:var(--accent)">0</span></div>
+        <div><span data-i18n="rp_edges">연결선</span>: <span id="statEdges" style="color:var(--green)">0</span></div>
+        <div><span data-i18n="rp_groups">그룹</span>: <span id="statGroups" style="color:var(--purple)">0</span></div>
       </div>
     </div>
 
     <div class="panel-section" id="filterSection" style="display:none">
-      <h3>🔍 필터 <span id="filterActiveBadge" class="filter-active-badge" style="display:none">ON</span></h3>
+      <h3><span data-i18n="rp_filter">🔍 필터</span> <span id="filterActiveBadge" class="filter-active-badge" style="display:none">ON</span></h3>
       <div class="filter-row">
         <label>NS</label>
-        <select id="filterNamespace"><option value="">전체</option></select>
+        <select id="filterNamespace"><option value="" data-i18n="rp_all_opt">전체</option></select>
       </div>
       <div class="filter-row">
         <label>Toleration</label>
-        <select id="filterToleration"><option value="">전체</option></select>
+        <select id="filterToleration"><option value="" data-i18n="rp_all_opt">전체</option></select>
       </div>
       <div class="filter-row">
         <label>Selector</label>
-        <select id="filterNodeSelector"><option value="">전체</option></select>
+        <select id="filterNodeSelector"><option value="" data-i18n="rp_all_opt">전체</option></select>
       </div>
       <div style="text-align:right;margin-top:4px;">
-        <button class="filter-clear-btn" onclick="clearAllFilters()">필터 초기화</button>
+        <button class="filter-clear-btn" onclick="clearAllFilters()" data-i18n="rp_clear_filter">필터 초기화</button>
       </div>
     </div>
 
     <div class="panel-section" id="resDashboardSection" style="display:none">
-      <h3>☸ K8s 리소스 현황</h3>
+      <h3 data-i18n="rp_k8s_status">☸ K8s 리소스 현황</h3>
       <div id="resDashboard">
         <div class="res-bar-wrap">
           <div class="res-bar-label"><span class="name">CPU</span><span class="val" id="resCpuVal">–</span></div>
@@ -922,12 +986,12 @@
           <div class="res-bar"><div class="res-bar-fill" id="resGpuBar" style="width:0"></div><div class="res-bar-min" id="resGpuMin" style="left:0"></div></div>
         </div>
         <div style="margin-top:8px" id="resStatusArea">
-          <div style="font-size:10px;color:#6e7681;margin-bottom:4px;">상태</div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px;" data-i18n="rp_status_label">상태</div>
           <div id="resStatusBadges" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
         </div>
         <div style="margin-top:8px" id="resDetailArea">
-          <div style="font-size:10px;color:#6e7681;margin-bottom:4px;">상세 (Max 기준)</div>
-          <div id="resDetailList" style="font-size:10px;color:#8b949e;line-height:1.8;font-family:JetBrains Mono,monospace;"></div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px;" data-i18n="rp_detail_label">상세 (Max 기준)</div>
+          <div id="resDetailList" style="font-size:10px;color:var(--text2);line-height:1.8;font-family:JetBrains Mono,monospace;"></div>
         </div>
       </div>
     </div>
@@ -937,11 +1001,12 @@
 
 <!-- STATUS BAR -->
 <div id="statusbar">
-  <span id="statusTool">도구: 선택</span>
-  <span id="statusZoom">확대: 100%</span>
+  <span id="statusTool" data-i18n="sb_tool">도구: 선택</span>
+  <span id="statusZoom" data-i18n="sb_zoom">확대: 100%</span>
   <span id="statusPos">x:0 y:0</span>
-  <span id="statusSel">선택: 없음</span>
-  <span style="opacity:0.45;font-size:11px">클릭: 작은→큰 순환선택 · 드래그: 범위선택 · Shift+클릭: 추가 · Ctrl+A: 전체 · Ctrl+드래그: 임시이동 | 화살표 선택 후: 핸들드래그=연결변경, Alt+핸들드래그=끝점위치조정</span>
+  <span id="statusSel" data-i18n="sb_sel">선택: 없음</span>
+  <span class="spacer"></span>
+  <span style="opacity:0.35" data-i18n="sb_help">Space+드래그: 이동 · Shift+클릭: 다중선택 · Ctrl+A: 전체</span>
 </div>
 
 
@@ -949,31 +1014,31 @@
      ICON PICKER MODAL
 ══════════════════════════════════════════════════════ -->
 <div id="iconPickerOverlay" onclick="closeIconPicker()" style="display:none;position:fixed;inset:0;
-  background:rgba(0,0,0,0.6);z-index:1100;"></div>
+  background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:1100;"></div>
 
 <div id="iconPickerModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:740px;max-width:97vw;height:600px;max-height:92vh;background:#161b22;border:1px solid #30363d;
-  border-radius:14px;z-index:1101;box-shadow:0 28px 90px rgba(0,0,0,0.8);
+  width:740px;max-width:97vw;height:600px;max-height:92vh;background:var(--surface);border:1px solid var(--border2);
+  border-radius:14px;z-index:1101;box-shadow:0 28px 90px rgba(0,0,0,0.5);
   font-family:Pretendard,sans-serif;display:none;flex-direction:column;overflow:hidden;">
 
   <!-- Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;
-    border-bottom:1px solid #21262d;flex-shrink:0;">
+    border-bottom:1px solid var(--surface2);flex-shrink:0;">
     <div style="display:flex;align-items:center;gap:10px;">
       <span style="font-size:18px;">🏗</span>
-      <span style="font-size:14px;font-weight:700;color:#e6edf3;">아이콘 선택</span>
+      <span style="font-size:14px;font-weight:700;color:var(--text);" data-i18n="ip_title">아이콘 선택</span>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
-      <input id="iconSearch" placeholder="검색..." oninput="filterIcons(this.value)"
-        style="background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;
+      <input id="iconSearch" placeholder="검색..." data-i18n-ph="ip_search" oninput="filterIcons(this.value)"
+        style="background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);
         padding:5px 10px;font-size:12px;outline:none;width:160px;">
-      <button onclick="closeIconPicker()" style="background:none;border:none;color:#8b949e;
+      <button onclick="closeIconPicker()" style="background:none;border:none;color:var(--text2);
         font-size:18px;cursor:pointer;">✕</button>
     </div>
   </div>
 
   <!-- Tabs -->
-  <div id="iconTabs" style="display:flex;gap:0;border-bottom:1px solid #21262d;flex-shrink:0;
+  <div id="iconTabs" style="display:flex;gap:0;border-bottom:1px solid var(--surface2);flex-shrink:0;
     overflow-x:auto;scrollbar-width:none;">
   </div>
 
@@ -987,42 +1052,42 @@
 <style>
 .icon-card {
   display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px;
-  background:#0d1117;border:1px solid #21262d;border-radius:8px;cursor:pointer;
+  background:var(--bg);border:1px solid var(--surface2);border-radius:8px;cursor:pointer;
   transition:all .15s;user-select:none;
 }
-.icon-card:hover { border-color:#58a6ff;background:#1f3a5f22; transform:translateY(-1px); }
+.icon-card:hover { border-color:var(--accent);background:#1f3a5f22; transform:translateY(-1px); }
 .icon-card .ic-img { width:32px;height:32px;object-fit:contain; }
-.icon-card .ic-lbl { font-size:9px;color:#8b949e;text-align:center;line-height:1.3;word-break:break-word; }
+.icon-card .ic-lbl { font-size:9px;color:var(--text2);text-align:center;line-height:1.3;word-break:break-word; }
 .icon-tab-btn {
   padding:8px 14px;background:none;border:none;border-bottom:2px solid transparent;
-  color:#8b949e;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;
+  color:var(--text2);cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;
   flex-shrink:0;
 }
-.icon-tab-btn.active { border-bottom-color:#58a6ff;color:#e6edf3; }
+.icon-tab-btn.active { border-bottom-color:var(--accent);color:var(--text); }
 </style>
 
 <!-- CONTEXT MENU -->
 <div id="ctxmenu">
-  <div class="ctx-item" onclick="ctxRename()">✏ 이름 변경</div>
-  <div class="ctx-item" onclick="ctxDuplicate()">⧉ 복제</div>
-  <div class="ctx-item" onclick="clipboardCopy(true)">✂ 잘라내기</div>
-  <div class="ctx-item" onclick="clipboardCopy(false)">📋 복사</div>
-  <div class="ctx-item" id="ctxPasteItem" onclick="clipboardPaste()">📎 붙여넣기</div>
-  <div class="ctx-item" id="ctxCollapseItem" onclick="ctxToggleCollapse()" style="display:none">▶ 그룹 접기</div>
-  <div class="ctx-item" onclick="ctxBringFront()">⬆ 앞으로</div>
-  <div class="ctx-item" onclick="ctxSendBack()">⬇ 뒤로</div>
+  <div class="ctx-item" onclick="ctxRename()" data-i18n="ctx_rename">✏ 이름 변경</div>
+  <div class="ctx-item" onclick="ctxDuplicate()" data-i18n="ctx_dup">⧉ 복제</div>
+  <div class="ctx-item" onclick="clipboardCopy(true)" data-i18n="ctx_cut">✂ 잘라내기</div>
+  <div class="ctx-item" onclick="clipboardCopy(false)" data-i18n="ctx_copy">📋 복사</div>
+  <div class="ctx-item" id="ctxPasteItem" onclick="clipboardPaste()" data-i18n="ctx_paste">📎 붙여넣기</div>
+  <div class="ctx-item" id="ctxCollapseItem" onclick="ctxToggleCollapse()" style="display:none" data-i18n="ctx_collapse">▶ 그룹 접기</div>
+  <div class="ctx-item" onclick="ctxBringFront()" data-i18n="ctx_front">⬆ 앞으로</div>
+  <div class="ctx-item" onclick="ctxSendBack()" data-i18n="ctx_back">⬇ 뒤로</div>
   <div class="ctx-sep"></div>
-  <div class="ctx-item" onclick="ctxConnect()">↗ 연결 시작</div>
+  <div class="ctx-item" onclick="ctxConnect()" data-i18n="ctx_connect">↗ 연결 시작</div>
   <div class="ctx-sep"></div>
-  <div class="ctx-item danger" onclick="deleteSelected()">🗑 삭제</div>
+  <div class="ctx-item danger" onclick="deleteSelected()" data-i18n="ctx_delete">🗑 삭제</div>
 </div>
 
 <!-- INFRA CHECK MODAL -->
-<div id="infraCheckOverlay" onclick="closeInfraCheck()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1200;"></div>
-<div id="infraCheckPanel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:640px;max-width:95vw;max-height:85vh;background:#161b22;border:1px solid #30363d;border-radius:14px;z-index:1201;box-shadow:0 24px 80px rgba(0,0,0,0.7);font-family:Pretendard,sans-serif;overflow:hidden;flex-direction:column;">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid #21262d;">
-    <h2 style="font-size:15px;font-weight:700;color:#e6edf3;display:flex;align-items:center;gap:8px;margin:0;">✅ K8s 인프라 완성도 체크</h2>
-    <button onclick="closeInfraCheck()" style="background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;">✕</button>
+<div id="infraCheckOverlay" onclick="closeInfraCheck()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:1200;"></div>
+<div id="infraCheckPanel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:640px;max-width:95vw;max-height:85vh;background:var(--surface);border:1px solid var(--border2);border-radius:14px;z-index:1201;box-shadow:0 24px 80px rgba(0,0,0,0.5);font-family:Pretendard,sans-serif;overflow:hidden;flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--surface2);">
+    <h2 style="font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;margin:0;" data-i18n="ic_title">✅ K8s 인프라 완성도 체크</h2>
+    <button onclick="closeInfraCheck()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;">✕</button>
   </div>
   <div id="infraCheckBody" style="padding:20px;overflow-y:auto;flex:1;"></div>
 </div>
@@ -1031,90 +1096,90 @@
 <div id="k8sConfigOverlay" onclick="closeK8sConfig()"></div>
 <div id="k8sConfigPanel">
   <div class="k8s-header">
-    <h2>☸ K8s 클러스터 설정</h2>
-    <button onclick="closeK8sConfig()" style="background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;">✕</button>
+    <h2 data-i18n="k8s_title">☸ K8s 클러스터 설정</h2>
+    <button onclick="closeK8sConfig()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;">✕</button>
   </div>
   <div class="k8s-body">
     <div class="k8s-tabs">
-      <button class="k8s-tab active" onclick="switchK8sTab('hw')">하드웨어</button>
-      <button class="k8s-tab" onclick="switchK8sTab('sched')">스케줄링</button>
+      <button class="k8s-tab active" onclick="switchK8sTab('hw')" data-i18n="k8s_hw">하드웨어</button>
+      <button class="k8s-tab" onclick="switchK8sTab('sched')" data-i18n="k8s_sched">스케줄링</button>
     </div>
     <div class="k8s-tab-content active" id="k8sTabHw">
-    <div style="font-size:11px;color:#6e7681;margin-bottom:14px;">클러스터의 총 가용 리소스를 설정하면, 다이어그램 내 인프라 노드들의 리소스 합계와 비교하여 여유/부족을 표시합니다.</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:14px;" data-i18n="k8s_hw_desc">클러스터의 총 가용 리소스를 설정하면, 다이어그램 내 인프라 노드들의 리소스 합계와 비교하여 여유/부족을 표시합니다.</div>
 
-    <div style="font-size:11px;color:#58a6ff;font-weight:600;margin-bottom:10px;">워커 노드 구성</div>
+    <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:10px;" data-i18n="k8s_worker">워커 노드 구성</div>
     <div class="k8s-row">
-      <label>노드 수</label>
+      <label data-i18n="k8s_node_count">노드 수</label>
       <input id="k8sNodeCount" type="number" min="1" value="3" placeholder="3">
-      <span class="unit">대</span>
+      <span class="unit" data-i18n="k8s_unit_node">대</span>
     </div>
     <div class="k8s-row">
-      <label>노드당 CPU</label>
+      <label data-i18n="k8s_cpu">노드당 CPU</label>
       <input id="k8sNodeCpu" type="number" min="100" value="4000" placeholder="4000">
-      <span class="unit">m (밀리코어)</span>
+      <span class="unit" data-i18n="k8s_cpu_unit">m (밀리코어)</span>
     </div>
     <div class="k8s-row">
-      <label>노드당 Memory</label>
+      <label data-i18n="k8s_mem">노드당 Memory</label>
       <input id="k8sNodeMem" type="number" min="128" value="8192" placeholder="8192">
       <span class="unit">Mi</span>
     </div>
     <div class="k8s-row">
-      <label>노드당 Disk</label>
+      <label data-i18n="k8s_disk">노드당 Disk</label>
       <input id="k8sNodeDisk" type="number" min="1" value="100" placeholder="100">
       <span class="unit">Gi</span>
     </div>
 
-    <div style="font-size:11px;color:#58a6ff;font-weight:600;margin:16px 0 10px;">GPU 노드 구성</div>
-    <div style="font-size:10px;color:#6e7681;margin-bottom:8px;">GPU가 장착된 노드가 있으면 설정하세요 (없으면 0)</div>
+    <div style="font-size:11px;color:var(--accent);font-weight:600;margin:16px 0 10px;" data-i18n="k8s_gpu_section">GPU 노드 구성</div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:8px;" data-i18n="k8s_gpu_desc">GPU가 장착된 노드가 있으면 설정하세요 (없으면 0)</div>
     <div class="k8s-row">
-      <label>GPU 노드 수</label>
+      <label data-i18n="k8s_gpu_nodes">GPU 노드 수</label>
       <input id="k8sGpuNodes" type="number" min="0" value="0" placeholder="0">
-      <span class="unit">대</span>
+      <span class="unit" data-i18n="k8s_unit_node">대</span>
     </div>
     <div class="k8s-row">
-      <label>노드당 GPU</label>
+      <label data-i18n="k8s_gpu_per">노드당 GPU</label>
       <input id="k8sGpuPerNode" type="number" min="0" value="0" placeholder="0">
-      <span class="unit">장</span>
+      <span class="unit" data-i18n="k8s_gpu_unit">장</span>
     </div>
     <div class="k8s-row">
-      <label>GPU 모델</label>
+      <label data-i18n="k8s_gpu_model">GPU 모델</label>
       <input id="k8sGpuModel" type="text" value="" placeholder="예: NVIDIA A100" style="grid-column:span 1;">
       <span class="unit"></span>
     </div>
 
-    <div style="font-size:11px;color:#58a6ff;font-weight:600;margin:16px 0 10px;">시스템 예약 (노드당)</div>
+    <div style="font-size:11px;color:var(--accent);font-weight:600;margin:16px 0 10px;" data-i18n="k8s_reserve">시스템 예약 (노드당)</div>
     <div class="k8s-row">
-      <label>예약 CPU</label>
+      <label data-i18n="k8s_reserve_cpu">예약 CPU</label>
       <input id="k8sReservedCpu" type="number" min="0" value="500" placeholder="500">
       <span class="unit">m</span>
     </div>
     <div class="k8s-row">
-      <label>예약 Memory</label>
+      <label data-i18n="k8s_reserve_mem">예약 Memory</label>
       <input id="k8sReservedMem" type="number" min="0" value="512" placeholder="512">
       <span class="unit">Mi</span>
     </div>
 
-    <div style="background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:12px;margin-top:14px;">
-      <div style="font-size:10px;color:#6e7681;margin-bottom:6px;">총 할당 가능 리소스 (예약 제외)</div>
-      <div style="font-size:13px;color:#e6edf3;font-family:JetBrains Mono,monospace;line-height:1.8;" id="k8sSummary">
+    <div style="background:var(--bg);border:1px solid var(--surface2);border-radius:8px;padding:12px;margin-top:14px;">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px;" data-i18n="k8s_avail">총 할당 가능 리소스 (예약 제외)</div>
+      <div style="font-size:13px;color:var(--text);font-family:JetBrains Mono,monospace;line-height:1.8;" id="k8sSummary">
         CPU: – &nbsp; MEM: – &nbsp; DISK: –
       </div>
     </div>
     </div><!-- /k8sTabHw -->
 
     <div class="k8s-tab-content" id="k8sTabSched">
-      <div style="font-size:11px;color:#6e7681;margin-bottom:14px;">네임스페이스, 테인트/톨러레이션, 노드 셀렉터를 설정하여 워크로드의 스케줄링 전략을 관리합니다.</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;" data-i18n="k8s_sched_desc">네임스페이스, 테인트/톨러레이션, 노드 셀렉터를 설정하여 워크로드의 스케줄링 전략을 관리합니다.</div>
 
-      <div style="font-size:11px;color:#58a6ff;font-weight:600;margin-bottom:8px;">네임스페이스</div>
-      <div style="font-size:10px;color:#6e7681;margin-bottom:6px;">클러스터 내 논리적 격리 단위입니다. 워크로드를 그룹별로 분리합니다.</div>
+      <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:8px;" data-i18n="k8s_ns">네임스페이스</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px;" data-i18n="k8s_ns_desc">클러스터 내 논리적 격리 단위입니다. 워크로드를 그룹별로 분리합니다.</div>
       <div class="k8s-tag-list" id="k8sNsList"></div>
       <div class="k8s-add-row">
-        <input id="k8sNsInput" type="text" placeholder="네임스페이스 이름" style="flex:1">
-        <button class="k8s-add-btn" onclick="addK8sNamespace()">+ 추가</button>
+        <input id="k8sNsInput" type="text" placeholder="네임스페이스 이름" data-i18n-ph="k8s_ns_ph" style="flex:1">
+        <button class="k8s-add-btn" onclick="addK8sNamespace()" data-i18n="k8s_add">+ 추가</button>
       </div>
 
-      <div style="font-size:11px;color:#58a6ff;font-weight:600;margin:16px 0 8px;">테인트 (Taints)</div>
-      <div style="font-size:10px;color:#6e7681;margin-bottom:6px;">클러스터 노드에 적용되는 제한입니다. 매칭되는 Toleration이 없는 Pod는 스케줄링되지 않습니다.</div>
+      <div style="font-size:11px;color:var(--accent);font-weight:600;margin:16px 0 8px;" data-i18n="k8s_taints">테인트 (Taints)</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px;" data-i18n="k8s_taints_desc">클러스터 노드에 적용되는 제한입니다. 매칭되는 Toleration이 없는 Pod는 스케줄링되지 않습니다.</div>
       <div class="k8s-tag-list" id="k8sTaintList"></div>
       <div class="k8s-add-row">
         <input id="k8sTaintKey" type="text" placeholder="key" style="flex:1">
@@ -1124,22 +1189,22 @@
           <option value="PreferNoSchedule">PreferNoSchedule</option>
           <option value="NoExecute">NoExecute</option>
         </select>
-        <button class="k8s-add-btn" onclick="addK8sTaint()">+ 추가</button>
+        <button class="k8s-add-btn" onclick="addK8sTaint()" data-i18n="k8s_add">+ 추가</button>
       </div>
 
-      <div style="font-size:11px;color:#58a6ff;font-weight:600;margin:16px 0 8px;">노드 라벨 (Node Labels)</div>
-      <div style="font-size:10px;color:#6e7681;margin-bottom:6px;">클러스터 노드에 붙는 라벨입니다. nodeSelector로 특정 라벨의 노드에만 워크로드를 배치합니다.</div>
+      <div style="font-size:11px;color:var(--accent);font-weight:600;margin:16px 0 8px;" data-i18n="k8s_labels">노드 라벨 (Node Labels)</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px;" data-i18n="k8s_labels_desc">클러스터 노드에 붙는 라벨입니다. nodeSelector로 특정 라벨의 노드에만 워크로드를 배치합니다.</div>
       <div class="k8s-tag-list" id="k8sLabelList"></div>
       <div class="k8s-add-row">
         <input id="k8sLabelKey" type="text" placeholder="key" style="flex:1">
         <input id="k8sLabelVal" type="text" placeholder="value" style="flex:1">
-        <button class="k8s-add-btn" onclick="addK8sLabel()">+ 추가</button>
+        <button class="k8s-add-btn" onclick="addK8sLabel()" data-i18n="k8s_add">+ 추가</button>
       </div>
     </div><!-- /k8sTabSched -->
 
     <div class="k8s-btn-row">
-      <button class="k8s-btn cancel" onclick="closeK8sConfig()">취소</button>
-      <button class="k8s-btn primary" onclick="applyK8sConfig()">적용</button>
+      <button class="k8s-btn cancel" onclick="closeK8sConfig()" data-i18n="k8s_cancel">취소</button>
+      <button class="k8s-btn primary" onclick="applyK8sConfig()" data-i18n="k8s_apply">적용</button>
     </div>
   </div>
 </div>
@@ -1147,11 +1212,11 @@
 <!-- RENAME MODAL -->
 <div id="modal-overlay">
   <div id="modal">
-    <h2>✏ 이름 변경</h2>
-    <input id="modalInput" type="text" placeholder="새 이름 입력...">
+    <h2 data-i18n="md_rename">✏ 이름 변경</h2>
+    <input id="modalInput" type="text" placeholder="새 이름 입력..." data-i18n-ph="md_ph">
     <div class="modal-btns">
-      <button class="mbtn" onclick="closeModal()">취소</button>
-      <button class="mbtn primary" onclick="confirmModal()">확인</button>
+      <button class="mbtn" onclick="closeModal()" data-i18n="md_cancel">취소</button>
+      <button class="mbtn primary" onclick="confirmModal()" data-i18n="md_ok">확인</button>
     </div>
   </div>
 </div>
@@ -1160,60 +1225,60 @@
 <!-- ══════════════════════════════════════════════════════
      AI DIAGRAM GENERATOR PANEL — Multi-service + Chat
 ══════════════════════════════════════════════════════ -->
-<div id="aiOverlay" onclick="closeAIPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:900;"></div>
+<div id="aiOverlay" onclick="closeAIPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:900;"></div>
 <div id="aiPanel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:660px;max-width:95vw;max-height:90vh;background:#161b22;border:1px solid #30363d;border-radius:14px;
-  z-index:901;box-shadow:0 24px 80px rgba(0,0,0,0.7);font-family:Pretendard,sans-serif;overflow:hidden;
+  width:660px;max-width:95vw;max-height:90vh;background:var(--surface);border:1px solid var(--border2);border-radius:14px;
+  z-index:901;box-shadow:0 24px 80px rgba(0,0,0,0.5);font-family:Pretendard,sans-serif;overflow:hidden;
   flex-direction:column;">
 
   <!-- Header: service + model + settings toggle + close -->
   <div style="display:flex;align-items:center;gap:8px;padding:14px 18px 12px;
-    border-bottom:1px solid #21262d;background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);flex-shrink:0;">
+    border-bottom:1px solid var(--surface2);background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);flex-shrink:0;">
     <span style="font-size:18px;">✦</span>
     <select id="aiServiceSelect" onchange="switchAIService(this.value);saveAIConfig();"
-      style="background:#21262d;border:1px solid #30363d;color:#e6edf3;padding:4px 8px;border-radius:6px;font-size:12px;cursor:pointer;">
+      style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:12px;cursor:pointer;">
       <option value="claude">Claude</option>
       <option value="openai">OpenAI</option>
       <option value="gemini">Gemini</option>
       <option value="ollama">Ollama</option>
     </select>
     <select id="aiModelSelect" onchange="aiConfig.models[aiConfig.service]=this.value;saveAIConfig();"
-      style="background:#21262d;border:1px solid #30363d;color:#e6edf3;padding:4px 8px;border-radius:6px;font-size:12px;cursor:pointer;max-width:200px;">
+      style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:12px;cursor:pointer;max-width:200px;">
     </select>
     <button id="aiSettingsToggle" onclick="var s=document.getElementById('aiSettingsArea');s.style.display=s.style.display==='none'?'':'none';"
-      style="background:none;border:1px solid #30363d;color:#8b949e;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;margin-left:auto;">
-      설정
+      style="background:none;border:1px solid var(--border);color:var(--text2);padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;margin-left:auto;">
+      <span data-i18n="ai_settings">설정</span>
     </button>
-    <button onclick="closeAIPanel()" style="background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer;line-height:1;">✕</button>
+    <button onclick="closeAIPanel()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;line-height:1;">✕</button>
   </div>
 
   <!-- Settings area (toggled) -->
   <div id="aiSettingsArea" class="ai-settings-area" style="display:none;flex-shrink:0;">
     <div id="aiKeyArea" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-      <label style="font-size:12px;color:#8b949e;white-space:nowrap;min-width:52px;">API Key</label>
+      <label style="font-size:12px;color:var(--text2);white-space:nowrap;min-width:52px;">API Key</label>
       <input id="aiApiKey" type="password" placeholder="sk-ant-..."
-        style="flex:1;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;padding:6px 10px;font-size:12px;outline:none;"
+        style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:12px;outline:none;"
         oninput="aiConfig.keys[aiConfig.service]=this.value;saveAIConfig();">
     </div>
     <div id="aiEndpointArea" style="display:none;align-items:center;gap:8px;margin-bottom:8px;">
-      <label style="font-size:12px;color:#8b949e;white-space:nowrap;min-width:52px;">Endpoint</label>
+      <label style="font-size:12px;color:var(--text2);white-space:nowrap;min-width:52px;">Endpoint</label>
       <input id="aiEndpoint" type="text" placeholder="http://localhost:11434/api/chat"
-        style="flex:1;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;padding:6px 10px;font-size:12px;outline:none;"
+        style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:12px;outline:none;"
         oninput="aiConfig.endpoints.ollama=this.value;saveAIConfig();">
     </div>
     <div id="aiOllamaModelArea" style="display:none;align-items:center;gap:8px;">
-      <label style="font-size:12px;color:#8b949e;white-space:nowrap;min-width:52px;">모델 추가</label>
+      <label style="font-size:12px;color:var(--text2);white-space:nowrap;min-width:52px;" data-i18n="ai_model_add">모델 추가</label>
       <input id="aiOllamaModelInput" type="text" placeholder="모델명 입력 후 Enter"
-        style="flex:1;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;padding:6px 10px;font-size:12px;outline:none;"
+        style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;font-size:12px;outline:none;"
         onkeydown="if(event.key==='Enter'){event.preventDefault();var v=this.value.trim();if(v&&aiConfig.ollamaModels.indexOf(v)===-1){aiConfig.ollamaModels.push(v);saveAIConfig();switchAIService('ollama');this.value='';}}">
     </div>
   </div>
 
   <!-- Mode tabs -->
   <div style="padding:8px 18px 0;display:flex;gap:6px;flex-shrink:0;">
-    <button id="aiTabNew" class="ai-tab active" onclick="setAIMode('new')">새로 생성</button>
-    <button id="aiTabAppend" class="ai-tab" onclick="setAIMode('append')">기존에 추가</button>
-    <button id="aiTabModify" class="ai-tab" onclick="setAIMode('modify')">현재 수정</button>
+    <button id="aiTabNew" class="ai-tab active" onclick="setAIMode('new')" data-i18n="ai_new">새로 생성</button>
+    <button id="aiTabAppend" class="ai-tab" onclick="setAIMode('append')" data-i18n="ai_append">기존에 추가</button>
+    <button id="aiTabModify" class="ai-tab" onclick="setAIMode('modify')" data-i18n="ai_modify">현재 수정</button>
   </div>
 
   <!-- Chat area -->
@@ -1221,7 +1286,7 @@
 
   <!-- Quick prompts -->
   <div style="padding:4px 18px;display:flex;flex-wrap:wrap;gap:5px;flex-shrink:0;">
-    <span style="font-size:11px;color:#8b949e;align-self:center;">예시:</span>
+    <span style="font-size:11px;color:var(--text2);align-self:center;" data-i18n="ai_example">예시:</span>
     <button class="ai-quick" onclick="setQuick('K8s 마이크로서비스: API Gateway, 서비스 3개, PostgreSQL, Redis, Kafka')">K8s 마이크로서비스</button>
     <button class="ai-quick" onclick="setQuick('CI/CD 파이프라인: GitHub → Build → Test → Deploy → Production')">CI/CD 파이프라인</button>
     <button class="ai-quick" onclick="setQuick('데이터 처리 파이프라인: S3 → Kafka → Spark → Elasticsearch → Grafana')">데이터 파이프라인</button>
@@ -1230,58 +1295,58 @@
 
   <!-- Options -->
   <div style="padding:4px 18px 6px;flex-shrink:0;">
-    <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#8b949e;cursor:pointer;">
-      <input type="checkbox" id="aiUseGroups" checked style="accent-color:#58a6ff;"> 그룹 사용
+    <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;">
+      <input type="checkbox" id="aiUseGroups" checked style="accent-color:var(--accent);"> <span data-i18n="ai_use_groups">그룹 사용</span>
     </label>
   </div>
 
   <!-- Input area -->
-  <div style="padding:8px 18px 14px;border-top:1px solid #21262d;display:flex;gap:8px;align-items:flex-end;flex-shrink:0;">
-    <textarea id="aiPrompt" rows="2" placeholder="다이어그램을 설명하세요... (Ctrl+Enter로 전송)"
-      style="flex:1;background:#0d1117;border:1px solid #30363d;border-radius:8px;
-      color:#e6edf3;padding:8px 10px;font-size:13px;font-family:inherit;resize:none;
+  <div style="padding:8px 18px 14px;border-top:1px solid var(--surface2);display:flex;gap:8px;align-items:flex-end;flex-shrink:0;">
+    <textarea id="aiPrompt" rows="2" placeholder="다이어그램을 설명하세요... (Ctrl+Enter로 전송)" data-i18n-ph="ai_prompt_ph"
+      style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+      color:var(--text);padding:8px 10px;font-size:13px;font-family:inherit;resize:none;
       outline:none;box-sizing:border-box;line-height:1.5;"
       onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();sendAIMessage();}"></textarea>
     <div style="display:flex;flex-direction:column;gap:4px;">
       <button id="aiSendBtn" onclick="sendAIMessage()"
         style="background:linear-gradient(135deg,#1f6feb,#388bfd);border:none;color:#fff;padding:8px 16px;
-        border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;">전송</button>
+        border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;" data-i18n="ai_send">전송</button>
       <button onclick="clearAIChat()"
-        style="background:#21262d;border:1px solid #30363d;color:#8b949e;padding:4px 10px;
-        border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;">초기화</button>
+        style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:4px 10px;
+        border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;" data-i18n="ai_reset">초기화</button>
     </div>
   </div>
 </div>
 
 <style>
 .ai-tab {
-  background:#21262d; border:1px solid #30363d; color:#8b949e;
+  background:var(--surface2); border:1px solid var(--border); color:var(--text2);
   padding:5px 14px; border-radius:6px 6px 0 0; cursor:pointer; font-size:12px;
   margin-bottom:-1px; position:relative;
 }
-.ai-tab.active { background:#0d1117; border-bottom-color:#0d1117; color:#e6edf3; }
+.ai-tab.active { background:var(--bg); border-bottom-color:#0d1117; color:var(--text); }
 .ai-quick {
-  background:#21262d; border:1px solid #30363d; color:#8b949e;
+  background:var(--surface2); border:1px solid var(--border); color:var(--text2);
   padding:3px 9px; border-radius:12px; cursor:pointer; font-size:11px;
   transition: all .15s;
 }
-.ai-quick:hover { border-color:#58a6ff; color:#58a6ff; }
+.ai-quick:hover { border-color:var(--accent); color:var(--accent); }
 .ai-settings-area {
-  padding:12px 18px;border-bottom:1px solid #21262d;background:#0d1117;
+  padding:12px 18px;border-bottom:1px solid var(--surface2);background:var(--bg);
 }
 .ai-chat-area {
   flex:1;min-height:180px;max-height:400px;overflow-y:auto;padding:12px 18px;
-  background:#0d1117;border-top:1px solid #21262d;border-bottom:1px solid #21262d;
+  background:var(--bg);border-top:1px solid var(--surface2);border-bottom:1px solid var(--surface2);
 }
 .ai-msg { margin-bottom:10px; display:flex; }
 .ai-msg-user { justify-content:flex-end; }
 .ai-msg-ai { justify-content:flex-start; }
 .ai-bubble-user {
-  background:#1f3a5f;color:#e6edf3;padding:8px 12px;border-radius:12px 12px 4px 12px;
+  background:#1f3a5f;color:var(--text);padding:8px 12px;border-radius:12px 12px 4px 12px;
   max-width:85%;font-size:13px;line-height:1.5;
 }
 .ai-bubble-ai {
-  background:#21262d;color:#e6edf3;padding:8px 12px;border-radius:12px 12px 12px 4px;
+  background:var(--surface2);color:var(--text);padding:8px 12px;border-radius:12px 12px 12px 4px;
   max-width:85%;font-size:13px;line-height:1.5;
 }
 .ai-apply-btn {
@@ -1292,11 +1357,400 @@
 .ai-applied {
   display:inline-block;margin-top:8px;color:#3fb950;font-size:12px;font-weight:600;
 }
+
+/* ── IaC Export Modal ── */
+.iac-modal {
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;
+}
+.iac-modal.active { display:flex; }
+.iac-modal-content {
+  width:85%; max-width:900px; max-height:85vh; background:var(--surface);
+  border:1px solid var(--border); border-radius:12px; display:flex; flex-direction:column;
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+}
+.iac-modal-header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 18px; border-bottom:1px solid var(--border); flex-shrink:0;
+}
+.iac-modal-header span { font-weight:700; font-size:14px; color:var(--text); }
+.iac-modal-header .iac-btns { display:flex; gap:6px; }
+.iac-modal-header .iac-btns button {
+  height:28px; padding:0 10px; background:var(--surface2); border:1px solid var(--border);
+  border-radius:6px; color:var(--text2); font-size:11.5px; cursor:pointer;
+  display:flex; align-items:center; gap:4px;
+}
+.iac-modal-header .iac-btns button:hover { background:var(--surface3); color:var(--text); }
+#iacModalCode {
+  flex:1; overflow:auto; margin:0; padding:18px;
+  font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.6;
+  color:var(--text); background:var(--bg); white-space:pre; tab-size:2;
+}
+.iac-mini-btn {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:18px; height:18px; border-radius:3px; border:1px solid var(--border);
+  background:var(--surface2); color:var(--text2); font-size:9px; font-weight:700;
+  cursor:pointer; margin-left:2px; flex-shrink:0;
+}
+.iac-mini-btn:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+.iac-toast {
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  background:var(--green); color:#fff; padding:8px 18px; border-radius:8px;
+  font-size:12px; font-weight:600; z-index:10000; opacity:0; transition:opacity 0.3s;
+}
+.iac-toast.show { opacity:1; }
 </style>
 
 <div class="tooltip" id="tooltip"></div>
 
 <script>
+// ════════════════════════════════════════════════════════
+// THEME & LANG
+// ════════════════════════════════════════════════════════
+let loomTheme = localStorage.getItem('loom_theme') || 'dark';
+let loomLang = localStorage.getItem('loom_lang') || 'ko';
+
+function themeColor(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue('--' + name).trim();
+}
+
+function applyTheme() {
+  document.documentElement.dataset.theme = loomTheme;
+  const btn = document.getElementById('btnTheme');
+  if (btn) btn.textContent = loomTheme === 'dark' ? '☀' : '☾';
+  if (typeof drawGrid === 'function') { drawGrid(); draw(); }
+}
+
+function toggleTheme() {
+  loomTheme = loomTheme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('loom_theme', loomTheme);
+  applyTheme();
+}
+
+// ── i18n ──
+const T = {
+  ko: {
+    // Topbar
+    tb_new: '📄 새로 만들기', tb_select: '선택', tb_connect: '연결', tb_pan: '이동',
+    tb_k8s: '☸ K8s 리소스', tb_infra: '✅ 인프라 체크', tb_ai: '✦ AI 생성',
+    tb_png: 'PNG (이미지)',
+    // Left panel
+    lp_cloud: '☁ 클라우드 / 솔루션',
+    lp_icon_btn: '아이콘 선택 (AWS / GCP / Azure / OSS)',
+    lp_recent: '최근 사용',
+    lp_conn_guide: '연결 모드 선택 후',
+    lp_conn1: '• 시작 노드 클릭',
+    lp_conn2: '• 끝 노드 클릭',
+    lp_arrow_style: '화살표 스타일:',
+    lp_layers: '📋 레이어',
+    lp_all: '전체',
+    lp_add_layer: '+ 레이어 추가',
+    // Canvas hint
+    hint_1: '팔레트에서 노드를 드래그하거나',
+    hint_2: '더블클릭으로 노드 추가',
+    // Right panel
+    rp_panel_font: '패널 폰트',
+    rp_props: '⚙ 속성',
+    rp_select_node: '노드를 선택하세요',
+    rp_name: '이름', rp_desc: '설명', rp_type: '타입',
+    rp_bg: '배경색', rp_fg: '글자색', rp_width: '너비', rp_height: '높이',
+    rp_layer: '레이어', rp_alert: '경고 표시',
+    rp_alert_none: '없음', rp_alert_warn: '⚠ 경고', rp_alert_error: '!! 오류/병목', rp_alert_ok: '✓ 정상',
+    rp_sched: '📦 스케줄링', rp_res_req: '☸ 리소스 요구사항',
+    rp_delete: '🗑 삭제',
+    rp_edge_props: '↗ 연결선 속성',
+    rp_edge_label: '라벨', rp_edge_style: '스타일', rp_edge_color: '색상',
+    rp_solid: '실선', rp_dashed: '점선', rp_bidir: '양방향',
+    rp_stats: '📊 통계',
+    rp_nodes: '노드', rp_edges: '연결선', rp_groups: '그룹',
+    rp_filter: '🔍 필터',
+    rp_all_opt: '전체',
+    rp_clear_filter: '필터 초기화',
+    rp_k8s_status: '☸ K8s 리소스 현황',
+    rp_status_label: '상태', rp_detail_label: '상세 (Max 기준)',
+    // Statusbar
+    sb_tool: '도구: 선택', sb_zoom: (loomLang==='en'?'Zoom: 100%':'확대: 100%'), sb_sel: '선택: 없음',
+    sb_help: 'Space+드래그: 이동 · Shift+클릭: 다중선택 · Ctrl+A: 전체',
+    // Icon picker
+    ip_title: '아이콘 선택', ip_search: '검색...',
+    // Context menu
+    ctx_rename: '✏ 이름 변경', ctx_dup: '⧉ 복제',
+    ctx_cut: '✂ 잘라내기', ctx_copy: '📋 복사', ctx_paste: '📎 붙여넣기',
+    ctx_collapse: '▶ 그룹 접기', ctx_front: '⬆ 앞으로', ctx_back: '⬇ 뒤로',
+    ctx_connect: '↗ 연결 시작', ctx_delete: '🗑 삭제',
+    // Infra check panel
+    ic_title: '✅ K8s 인프라 완성도 체크',
+    // K8s config
+    k8s_title: '☸ K8s 클러스터 설정',
+    k8s_hw: '하드웨어', k8s_sched: '스케줄링',
+    k8s_hw_desc: '클러스터의 총 가용 리소스를 설정하면, 다이어그램 내 인프라 노드들의 리소스 합계와 비교하여 여유/부족을 표시합니다.',
+    k8s_worker: '워커 노드 구성',
+    k8s_node_count: '노드 수', k8s_unit_node: '대',
+    k8s_cpu: '노드당 CPU', k8s_cpu_unit: 'm (밀리코어)',
+    k8s_mem: '노드당 Memory', k8s_disk: '노드당 Disk',
+    k8s_gpu_section: 'GPU 노드 구성',
+    k8s_gpu_desc: 'GPU가 장착된 노드가 있으면 설정하세요 (없으면 0)',
+    k8s_gpu_nodes: 'GPU 노드 수', k8s_gpu_per: '노드당 GPU', k8s_gpu_unit: '장',
+    k8s_gpu_model: 'GPU 모델',
+    k8s_reserve: '시스템 예약 (노드당)',
+    k8s_reserve_cpu: '예약 CPU', k8s_reserve_mem: '예약 Memory',
+    k8s_avail: '총 할당 가능 리소스 (예약 제외)',
+    k8s_sched_desc: '네임스페이스, 테인트/톨러레이션, 노드 셀렉터를 설정하여 워크로드의 스케줄링 전략을 관리합니다.',
+    k8s_ns: '네임스페이스',
+    k8s_ns_desc: '클러스터 내 논리적 격리 단위입니다. 워크로드를 그룹별로 분리합니다.',
+    k8s_ns_ph: '네임스페이스 이름',
+    k8s_add: '+ 추가',
+    k8s_taints: '테인트 (Taints)',
+    k8s_taints_desc: '클러스터 노드에 적용되는 제한입니다. 매칭되는 Toleration이 없는 Pod는 스케줄링되지 않습니다.',
+    k8s_labels: '노드 라벨 (Node Labels)',
+    k8s_labels_desc: '클러스터 노드에 붙는 라벨입니다. nodeSelector로 특정 라벨의 노드에만 워크로드를 배치합니다.',
+    k8s_cancel: '취소', k8s_apply: '적용',
+    // Modal
+    md_rename: '✏ 이름 변경', md_ph: '새 이름 입력...', md_cancel: '취소', md_ok: '확인',
+    // AI panel
+    ai_settings: '설정', ai_model_add: '모델 추가',
+    ai_new: '새로 생성', ai_append: '기존에 추가', ai_modify: '현재 수정',
+    ai_example: '예시:', ai_use_groups: '그룹 사용',
+    ai_prompt_ph: '다이어그램을 설명하세요... (Ctrl+Enter로 전송)',
+    ai_send: '전송', ai_reset: '초기화',
+    // Placeholder/title
+    prop_name_ph: '노드 이름', prop_desc_ph: '설명...',
+    edge_label_ph: '연결선 이름',
+    ip_btn: '아이콘 선택',
+    transparent: '투명 (transparent)',
+    font_color_title: '직접 선택',
+    font_reset_title: '기본값 복원',
+    ip_no_result: '검색 결과 없음',
+    rd_no_infra: '인프라 노드 없음',
+    // Dynamic JS strings
+    ctx_expand: '▼ 그룹 펼치기',
+    confirm_new: '변경사항이 있습니다. 새로 시작할까요?',
+    copy_suffix: ' (복사)',
+    conn_pick_end: '연결: 끝점 선택...',
+    conn_isolated: '고립 — 엣지 연결 없음',
+    conn_no_input: '입력 없음 — 이 노드로 들어오는 연결이 없음',
+    conn_no_output: '출력 없음 — 이 노드에서 나가는 연결이 없음',
+    unused_no_cat: '카테고리 미매칭 — 인프라 체크 카테고리에 해당하지 않는 노드',
+    unused_no_cat_action: '라벨/설명을 구체화하거나, 불필요 시 삭제 검토',
+    unused_no_conn: '미연결 리소스 — 어떤 노드와도 연결되지 않음',
+    unused_no_conn_action: '다른 노드와 연결하거나 삭제 검토',
+    unused_dup_action: '역할 분담이 맞는지 확인, 불필요 노드 정리 검토',
+    dup_suffix: '개 중복',
+    res_gpu_no_node: 'GPU 노드 미설정: GPU를 사용하는 워크로드가 있지만 K8s에 GPU 노드가 설정되지 않았습니다',
+    res_ha_warn: '고가용성(HA) 위해 2+ 권장',
+    res_gpu_no_tol: 'GPU를 요청하지만 toleration이 없습니다. GPU 노드 테인트에 대한 toleration 설정을 확인하세요.',
+    res_no_selector: '에 매칭되는 클러스터 노드 라벨이 없습니다.',
+    k8s_cpu_over: '경고: 예약 CPU가 노드 CPU보다 크거나 같습니다.\n예약값은 노드당 시스템 예약량(예: 500m)입니다.',
+    k8s_mem_over: '경고: 예약 MEM이 노드 MEM보다 크거나 같습니다.',
+    k8s_ns_dup: '이미 존재하는 네임스페이스입니다.',
+    k8s_taint_dup: '동일한 테인트가 이미 존재합니다.',
+    k8s_label_dup: '동일한 라벨이 이미 존재합니다.',
+    k8s_taint_hint: 'K8s 설정에서 테인트를 먼저 추가하세요',
+    k8s_label_hint: 'K8s 설정에서 노드 라벨을 먼저 추가하세요',
+    filter_all: '전체',
+    filter_none_tol: '(toleration 없음)',
+    filter_none_sel: '(selector 없음)',
+    layer_delete_btn: '삭제',
+    layer_confirm_del: '이 레이어를 삭제하시겠습니까? 노드는 Layer 1로 이동됩니다.',
+    layer_rename_prompt: '레이어 이름:',
+    no_nodes: '노드가 없습니다',
+    xlsx_loading: 'SheetJS 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.',
+    pdf_loading: 'jsPDF 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.',
+    pdf_font_fail: '폰트 로딩 실패. 기본 폰트로 생성합니다.',
+    import_error: '파일 로딩 오류: ',
+    migrate_toast: '마이그레이션 완료 — K8s 리소스 기본값이 인프라 노드에 적용되었습니다. JSON을 다시 저장하면 새 형식으로 유지됩니다.',
+    ai_empty: 'AI에게 다이어그램 생성/수정을 요청하세요.',
+    ai_done: '다이어그램 생성 완료',
+    ai_apply: '적용하기',
+    ai_applied: '✓ 적용됨',
+    ai_error: '오류: ',
+    ai_key_required: 'API Key를 입력해주세요.',
+    ai_group_hint: '그룹 노드를 사용해 관련 컴포넌트를 묶어줘.',
+    ai_append_hint: '기존 다이어그램에 추가해줘. 기존 노드 ID와 겹치지 않게 새 ID를 부여하고, 기존 노드도 그대로 포함해서 전체 JSON을 반환해줘.',
+    ai_modify_hint: '아래 기존 다이어그램을 수정해줘. 전체 수정된 JSON을 반환해줘.',
+    k8s_cpu_reserve_warn: ' [CPU 예약 초과!]',
+    k8s_mem_reserve_warn: ' [MEM 예약 초과!]',
+    ip_key_ph: '(불필요)',
+    iac_yaml: 'K8s YAML', iac_terraform: 'Terraform', iac_helm: 'Helm Values',
+    iac_copy: '복사', iac_download: '다운로드',
+    iac_no_workload: '내보낼 워크로드 노드가 없습니다',
+    iac_copied: '클립보드에 복사됨', iac_export_all: '전체 인프라',
+  },
+  en: {
+    tb_new: '📄 New', tb_select: 'Select', tb_connect: 'Connect', tb_pan: 'Pan',
+    tb_k8s: '☸ K8s Resources', tb_infra: '✅ Infra Check', tb_ai: '✦ AI Generate',
+    tb_png: 'PNG (Image)',
+    lp_cloud: '☁ Cloud / Solutions',
+    lp_icon_btn: 'Icon Picker (AWS / GCP / Azure / OSS)',
+    lp_recent: 'Recent',
+    lp_conn_guide: 'In connect mode:',
+    lp_conn1: '• Click source node',
+    lp_conn2: '• Click target node',
+    lp_arrow_style: 'Arrow styles:',
+    lp_layers: '📋 Layers',
+    lp_all: 'All',
+    lp_add_layer: '+ Add Layer',
+    hint_1: 'Drag nodes from palette',
+    hint_2: 'or double-click to add',
+    rp_panel_font: 'Panel Font',
+    rp_props: '⚙ Properties',
+    rp_select_node: 'Select a node',
+    rp_name: 'Name', rp_desc: 'Description', rp_type: 'Type',
+    rp_bg: 'Background', rp_fg: 'Font Color', rp_width: 'Width', rp_height: 'Height',
+    rp_layer: 'Layer', rp_alert: 'Alert Badge',
+    rp_alert_none: 'None', rp_alert_warn: '⚠ Warning', rp_alert_error: '!! Error/Bottleneck', rp_alert_ok: '✓ OK',
+    rp_sched: '📦 Scheduling', rp_res_req: '☸ Resource Requests',
+    rp_delete: '🗑 Delete',
+    rp_edge_props: '↗ Edge Properties',
+    rp_edge_label: 'Label', rp_edge_style: 'Style', rp_edge_color: 'Color',
+    rp_solid: 'Solid', rp_dashed: 'Dashed', rp_bidir: 'Bidirectional',
+    rp_stats: '📊 Stats',
+    rp_nodes: 'Nodes', rp_edges: 'Edges', rp_groups: 'Groups',
+    rp_filter: '🔍 Filter',
+    rp_all_opt: 'All',
+    rp_clear_filter: 'Clear Filters',
+    rp_k8s_status: '☸ K8s Resources',
+    rp_status_label: 'Status', rp_detail_label: 'Detail (Max)',
+    sb_tool: 'Tool: Select', sb_zoom: 'Zoom: 100%', sb_sel: 'Selected: None',
+    sb_help: 'Space+Drag: Pan · Shift+Click: Multi-select · Ctrl+A: All',
+    ip_title: 'Icon Picker', ip_search: 'Search...',
+    ctx_rename: '✏ Rename', ctx_dup: '⧉ Duplicate',
+    ctx_cut: '✂ Cut', ctx_copy: '📋 Copy', ctx_paste: '📎 Paste',
+    ctx_collapse: '▶ Collapse Group', ctx_front: '⬆ Bring Front', ctx_back: '⬇ Send Back',
+    ctx_connect: '↗ Start Connect', ctx_delete: '🗑 Delete',
+    ic_title: '✅ K8s Infra Completeness Check',
+    k8s_title: '☸ K8s Cluster Settings',
+    k8s_hw: 'Hardware', k8s_sched: 'Scheduling',
+    k8s_hw_desc: 'Set total cluster resources. Compare against infra node totals to show surplus/deficit.',
+    k8s_worker: 'Worker Node Config',
+    k8s_node_count: 'Node Count', k8s_unit_node: 'nodes',
+    k8s_cpu: 'CPU per Node', k8s_cpu_unit: 'm (millicores)',
+    k8s_mem: 'Memory per Node', k8s_disk: 'Disk per Node',
+    k8s_gpu_section: 'GPU Node Config',
+    k8s_gpu_desc: 'Configure if you have GPU-equipped nodes (leave 0 if none)',
+    k8s_gpu_nodes: 'GPU Nodes', k8s_gpu_per: 'GPU per Node', k8s_gpu_unit: 'units',
+    k8s_gpu_model: 'GPU Model',
+    k8s_reserve: 'System Reserved (per node)',
+    k8s_reserve_cpu: 'Reserved CPU', k8s_reserve_mem: 'Reserved Memory',
+    k8s_avail: 'Total Allocatable (after reserved)',
+    k8s_sched_desc: 'Manage scheduling strategy with namespaces, taints/tolerations, and node selectors.',
+    k8s_ns: 'Namespaces',
+    k8s_ns_desc: 'Logical isolation units in the cluster. Separates workloads by group.',
+    k8s_ns_ph: 'Namespace name',
+    k8s_add: '+ Add',
+    k8s_taints: 'Taints',
+    k8s_taints_desc: 'Restrictions on cluster nodes. Pods without matching tolerations won\'t be scheduled.',
+    k8s_labels: 'Node Labels',
+    k8s_labels_desc: 'Labels on cluster nodes. Use nodeSelector to target specific labeled nodes.',
+    k8s_cancel: 'Cancel', k8s_apply: 'Apply',
+    md_rename: '✏ Rename', md_ph: 'Enter new name...', md_cancel: 'Cancel', md_ok: 'OK',
+    ai_settings: 'Settings', ai_model_add: 'Add Model',
+    ai_new: 'New Diagram', ai_append: 'Append', ai_modify: 'Modify Current',
+    ai_example: 'Examples:', ai_use_groups: 'Use Groups',
+    ai_prompt_ph: 'Describe a diagram... (Ctrl+Enter to send)',
+    ai_send: 'Send', ai_reset: 'Reset',
+    prop_name_ph: 'Node name', prop_desc_ph: 'Description...',
+    edge_label_ph: 'Edge label',
+    ip_btn: 'Pick Icon',
+    transparent: 'Transparent',
+    font_color_title: 'Pick color',
+    font_reset_title: 'Reset to default',
+    ip_no_result: 'No results found',
+    rd_no_infra: 'No infra nodes',
+    ctx_expand: '▼ Expand Group',
+    confirm_new: 'You have unsaved changes. Start new?',
+    copy_suffix: ' (copy)',
+    conn_pick_end: 'Connect: pick endpoint...',
+    conn_isolated: 'Isolated — no edge connections',
+    conn_no_input: 'No input — no incoming connections',
+    conn_no_output: 'No output — no outgoing connections',
+    unused_no_cat: 'No category match — node doesn\'t match any infra check category',
+    unused_no_cat_action: 'Refine label/description or consider removing',
+    unused_no_conn: 'Unconnected resource — not connected to any node',
+    unused_no_conn_action: 'Connect to other nodes or consider removing',
+    unused_dup_action: 'Verify role assignments, consider consolidating',
+    dup_suffix: ' duplicates',
+    res_gpu_no_node: 'GPU node not configured: workloads require GPU but no GPU nodes are set in K8s',
+    res_ha_warn: 'HA recommended: 2+ replicas',
+    res_gpu_no_tol: 'Requests GPU but has no toleration. Check toleration settings for GPU node taints.',
+    res_no_selector: ' has no matching cluster node label.',
+    k8s_cpu_over: 'Warning: Reserved CPU is >= node CPU.\nReserved is per-node system reservation (e.g. 500m).',
+    k8s_mem_over: 'Warning: Reserved MEM is >= node MEM.',
+    k8s_ns_dup: 'Namespace already exists.',
+    k8s_taint_dup: 'Taint already exists.',
+    k8s_label_dup: 'Label already exists.',
+    k8s_taint_hint: 'Add taints in K8s settings first',
+    k8s_label_hint: 'Add node labels in K8s settings first',
+    filter_all: 'All',
+    filter_none_tol: '(no toleration)',
+    filter_none_sel: '(no selector)',
+    layer_delete_btn: 'Delete',
+    layer_confirm_del: 'Delete this layer? Nodes will be moved to Layer 1.',
+    layer_rename_prompt: 'Layer name:',
+    no_nodes: 'No nodes found',
+    xlsx_loading: 'SheetJS library is loading. Please try again shortly.',
+    pdf_loading: 'jsPDF library is loading. Please try again shortly.',
+    pdf_font_fail: 'Font loading failed. Using default font.',
+    import_error: 'File loading error: ',
+    migrate_toast: 'Migration complete — K8s resource defaults applied to infra nodes. Save JSON again to keep the new format.',
+    ai_empty: 'Ask AI to create or modify diagrams.',
+    ai_done: 'Diagram generated',
+    ai_apply: 'Apply',
+    ai_applied: '✓ Applied',
+    ai_error: 'Error: ',
+    ai_key_required: 'Please enter an API Key.',
+    ai_group_hint: 'Use group nodes to organize related components.',
+    ai_append_hint: 'Add to the existing diagram. Assign new IDs that don\'t conflict with existing node IDs, and include all existing nodes in the full JSON response.',
+    ai_modify_hint: 'Modify the diagram below. Return the complete modified JSON.',
+    k8s_cpu_reserve_warn: ' [CPU reservation exceeded!]',
+    k8s_mem_reserve_warn: ' [MEM reservation exceeded!]',
+    ip_key_ph: '(not needed)',
+    iac_yaml: 'K8s YAML', iac_terraform: 'Terraform', iac_helm: 'Helm Values',
+    iac_copy: 'Copy', iac_download: 'Download',
+    iac_no_workload: 'No workload nodes to export',
+    iac_copied: 'Copied to clipboard', iac_export_all: 'All Infrastructure',
+  }
+};
+
+function t(key) { return (T[loomLang] || T.ko)[key] || (T.ko)[key] || key; }
+
+function applyLang() {
+  const d = T[loomLang] || T.ko;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (d[k] !== undefined) el.textContent = d[k];
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const k = el.getAttribute('data-i18n-ph');
+    if (d[k] !== undefined) el.placeholder = d[k];
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const k = el.getAttribute('data-i18n-title');
+    if (d[k] !== undefined) el.title = d[k];
+  });
+  // Hint uses <br>
+  const hint = document.getElementById('hint');
+  if (hint) { hint.firstChild.textContent = d.hint_1; hint.lastChild.textContent = d.hint_2; }
+  // Statusbar
+  if (document.getElementById('statusTool')) {
+    const toolNames = {ko:{select:'선택',connect:'연결',pan:'이동'},en:{select:'Select',connect:'Connect',pan:'Pan'}};
+    const tn = (toolNames[loomLang]||toolNames.ko)[state.tool]||state.tool;
+    document.getElementById('statusTool').textContent = (loomLang==='en'?'Tool: ':'도구: ') + tn;
+  }
+  const btn = document.getElementById('btnLang');
+  if (btn) btn.textContent = loomLang.toUpperCase();
+  document.documentElement.lang = loomLang;
+}
+
+function toggleLang() {
+  loomLang = loomLang === 'ko' ? 'en' : 'ko';
+  localStorage.setItem('loom_lang', loomLang);
+  applyLang();
+}
+
+// init theme immediately
+document.documentElement.dataset.theme = loomTheme;
+
 // ════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════
@@ -1449,6 +1903,9 @@ const DEFAULT_RESOURCES = {
   service:  { minCpu:100,  maxCpu:500,  minMem:128,  maxMem:512,  minDisk:1,  maxDisk:10, gpu:0, replicas:2 },
 };
 
+// Cached theme colors for canvas drawing (must be before resizeCanvas)
+let tc = {};
+
 // ════════════════════════════════════════════════════════
 // CANVAS RESIZE
 // ════════════════════════════════════════════════════════
@@ -1470,7 +1927,7 @@ resizeCanvas();
   handle.addEventListener('mousedown', function(e) {
     e.preventDefault();
     window._rpDragging = true;
-    handle.style.background = '#58a6ff';
+    handle.style.background = 'var(--accent)';
     var startX = e.clientX;
     var startW = panel.offsetWidth;
     function onMove(ev) {
@@ -1510,7 +1967,8 @@ function drawGrid() {
   const gridSize = 20 * state.zoom;
   const offX = state.panX % gridSize;
   const offY = state.panY % gridSize;
-  gctx.strokeStyle = 'rgba(48,54,61,0.5)';
+  const isLight = document.documentElement.dataset.theme === 'light';
+  gctx.strokeStyle = isLight ? 'rgba(180,188,200,0.5)' : 'rgba(48,54,61,0.5)';
   gctx.lineWidth = 0.5;
   for(let x = offX; x < w; x += gridSize) {
     gctx.beginPath(); gctx.moveTo(x,0); gctx.lineTo(x,h); gctx.stroke();
@@ -1519,7 +1977,7 @@ function drawGrid() {
     gctx.beginPath(); gctx.moveTo(0,y); gctx.lineTo(w,y); gctx.stroke();
   }
   // dot at intersections
-  gctx.fillStyle = 'rgba(88,166,255,0.15)';
+  gctx.fillStyle = isLight ? 'rgba(37,99,235,0.18)' : 'rgba(88,166,255,0.15)';
   for(let x = offX; x < w; x += gridSize*5) {
     for(let y = offY; y < h; y += gridSize*5) {
       gctx.beginPath(); gctx.arc(x,y,1.5,0,Math.PI*2); gctx.fill();
@@ -1540,7 +1998,24 @@ function toScreen(wx, wy) {
 // ════════════════════════════════════════════════════════
 // RENDER
 // ════════════════════════════════════════════════════════
+// Cached theme colors for canvas drawing (refreshed on every render)
+function refreshThemeColors() {
+  const s = getComputedStyle(document.documentElement);
+  tc.accent = s.getPropertyValue('--accent').trim();
+  tc.text = s.getPropertyValue('--text').trim();
+  tc.text2 = s.getPropertyValue('--text2').trim();
+  tc.text3 = s.getPropertyValue('--text3').trim();
+  tc.surface = s.getPropertyValue('--surface').trim();
+  tc.bg = s.getPropertyValue('--bg').trim();
+  tc.border = s.getPropertyValue('--border').trim();
+  tc.green = s.getPropertyValue('--green').trim();
+  tc.red = s.getPropertyValue('--red').trim();
+  tc.yellow = s.getPropertyValue('--yellow').trim();
+}
+refreshThemeColors();
+
 function render() {
+  refreshThemeColors();
   const w = canvas.width, h = canvas.height;
   ctx.clearRect(0,0,w,h);
   ctx.save();
@@ -1571,7 +2046,7 @@ function render() {
     const src = state.nodes.find(n=>n.id===state.connectFrom);
     if(src) {
       ctx.save();
-      ctx.strokeStyle = '#58a6ff';
+      ctx.strokeStyle = tc.accent;
       ctx.lineWidth = 2;
       ctx.setLineDash([6,3]);
       ctx.beginPath();
@@ -1613,7 +2088,7 @@ function render() {
           } else {
             ctx.beginPath();
             ctx.arc(hx, hy, 7, 0, Math.PI*2);
-            ctx.fillStyle = isDragging ? '#ffa657' : '#58a6ff';
+            ctx.fillStyle = isDragging ? '#ffa657' : tc.accent;
             ctx.fill();
             ctx.strokeStyle = '#fff';
             ctx.lineWidth = 2;
@@ -1637,14 +2112,14 @@ function render() {
           ctx.arc(mx, my, 6, 0, Math.PI*2);
           ctx.fillStyle = 'rgba(88,166,255,0.15)';
           ctx.fill();
-          ctx.strokeStyle = '#58a6ff';
+          ctx.strokeStyle = tc.accent;
           ctx.lineWidth = 1.5;
           ctx.stroke();
           // Draw + sign
           ctx.beginPath();
           ctx.moveTo(mx-3, my); ctx.lineTo(mx+3, my);
           ctx.moveTo(mx, my-3); ctx.lineTo(mx, my+3);
-          ctx.strokeStyle = '#58a6ff';
+          ctx.strokeStyle = tc.accent;
           ctx.lineWidth = 1.5;
           ctx.stroke();
           ctx.restore();
@@ -1658,7 +2133,7 @@ function render() {
           ctx.fillStyle = (state.wpDragging && state.wpDragging.index === i && state.wpDragging.edgeId === se.id)
             ? '#ffa657' : '#fff';
           ctx.fill();
-          ctx.strokeStyle = '#58a6ff';
+          ctx.strokeStyle = tc.accent;
           ctx.lineWidth = 2;
           ctx.stroke();
           ctx.restore();
@@ -1754,11 +2229,11 @@ function drawNode(n) {
   const { x, y, w, h, type, label, color, desc, alert } = n;
   const cfg = NODE_TYPES[type] || NODE_TYPES.server;
   const bgColor = color || cfg.color;
-  const textColor = n.fontColor || '#e6edf3';
+  const textColor = n.fontColor || tc.text;
   const isMultiSel = state.multiSelect.includes(n.id);
   const isSel = state.selected === n.id;
   const borderColor = (isSel || isMultiSel)
-    ? (isMultiSel ? '#58a6ff' : '#fff')
+    ? (isMultiSel ? tc.accent : '#fff')
     : (state.hovered === n.id ? cfg.border+'cc' : cfg.border);
   const lw = (isSel || isMultiSel) ? 2.5 : 1.5;
 
@@ -1792,10 +2267,10 @@ function drawNode(n) {
       const bx = x + w - 26, by = y + 4, bw = 22, bh = 22;
       ctx.fillStyle = 'rgba(88,166,255,0.2)';
       ctx.beginPath(); roundRect(ctx, bx, by, bw, bh, 4); ctx.fill();
-      ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 1;
+      ctx.strokeStyle = tc.accent; ctx.lineWidth = 1;
       ctx.beginPath(); roundRect(ctx, bx, by, bw, bh, 4); ctx.stroke();
       // ▼ 아이콘 (펼치기)
-      ctx.fillStyle = '#58a6ff';
+      ctx.fillStyle = tc.accent;
       ctx.font = font('700', 12);
       ctx.textAlign = 'center';
       ctx.fillText('▼', bx + bw/2, by + 16);
@@ -1867,7 +2342,7 @@ function drawNode(n) {
     wrapText(ctx, label, x+8, y+18, w-16, 14);
     // Desc
     if(desc) {
-      ctx.fillStyle = n.fontColor || '#8b949e';
+      ctx.fillStyle = n.fontColor || tc.text2;
       ctx.font = font('400', 10);
       // Count label lines (including \n and word-wrap)
       ctx.save();
@@ -1988,7 +2463,7 @@ function drawNode(n) {
 
   // Desc
   if(desc) {
-    ctx.fillStyle = '#8b949e';
+    ctx.fillStyle = tc.text2;
     ctx.font = font('400', 10);
     ctx.fillText(truncate(desc, Math.floor((w-iconW-14)/6)), x+iconW, y+h/2+11);
   }
@@ -2002,7 +2477,7 @@ function drawNode(n) {
     var nsY = y + 3;
     ctx.fillStyle = 'rgba(88,166,255,0.2)';
     ctx.beginPath(); roundRect(ctx, nsX, nsY, nsW, 14, 3); ctx.fill();
-    ctx.fillStyle = '#58a6ff';
+    ctx.fillStyle = tc.accent;
     ctx.fillText(nsText, nsX + 4, nsY + 10);
   }
 
@@ -2023,7 +2498,7 @@ function drawNode(n) {
 
   // Resize handle
   if(state.selected === n.id) {
-    ctx.fillStyle = '#58a6ff';
+    ctx.fillStyle = tc.accent;
     ctx.fillRect(x+w-6, y+h-6, 8, 8);
   }
 
@@ -2083,7 +2558,7 @@ function drawEdge(e) {
   const [ex2,ey2] = nodeEdgePoint(dst, sx, sy, dstRedirected ? null : e.toOffset);
 
   const isSelected = (state.selectedEdge === e.id);
-  const color = e.color || '#58a6ff';
+  const color = e.color || tc.accent;
   const isRedirected = srcRedirected || dstRedirected;
 
   ctx.save();
@@ -2136,13 +2611,13 @@ function drawEdge(e) {
         half -= segLen;
       }
       ly -= 8;
-      ctx.fillStyle = isSelected ? '#fff' : '#8b949e';
+      ctx.fillStyle = isSelected ? '#fff' : tc.text2;
       ctx.font = font('500', 10);
       ctx.textAlign = 'center';
       const tw = ctx.measureText(e.label).width;
-      ctx.fillStyle = '#161b22';
+      ctx.fillStyle = tc.surface;
       ctx.fillRect(lx-tw/2-3, ly-10, tw+6, 14);
-      ctx.fillStyle = isSelected ? '#fff' : '#8b949e';
+      ctx.fillStyle = isSelected ? '#fff' : tc.text2;
       ctx.fillText(e.label, lx, ly);
       ctx.textAlign = 'left';
     }
@@ -2164,14 +2639,14 @@ function drawEdge(e) {
 
     // Label
     if(e.label) {
-      ctx.fillStyle = isSelected ? '#fff' : '#8b949e';
+      ctx.fillStyle = isSelected ? '#fff' : tc.text2;
       ctx.font = font('500', 10);
       ctx.textAlign = 'center';
       const lx = (sx2+ex2)/2, ly = (sy2+ey2)/2 - 8;
       const tw = ctx.measureText(e.label).width;
-      ctx.fillStyle = '#161b22';
+      ctx.fillStyle = tc.surface;
       ctx.fillRect(lx-tw/2-3, ly-10, tw+6, 14);
-      ctx.fillStyle = isSelected ? '#fff' : '#8b949e';
+      ctx.fillStyle = isSelected ? '#fff' : tc.text2;
       ctx.fillText(e.label, lx, ly);
       ctx.textAlign = 'left';
     }
@@ -2463,7 +2938,7 @@ function clearSelection() {
   document.getElementById('edgePropSection').style.display = 'none';
   document.getElementById('nodeResSection').style.display = 'none';
   document.getElementById('nodeSchedSection').style.display = 'none';
-  document.getElementById('statusSel').textContent = '선택: 없음';
+  document.getElementById('statusSel').textContent = (loomLang==='en'?'Selected: None':'선택: 없음');
   render();
 }
 
@@ -2618,7 +3093,7 @@ canvas.addEventListener('mousedown', e => {
     if(node) {
       if(!state.connectFrom) {
         state.connectFrom = node.id;
-        document.getElementById('statusTool').textContent = '연결: 끝점 선택...';
+        document.getElementById('statusTool').textContent = t('conn_pick_end');
       } else if(node.id !== state.connectFrom) {
         // Create edge
         saveHistory();
@@ -2632,7 +3107,7 @@ canvas.addEventListener('mousedown', e => {
           waypoints: []
         });
         state.connectFrom = null;
-        document.getElementById('statusTool').textContent = '도구: 연결';
+        document.getElementById('statusTool').textContent = (loomLang==='en'?'Tool: Connect':'도구: 연결');
         render();
       }
     }
@@ -2770,7 +3245,7 @@ canvas.addEventListener('mousedown', e => {
         else state.multiSelect.push(node.id);
         state.selected = null;
         state.selectedEdge = null;
-        document.getElementById('statusSel').textContent = `선택: ${state.multiSelect.length}개`;
+        document.getElementById('statusSel').textContent = `${loomLang==='en'?'Selected':'선택'}: ${state.multiSelect.length}${loomLang==='en'?' items':'개'}`;
         render();
         return;
       }
@@ -2928,7 +3403,7 @@ canvas.addEventListener('mousemove', e => {
         (state.activeLayer === null || (n.layer || 1) === state.activeLayer))
       .map(n => n.id);
     document.getElementById('statusSel').textContent =
-      state.multiSelect.length > 0 ? `선택: ${state.multiSelect.length}개` : '선택: 없음';
+      state.multiSelect.length > 0 ? `${loomLang==='en'?'Selected':'선택'}: ${state.multiSelect.length}${loomLang==='en'?' items':'개'}` : (loomLang==='en'?'Selected: None':'선택: 없음');
     render();
     return;
   }
@@ -3058,7 +3533,7 @@ canvas.addEventListener('mouseup', e => {
           n.y >= ry && n.y+n.h <= ry+rh)
         .map(n => n.id);
       document.getElementById('statusSel').textContent =
-        state.multiSelect.length > 0 ? `선택: ${state.multiSelect.length}개` : '선택: 없음';
+        state.multiSelect.length > 0 ? `${loomLang==='en'?'Selected':'선택'}: ${state.multiSelect.length}${loomLang==='en'?' items':'개'}` : (loomLang==='en'?'Selected: None':'선택: 없음');
     }
     state.marquee = null;
     render();
@@ -3158,7 +3633,7 @@ document.addEventListener('keydown', ev => {
       .filter(n => !n._groupHidden && (state.activeLayer === null || (n.layer || 1) === state.activeLayer))
       .map(n => n.id);
     state.selected = null;
-    document.getElementById('statusSel').textContent = `선택: ${state.multiSelect.length}개`;
+    document.getElementById('statusSel').textContent = `${loomLang==='en'?'Selected':'선택'}: ${state.multiSelect.length}${loomLang==='en'?' items':'개'}`;
     render();
   }
   if(ev.key === 'Delete' || ev.key === 'Backspace') {
@@ -3199,7 +3674,7 @@ canvas.addEventListener('wheel', e => {
   state.panX = pos.x - (pos.x - state.panX) * (newZoom/state.zoom);
   state.panY = pos.y - (pos.y - state.panY) * (newZoom/state.zoom);
   state.zoom = newZoom;
-  document.getElementById('statusZoom').textContent = `확대: ${Math.round(state.zoom*100)}%`;
+  document.getElementById('statusZoom').textContent = `${loomLang==='en'?'Zoom':'확대'}: ${Math.round(state.zoom*100)}%`;
   drawGrid();
   render();
 }, { passive:false });
@@ -3217,7 +3692,7 @@ canvas.addEventListener('contextmenu', e => {
     const collapseItem = document.getElementById('ctxCollapseItem');
     if(node.type === 'group') {
       collapseItem.style.display = 'block';
-      collapseItem.textContent = node.collapsed ? '▼ 그룹 펼치기' : '▶ 그룹 접기';
+      collapseItem.textContent = node.collapsed ? t('ctx_expand') : t('ctx_collapse');
     } else {
       collapseItem.style.display = 'none';
     }
@@ -3280,8 +3755,9 @@ function setTool(t) {
   document.querySelectorAll('#topbar .tbtn').forEach(b => b.classList.remove('active'));
   const map = { select:'btnSelect', connect:'btnConnect', pan:'btnPan' };
   if(map[t]) document.getElementById(map[t]).classList.add('active');
-  const names = { select:'선택', connect:'연결', pan:'이동' };
-  document.getElementById('statusTool').textContent = `도구: ${names[t]||t}`;
+  const names = {ko:{select:'선택',connect:'연결',pan:'이동'},en:{select:'Select',connect:'Connect',pan:'Pan'}};
+  const tn = (names[loomLang]||names.ko)[t]||t;
+  document.getElementById('statusTool').textContent = (loomLang==='en'?'Tool: ':'도구: ') + tn;
   canvas.style.cursor = t==='pan' ? 'grab' : t==='connect' ? 'crosshair' : 'default';
 }
 setTool('select');
@@ -3323,7 +3799,7 @@ function updatePropPanel() {
     layerSel.appendChild(opt);
   });
   layerSel.value = n.layer || 1;
-  document.getElementById('statusSel').textContent = `선택: ${n.label}`;
+  document.getElementById('statusSel').textContent = `${loomLang==='en'?'Selected':'선택'}: ${n.label}`;
   updateNodeResProps();
   updateNodeSchedProps();
 }
@@ -3408,7 +3884,7 @@ function ctxDuplicate() {
   const n = state.nodes.find(n=>n.id===state.selected);
   if(!n) return;
   saveHistory();
-  const copy = {...n, id: state.nextId++, x: n.x+30, y: n.y+30, label: n.label+' (복사)'};
+  const copy = {...n, id: state.nextId++, x: n.x+30, y: n.y+30, label: n.label+t('copy_suffix')};
   state.nodes.push(copy);
   selectNode(copy.id);
   render();
@@ -3536,7 +4012,7 @@ document.getElementById('modal-overlay').addEventListener('click', e => {
 // NEW DIAGRAM
 // ════════════════════════════════════════════════════════
 function newDiagram() {
-  if(state.dirty && !confirm('변경사항이 있습니다. 새로 시작할까요?')) return;
+  if(state.dirty && !confirm(t('confirm_new'))) return;
   state.nodes = [];
   state.edges = [];
   state.nextId = 1;
@@ -3607,13 +4083,13 @@ function redo() {
 // ════════════════════════════════════════════════════════
 function zoomIn() { applyZoom(1.2); }
 function zoomOut() { applyZoom(0.8); }
-function zoomReset() { state.zoom=1; state.panX=40; state.panY=40; drawGrid(); render(); document.getElementById('statusZoom').textContent='확대: 100%'; }
+function zoomReset() { state.zoom=1; state.panX=40; state.panY=40; drawGrid(); render(); document.getElementById('statusZoom').textContent=(loomLang==='en'?'Zoom: 100%':'확대: 100%'); }
 function applyZoom(f) {
   const cx=canvas.width/2, cy=canvas.height/2;
   state.panX = cx-(cx-state.panX)*f*(f>1?1:1);
   state.panY = cy-(cy-state.panY)*f;
   state.zoom = Math.max(0.2, Math.min(4, state.zoom*f));
-  document.getElementById('statusZoom').textContent=`확대: ${Math.round(state.zoom*100)}%`;
+  document.getElementById('statusZoom').textContent=`${loomLang==='en'?'Zoom':'확대'}: ${Math.round(state.zoom*100)}%`;
   drawGrid(); render();
 }
 
@@ -3685,6 +4161,349 @@ function calcResourceTotals() {
   return { minCpu, maxCpu, minMem, maxMem, minDisk, maxDisk, totalGpu, perNode };
 }
 
+// ════════════════════════════════════════════════════════
+// IaC EXPORT (K8s YAML / Terraform / Helm Values)
+// ════════════════════════════════════════════════════════
+
+var iacState = { code: '', filename: '', format: '' };
+
+function sanitizeK8sName(label) {
+  return (label || '').toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-+|-+$/g, '').substring(0, 63) || 'unnamed';
+}
+
+function getWorkloadType(nodeType) {
+  if (['server','service','queue','gateway'].includes(nodeType)) return 'deployment';
+  if (nodeType === 'database') return 'statefulset';
+  if (nodeType === 'storage') return 'pvc';
+  return null;
+}
+
+function getServiceType(nodeType) {
+  if (['server','service','queue','database'].includes(nodeType)) return 'ClusterIP';
+  if (nodeType === 'gateway') return 'LoadBalancer';
+  return null;
+}
+
+function getIaCNodes() {
+  return state.nodes.filter(function(n) {
+    return !NON_INFRA_TYPES.includes(n.type) && getWorkloadType(n.type) !== null;
+  });
+}
+
+// ── K8s YAML generation ──
+
+function generateK8sYAML(node) {
+  var name = sanitizeK8sName(node.label);
+  var ns = node.namespace || 'default';
+  var r = getNodeResources(node);
+  var rep = r.replicas || 1;
+  var wType = getWorkloadType(node.type);
+  var sType = getServiceType(node.type);
+  var parts = [];
+
+  // Tolerations block
+  function tolerationsYAML(indent) {
+    if (!node.tolerations || !node.tolerations.length) return '';
+    var lines = indent + 'tolerations:\n';
+    node.tolerations.forEach(function(tol) {
+      lines += indent + '- key: "' + (tol.key||'') + '"\n';
+      lines += indent + '  operator: "Equal"\n';
+      lines += indent + '  value: "' + (tol.value||'') + '"\n';
+      lines += indent + '  effect: "' + (tol.effect||'NoSchedule') + '"\n';
+    });
+    return lines;
+  }
+
+  // NodeSelector block
+  function nodeSelectorYAML(indent) {
+    if (!node.nodeSelector || !Object.keys(node.nodeSelector).length) return '';
+    var lines = indent + 'nodeSelector:\n';
+    Object.keys(node.nodeSelector).forEach(function(k) {
+      lines += indent + '  ' + k + ': "' + node.nodeSelector[k] + '"\n';
+    });
+    return lines;
+  }
+
+  // Resources block
+  function resourcesYAML(indent) {
+    var lines = indent + 'resources:\n';
+    lines += indent + '  requests:\n';
+    lines += indent + '    cpu: "' + r.minCpu + 'm"\n';
+    lines += indent + '    memory: "' + r.minMem + 'Mi"\n';
+    lines += indent + '  limits:\n';
+    lines += indent + '    cpu: "' + r.maxCpu + 'm"\n';
+    lines += indent + '    memory: "' + r.maxMem + 'Mi"\n';
+    if (r.gpu > 0) {
+      lines += indent + '    nvidia.com/gpu: "' + r.gpu + '"\n';
+    }
+    return lines;
+  }
+
+  if (wType === 'deployment') {
+    var y = 'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: ' + name + '\n  namespace: ' + ns + '\nspec:\n  replicas: ' + rep + '\n  selector:\n    matchLabels:\n      app: ' + name + '\n  template:\n    metadata:\n      labels:\n        app: ' + name + '\n    spec:\n';
+    y += tolerationsYAML('      ');
+    y += nodeSelectorYAML('      ');
+    y += '      containers:\n      - name: ' + name + '\n        image: ' + name + ':latest\n        ports:\n        - containerPort: 8080\n';
+    y += resourcesYAML('        ');
+    parts.push(y.trimEnd());
+  } else if (wType === 'statefulset') {
+    var y = 'apiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: ' + name + '\n  namespace: ' + ns + '\nspec:\n  serviceName: ' + name + '\n  replicas: ' + rep + '\n  selector:\n    matchLabels:\n      app: ' + name + '\n  template:\n    metadata:\n      labels:\n        app: ' + name + '\n    spec:\n';
+    y += tolerationsYAML('      ');
+    y += nodeSelectorYAML('      ');
+    y += '      containers:\n      - name: ' + name + '\n        image: ' + name + ':latest\n        ports:\n        - containerPort: 5432\n';
+    y += resourcesYAML('        ');
+    y += '  volumeClaimTemplates:\n  - metadata:\n      name: data\n    spec:\n      accessModes: ["ReadWriteOnce"]\n      resources:\n        requests:\n          storage: ' + r.maxDisk + 'Gi';
+    parts.push(y.trimEnd());
+  } else if (wType === 'pvc') {
+    var y = 'apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: ' + name + '\n  namespace: ' + ns + '\nspec:\n  accessModes:\n  - ReadWriteOnce\n  resources:\n    requests:\n      storage: ' + r.maxDisk + 'Gi';
+    parts.push(y.trimEnd());
+  }
+
+  // Service
+  if (sType) {
+    var svc = 'apiVersion: v1\nkind: Service\nmetadata:\n  name: ' + name + '\n  namespace: ' + ns + '\nspec:\n';
+    if (wType === 'statefulset') {
+      svc += '  clusterIP: None\n';
+    }
+    svc += '  type: ' + sType + '\n  selector:\n    app: ' + name + '\n  ports:\n  - port: ' + (wType === 'statefulset' ? '5432' : '8080') + '\n    targetPort: ' + (wType === 'statefulset' ? '5432' : '8080');
+    parts.push(svc.trimEnd());
+  }
+
+  return parts.join('\n---\n');
+}
+
+function generateK8sYAMLAll() {
+  var nodes = getIaCNodes();
+  if (!nodes.length) { alert(t('iac_no_workload')); return; }
+  var parts = [];
+
+  // Namespace resources
+  (k8sConfig.namespaces || ['default']).forEach(function(ns) {
+    if (ns !== 'default') {
+      parts.push('apiVersion: v1\nkind: Namespace\nmetadata:\n  name: ' + ns);
+    }
+  });
+
+  nodes.forEach(function(n) { parts.push(generateK8sYAML(n)); });
+  showIaCModal(t('iac_yaml') + ' — ' + t('iac_export_all'), parts.join('\n---\n'), 'infrastructure.yaml', 'yaml');
+}
+
+// ── Terraform generation ──
+
+function generateTerraform(node) {
+  var name = sanitizeK8sName(node.label);
+  var tfName = name.replace(/-/g, '_');
+  var ns = node.namespace || 'default';
+  var r = getNodeResources(node);
+  var rep = r.replicas || 1;
+  var wType = getWorkloadType(node.type);
+  var sType = getServiceType(node.type);
+  var parts = [];
+
+  function tolerationsTF(indent) {
+    if (!node.tolerations || !node.tolerations.length) return '';
+    var lines = '';
+    node.tolerations.forEach(function(tol) {
+      lines += indent + 'toleration {\n';
+      lines += indent + '  key      = "' + (tol.key||'') + '"\n';
+      lines += indent + '  operator = "Equal"\n';
+      lines += indent + '  value    = "' + (tol.value||'') + '"\n';
+      lines += indent + '  effect   = "' + (tol.effect||'NoSchedule') + '"\n';
+      lines += indent + '}\n';
+    });
+    return lines;
+  }
+
+  function nodeSelectorTF(indent) {
+    if (!node.nodeSelector || !Object.keys(node.nodeSelector).length) return '';
+    var lines = indent + 'node_selector = {\n';
+    Object.keys(node.nodeSelector).forEach(function(k) {
+      lines += indent + '  ' + k + ' = "' + node.nodeSelector[k] + '"\n';
+    });
+    lines += indent + '}\n';
+    return lines;
+  }
+
+  if (wType === 'deployment') {
+    var tf = 'resource "kubernetes_deployment" "' + tfName + '" {\n  metadata {\n    name      = "' + name + '"\n    namespace = "' + ns + '"\n  }\n  spec {\n    replicas = ' + rep + '\n    selector {\n      match_labels = {\n        app = "' + name + '"\n      }\n    }\n    template {\n      metadata {\n        labels = {\n          app = "' + name + '"\n        }\n      }\n      spec {\n';
+    tf += tolerationsTF('        ');
+    tf += nodeSelectorTF('        ');
+    tf += '        container {\n          name  = "' + name + '"\n          image = "' + name + ':latest"\n          port {\n            container_port = 8080\n          }\n          resources {\n            requests = {\n              cpu    = "' + r.minCpu + 'm"\n              memory = "' + r.minMem + 'Mi"\n            }\n            limits = {\n              cpu    = "' + r.maxCpu + 'm"\n              memory = "' + r.maxMem + 'Mi"\n';
+    if (r.gpu > 0) tf += '              "nvidia.com/gpu" = "' + r.gpu + '"\n';
+    tf += '            }\n          }\n        }\n      }\n    }\n  }\n}';
+    parts.push(tf);
+  } else if (wType === 'statefulset') {
+    var tf = 'resource "kubernetes_stateful_set" "' + tfName + '" {\n  metadata {\n    name      = "' + name + '"\n    namespace = "' + ns + '"\n  }\n  spec {\n    service_name = "' + name + '"\n    replicas     = ' + rep + '\n    selector {\n      match_labels = {\n        app = "' + name + '"\n      }\n    }\n    template {\n      metadata {\n        labels = {\n          app = "' + name + '"\n        }\n      }\n      spec {\n';
+    tf += tolerationsTF('        ');
+    tf += nodeSelectorTF('        ');
+    tf += '        container {\n          name  = "' + name + '"\n          image = "' + name + ':latest"\n          port {\n            container_port = 5432\n          }\n          resources {\n            requests = {\n              cpu    = "' + r.minCpu + 'm"\n              memory = "' + r.minMem + 'Mi"\n            }\n            limits = {\n              cpu    = "' + r.maxCpu + 'm"\n              memory = "' + r.maxMem + 'Mi"\n            }\n          }\n        }\n      }\n    }\n    volume_claim_template {\n      metadata {\n        name = "data"\n      }\n      spec {\n        access_modes = ["ReadWriteOnce"]\n        resources {\n          requests = {\n            storage = "' + r.maxDisk + 'Gi"\n          }\n        }\n      }\n    }\n  }\n}';
+    parts.push(tf);
+  } else if (wType === 'pvc') {
+    var tf = 'resource "kubernetes_persistent_volume_claim" "' + tfName + '" {\n  metadata {\n    name      = "' + name + '"\n    namespace = "' + ns + '"\n  }\n  spec {\n    access_modes = ["ReadWriteOnce"]\n    resources {\n      requests = {\n        storage = "' + r.maxDisk + 'Gi"\n      }\n    }\n  }\n}';
+    parts.push(tf);
+  }
+
+  // Service
+  if (sType) {
+    var svc = 'resource "kubernetes_service" "' + tfName + '" {\n  metadata {\n    name      = "' + name + '"\n    namespace = "' + ns + '"\n  }\n  spec {\n    type = "' + sType + '"\n    selector = {\n      app = "' + name + '"\n    }\n    port {\n      port        = ' + (wType === 'statefulset' ? '5432' : '8080') + '\n      target_port = ' + (wType === 'statefulset' ? '5432' : '8080') + '\n    }\n';
+    if (wType === 'statefulset') svc += '    cluster_ip = "None"\n';
+    svc += '  }\n}';
+    parts.push(svc);
+  }
+
+  return parts.join('\n\n');
+}
+
+function generateTerraformAll() {
+  var nodes = getIaCNodes();
+  if (!nodes.length) { alert(t('iac_no_workload')); return; }
+  var parts = ['provider "kubernetes" {\n  config_path = "~/.kube/config"\n}'];
+
+  // Namespace resources
+  (k8sConfig.namespaces || ['default']).forEach(function(ns) {
+    if (ns !== 'default') {
+      parts.push('resource "kubernetes_namespace" "' + ns.replace(/-/g,'_') + '" {\n  metadata {\n    name = "' + ns + '"\n  }\n}');
+    }
+  });
+
+  nodes.forEach(function(n) { parts.push(generateTerraform(n)); });
+  showIaCModal(t('iac_terraform') + ' — ' + t('iac_export_all'), parts.join('\n\n'), 'main.tf', 'tf');
+}
+
+// ── Helm Values generation ──
+
+function generateHelmSingle(node) {
+  var name = sanitizeK8sName(node.label);
+  var r = getNodeResources(node);
+  var rep = r.replicas || 1;
+  var wType = getWorkloadType(node.type);
+  var lines = [];
+
+  lines.push(name + ':');
+  lines.push('  enabled: true');
+  lines.push('  replicaCount: ' + rep);
+  lines.push('  image:');
+  lines.push('    repository: ' + name);
+  lines.push('    tag: latest');
+
+  if (wType === 'statefulset') {
+    lines.push('  kind: StatefulSet');
+  }
+
+  lines.push('  resources:');
+  lines.push('    requests:');
+  lines.push('      cpu: "' + r.minCpu + 'm"');
+  lines.push('      memory: "' + r.minMem + 'Mi"');
+  lines.push('    limits:');
+  lines.push('      cpu: "' + r.maxCpu + 'm"');
+  lines.push('      memory: "' + r.maxMem + 'Mi"');
+  if (r.gpu > 0) {
+    lines.push('      nvidia.com/gpu: "' + r.gpu + '"');
+  }
+
+  var sType = getServiceType(node.type);
+  if (sType) {
+    lines.push('  service:');
+    lines.push('    type: ' + sType);
+    lines.push('    port: ' + (wType === 'statefulset' ? '5432' : '8080'));
+  }
+
+  if (wType === 'statefulset' || wType === 'pvc') {
+    lines.push('  persistence:');
+    lines.push('    enabled: true');
+    lines.push('    size: ' + r.maxDisk + 'Gi');
+    lines.push('    accessMode: ReadWriteOnce');
+  }
+
+  if (node.tolerations && node.tolerations.length) {
+    lines.push('  tolerations:');
+    node.tolerations.forEach(function(tol) {
+      lines.push('  - key: "' + (tol.key||'') + '"');
+      lines.push('    operator: "Equal"');
+      lines.push('    value: "' + (tol.value||'') + '"');
+      lines.push('    effect: "' + (tol.effect||'NoSchedule') + '"');
+    });
+  }
+
+  if (node.nodeSelector && Object.keys(node.nodeSelector).length) {
+    lines.push('  nodeSelector:');
+    Object.keys(node.nodeSelector).forEach(function(k) {
+      lines.push('    ' + k + ': "' + node.nodeSelector[k] + '"');
+    });
+  }
+
+  return lines.join('\n');
+}
+
+function generateHelmValues() {
+  var nodes = getIaCNodes();
+  if (!nodes.length) { alert(t('iac_no_workload')); return; }
+  var lines = ['# Helm Values — Generated from Loom Architecture', ''];
+  lines.push('global:');
+  lines.push('  namespace: ' + ((k8sConfig.namespaces && k8sConfig.namespaces[0]) || 'default'));
+  lines.push('');
+
+  nodes.forEach(function(n) {
+    lines.push(generateHelmSingle(n));
+    lines.push('');
+  });
+
+  showIaCModal(t('iac_helm') + ' — ' + t('iac_export_all'), lines.join('\n').trimEnd(), 'values.yaml', 'yaml');
+}
+
+// ── IaC Modal controller ──
+
+function showIaCModal(title, code, filename, format) {
+  iacState = { code: code, filename: filename, format: format };
+  document.getElementById('iacModalTitle').textContent = title;
+  document.getElementById('iacModalCode').textContent = code;
+  document.getElementById('iacModal').classList.add('active');
+}
+
+function closeIaCModal() {
+  document.getElementById('iacModal').classList.remove('active');
+}
+
+function copyIaCCode() {
+  navigator.clipboard.writeText(iacState.code).then(function() {
+    var toast = document.getElementById('iacToast');
+    toast.textContent = t('iac_copied');
+    toast.classList.add('show');
+    setTimeout(function() { toast.classList.remove('show'); }, 2000);
+  });
+}
+
+function downloadIaCCode() {
+  var blob = new Blob([iacState.code], { type: 'text/plain' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = iacState.filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// Single-node IaC generation for mini buttons
+function showNodeK8sYAML(nodeId) {
+  var node = state.nodes.find(function(n) { return n.id === nodeId; });
+  if (!node) return;
+  var code = generateK8sYAML(node);
+  showIaCModal(t('iac_yaml') + ' — ' + node.label, code, sanitizeK8sName(node.label) + '.yaml', 'yaml');
+}
+
+function showNodeTerraform(nodeId) {
+  var node = state.nodes.find(function(n) { return n.id === nodeId; });
+  if (!node) return;
+  var code = generateTerraform(node);
+  showIaCModal(t('iac_terraform') + ' — ' + node.label, code, sanitizeK8sName(node.label) + '.tf', 'tf');
+}
+
+function showNodeHelm(nodeId) {
+  var node = state.nodes.find(function(n) { return n.id === nodeId; });
+  if (!node) return;
+  var code = generateHelmSingle(node);
+  showIaCModal(t('iac_helm') + ' — ' + node.label, code, sanitizeK8sName(node.label) + '-values.yaml', 'yaml');
+}
+
 function getAvailableResources() {
   const nc = k8sConfig.nodeCount;
   const cpuPerNode = Math.max(0, k8sConfig.nodeCpu  - k8sConfig.reservedCpu);
@@ -3706,106 +4525,139 @@ var _infraCheckMode = 'prod'; // 'dev' | 'prod'
 var INFRA_CATEGORIES = [
   {
     name: '네트워크 진입점 (Ingress / Load Balancer)',
+    nameEn: 'Network Ingress (Ingress / Load Balancer)',
     desc: '외부 트래픽을 클러스터 내부로 라우팅하는 진입점',
+    descEn: 'Entry point for routing external traffic into the cluster',
     keywords: ['ingress', 'nginx', 'load balancer', 'lb', 'gateway', 'traefik', 'haproxy', 'istio'],
     typeHint: 'gateway', devRequired: false, prodRequired: true,
     devNote: '개발 시 kubectl port-forward로 대체 가능',
+    devNoteEn: 'Can use kubectl port-forward in dev',
     suggestions: ['NGINX Ingress Controller', 'Traefik', 'AWS ALB Ingress', 'Istio Gateway']
   },
   {
     name: 'K8s Service (ClusterIP / NodePort)',
+    nameEn: 'K8s Service (ClusterIP / NodePort)',
     desc: 'Pod 간 통신을 위한 서비스 디스커버리',
+    descEn: 'Service discovery for inter-Pod communication',
     keywords: ['service', 'clusterip', 'nodeport', 'kube-proxy', 'k8s service', 'k8s svc'],
     typeHint: 'service', devRequired: true, prodRequired: true,
     suggestions: ['ClusterIP Service', 'NodePort Service', 'Headless Service']
   },
   {
     name: '컨테이너 레지스트리 (Container Registry)',
+    nameEn: 'Container Registry',
     desc: '컨테이너 이미지 저장소',
+    descEn: 'Container image repository',
     keywords: ['registry', 'harbor', 'ecr', 'gcr', 'acr', 'docker hub', 'nexus', '레지스트리'],
     typeHint: 'storage', devRequired: false, prodRequired: false,
     devNote: '로컬 빌드 또는 docker hub 사용 가능',
+    devNoteEn: 'Can use local build or Docker Hub',
     suggestions: ['Harbor', 'AWS ECR', 'Docker Hub', 'Nexus Repository']
   },
   {
     name: '데이터베이스 (Database)',
+    nameEn: 'Database',
     desc: '영구 데이터 저장을 위한 데이터베이스',
+    descEn: 'Database for persistent data storage',
     keywords: ['database', 'db', 'postgres', 'mysql', 'mariadb', 'mongodb', 'oracle', 'mssql', 'sqlite'],
     typeHint: 'database', devRequired: true, prodRequired: true,
-    suggestions: ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis (캐시 겸용)']
+    suggestions: ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis (cache)']
   },
   {
     name: '영구 스토리지 (Persistent Volume)',
+    nameEn: 'Persistent Storage (Persistent Volume)',
     desc: 'Pod 재시작 시에도 유지되는 데이터 저장소',
+    descEn: 'Data storage that persists across Pod restarts',
     keywords: ['pv', 'pvc', 'persistent', 'minio', 'nfs', 'ceph', 's3', 'storage class', '스토리지'],
     typeHint: 'storage', devRequired: false, prodRequired: true,
     devNote: '개발 시 emptyDir 또는 hostPath로 대체 가능',
-    suggestions: ['PV/PVC (hostPath)', 'MinIO (S3 호환)', 'NFS Provisioner', 'Ceph']
+    devNoteEn: 'Can use emptyDir or hostPath in dev',
+    suggestions: ['PV/PVC (hostPath)', 'MinIO (S3 compatible)', 'NFS Provisioner', 'Ceph']
   },
   {
     name: '메시지 큐 / 이벤트 브로커',
+    nameEn: 'Message Queue / Event Broker',
     desc: '비동기 메시지 처리 및 이벤트 스트리밍',
+    descEn: 'Async message processing and event streaming',
     keywords: ['kafka', 'rabbitmq', 'nats', 'redis', 'queue', 'mq', 'pub/sub', 'dead-letter', 'celery', '큐'],
     typeHint: 'queue', devRequired: false, prodRequired: false,
     suggestions: ['Apache Kafka', 'RabbitMQ', 'Redis Pub/Sub', 'NATS']
   },
   {
     name: '캐시 레이어 (Cache)',
+    nameEn: 'Cache Layer',
     desc: '자주 조회되는 데이터의 고속 캐싱',
+    descEn: 'High-speed caching for frequently accessed data',
     keywords: ['cache', 'redis', 'memcached', '캐시'],
     typeHint: 'queue', devRequired: false, prodRequired: false,
     suggestions: ['Redis', 'Memcached']
   },
   {
     name: '모니터링 / 메트릭 (Monitoring)',
+    nameEn: 'Monitoring / Metrics',
     desc: '클러스터 및 애플리케이션 상태 모니터링',
+    descEn: 'Cluster and application health monitoring',
     keywords: ['prometheus', 'grafana', 'monitoring', 'metric', 'datadog', 'newrelic', 'jaeger', 'zipkin', '모니터링'],
     typeHint: 'service', devRequired: false, prodRequired: true,
     devNote: '개발 시 kubectl logs/describe로 대체 가능',
-    suggestions: ['Prometheus + Grafana', 'Datadog Agent', 'ELK Stack', 'Jaeger (트레이싱)']
+    devNoteEn: 'Can use kubectl logs/describe in dev',
+    suggestions: ['Prometheus + Grafana', 'Datadog Agent', 'ELK Stack', 'Jaeger (tracing)']
   },
   {
     name: '로그 수집 (Logging)',
+    nameEn: 'Log Collection (Logging)',
     desc: '중앙 집중식 로그 수집 및 분석',
+    descEn: 'Centralized log collection and analysis',
     keywords: ['logging', 'log', 'elk', 'elasticsearch', 'kibana', 'fluentd', 'fluent-bit', 'loki', 'logstash', '로그'],
     typeHint: 'service', devRequired: false, prodRequired: true,
     devNote: '개발 시 stdout/stderr + kubectl logs로 충분',
+    devNoteEn: 'stdout/stderr + kubectl logs is enough in dev',
     suggestions: ['EFK (Elasticsearch + Fluentd + Kibana)', 'Loki + Promtail', 'Fluent Bit']
   },
   {
     name: 'CI/CD 파이프라인',
+    nameEn: 'CI/CD Pipeline',
     desc: '자동 빌드, 테스트, 배포 파이프라인',
+    descEn: 'Automated build, test, and deploy pipeline',
     keywords: ['ci/cd', 'cicd', 'jenkins', 'argocd', 'argo', 'github action', 'gitlab', 'tekton', 'flux', 'spinnaker'],
     typeHint: 'service', devRequired: false, prodRequired: false,
     suggestions: ['ArgoCD (GitOps)', 'Jenkins', 'GitHub Actions + ArgoCD', 'Tekton']
   },
   {
     name: '시크릿 / 설정 관리 (Secret & ConfigMap)',
+    nameEn: 'Secret & Config Management',
     desc: '민감 정보 및 환경 설정의 안전한 관리',
+    descEn: 'Secure management of sensitive data and configuration',
     keywords: ['secret', 'vault', 'configmap', 'config', 'sealed-secret', '시크릿', '설정'],
     typeHint: 'service', devRequired: false, prodRequired: false,
     suggestions: ['K8s Secret + ConfigMap', 'HashiCorp Vault', 'Sealed Secrets']
   },
   {
     name: 'RBAC / 보안 (Security)',
+    nameEn: 'RBAC / Security',
     desc: '역할 기반 접근 제어 및 네트워크 정책',
+    descEn: 'Role-based access control and network policies',
     keywords: ['rbac', 'security', 'network policy', 'opa', 'gatekeeper', 'cert-manager', 'tls', '보안', '인증'],
     typeHint: 'service', devRequired: false, prodRequired: false,
     suggestions: ['K8s RBAC', 'NetworkPolicy', 'cert-manager (TLS)', 'OPA Gatekeeper']
   },
   {
     name: 'DNS / 서비스 메시 (Service Mesh)',
+    nameEn: 'DNS / Service Mesh',
     desc: '서비스 간 통신 관리 및 내부 DNS',
+    descEn: 'Inter-service communication management and internal DNS',
     keywords: ['dns', 'coredns', 'istio', 'linkerd', 'service mesh', 'envoy', 'consul'],
     typeHint: 'service', devRequired: false, prodRequired: false,
-    suggestions: ['CoreDNS (기본 내장)', 'Istio', 'Linkerd']
+    suggestions: ['CoreDNS (built-in)', 'Istio', 'Linkerd']
   },
   {
     name: 'Auto Scaling (HPA / VPA)',
+    nameEn: 'Auto Scaling (HPA / VPA)',
     desc: '워크로드 및 클러스터 자동 스케일링',
+    descEn: 'Workload and cluster auto-scaling',
     keywords: ['hpa', 'vpa', 'autoscal', 'keda', 'cluster autoscaler', '스케일', 'scaling'],
     typeHint: 'service', devRequired: false, prodRequired: false,
-    suggestions: ['HPA (Horizontal Pod Autoscaler)', 'VPA', 'KEDA (이벤트 기반)', 'Cluster Autoscaler']
+    suggestions: ['HPA (Horizontal Pod Autoscaler)', 'VPA', 'KEDA (event-driven)', 'Cluster Autoscaler']
   }
 ];
 
@@ -3842,10 +4694,12 @@ function runInfraCheck(mode) {
     else if(isReq) failRequired++;
     else failOptional++;
     results.push({
-      name: cat.name, desc: cat.desc, found: found,
+      name: loomLang==='en'?(cat.nameEn||cat.name):cat.name,
+      desc: loomLang==='en'?(cat.descEn||cat.desc):cat.desc,
+      found: found,
       required: isReq, matchedNodes: matched,
       suggestions: cat.suggestions, typeHint: cat.typeHint,
-      devNote: cat.devNote || ''
+      devNote: loomLang==='en'?(cat.devNoteEn||cat.devNote||''):(cat.devNote||'')
     });
   });
 
@@ -3858,11 +4712,11 @@ function runInfraCheck(mode) {
     var incoming = edges.filter(function(e) { return e.to === n.id; });
     var outgoing = edges.filter(function(e) { return e.from === n.id; });
     if(incoming.length === 0 && outgoing.length === 0) {
-      connectivity.push({ node: n, issue: '고립 — 엣지 연결 없음', severity: 'high' });
+      connectivity.push({ node: n, issue: t('conn_isolated'), severity: 'high' });
     } else if(incoming.length === 0 && n.type !== 'start') {
-      connectivity.push({ node: n, issue: '입력 없음 — 이 노드로 들어오는 연결이 없음', severity: 'medium' });
+      connectivity.push({ node: n, issue: t('conn_no_input'), severity: 'medium' });
     } else if(outgoing.length === 0 && n.type !== 'end') {
-      connectivity.push({ node: n, issue: '출력 없음 — 이 노드에서 나가는 연결이 없음', severity: 'low' });
+      connectivity.push({ node: n, issue: t('conn_no_output'), severity: 'low' });
     }
   });
 
@@ -3877,8 +4731,8 @@ function runInfraCheck(mode) {
     if(!matchedNodeIds.has(n.id)) {
       unusedResources.push({
         node: n,
-        issue: '카테고리 미매칭 — 인프라 체크 카테고리에 해당하지 않는 노드',
-        action: '라벨/설명을 구체화하거나, 불필요 시 삭제 검토'
+        issue: t('unused_no_cat'),
+        action: t('unused_no_cat_action')
       });
     }
   });
@@ -3890,8 +4744,8 @@ function runInfraCheck(mode) {
     if(connectedPeers.length === 0 && !unusedResources.some(function(u) { return u.node.id === n.id; })) {
       unusedResources.push({
         node: n,
-        issue: '미연결 리소스 — 어떤 노드와도 연결되지 않음',
-        action: '다른 노드와 연결하거나 삭제 검토'
+        issue: t('unused_no_conn'),
+        action: t('unused_no_conn_action')
       });
     }
   });
@@ -3901,8 +4755,8 @@ function runInfraCheck(mode) {
     if(matched.length >= 3) {
       unusedResources.push({
         node: null,
-        issue: cat.name + ' — ' + matched.length + '개 중복 (' + matched.map(function(n) { return n.label; }).join(', ') + ')',
-        action: '역할 분담이 맞는지 확인, 불필요 노드 정리 검토'
+        issue: (loomLang==='en'?(cat.nameEn||cat.name):cat.name) + ' — ' + matched.length + t('dup_suffix') + ' (' + matched.map(function(n) { return n.label; }).join(', ') + ')',
+        action: t('unused_dup_action')
       });
     }
   });
@@ -3912,16 +4766,18 @@ function runInfraCheck(mode) {
   if(k8sConfig.enabled) {
     var totals = calcResourceTotals();
     var avail = getAvailableResources();
-    if(totals.maxCpu > avail.cpu) resourceIssues.push('CPU 초과: 필요 ' + totals.maxCpu + 'm > 가용 ' + avail.cpu + 'm');
-    if(totals.maxMem > avail.mem) resourceIssues.push('Memory 초과: 필요 ' + totals.maxMem + 'Mi > 가용 ' + avail.mem + 'Mi');
-    if(totals.maxDisk > avail.disk) resourceIssues.push('Disk 초과: 필요 ' + totals.maxDisk + 'Gi > 가용 ' + avail.disk + 'Gi');
-    if(totals.totalGpu > 0 && totals.totalGpu > avail.gpu) resourceIssues.push('GPU 초과: 필요 ' + totals.totalGpu + '개 > 가용 ' + avail.gpu + '개');
-    if(totals.totalGpu > 0 && avail.gpu === 0) resourceIssues.push('GPU 노드 미설정: GPU를 사용하는 워크로드가 있지만 K8s에 GPU 노드가 설정되지 않았습니다');
+    var _ov = loomLang==='en'?' exceeded: need ':' 초과: 필요 ';
+    var _av = loomLang==='en'?' > available ':' > 가용 ';
+    if(totals.maxCpu > avail.cpu) resourceIssues.push('CPU' + _ov + totals.maxCpu + 'm' + _av + avail.cpu + 'm');
+    if(totals.maxMem > avail.mem) resourceIssues.push('Memory' + _ov + totals.maxMem + 'Mi' + _av + avail.mem + 'Mi');
+    if(totals.maxDisk > avail.disk) resourceIssues.push('Disk' + _ov + totals.maxDisk + 'Gi' + _av + avail.disk + 'Gi');
+    if(totals.totalGpu > 0 && totals.totalGpu > avail.gpu) resourceIssues.push('GPU' + _ov + totals.totalGpu + _av + avail.gpu);
+    if(totals.totalGpu > 0 && avail.gpu === 0) resourceIssues.push(t('res_gpu_no_node'));
     if(!isDev) {
       infra.forEach(function(n) {
         var r = getNodeResources(n);
         if(r.replicas < 2 && ['server','service','gateway'].includes(n.type)) {
-          resourceIssues.push(n.label + ': replica=' + r.replicas + ' — 고가용성(HA) 위해 2+ 권장');
+          resourceIssues.push(n.label + ': replica=' + r.replicas + ' — ' + t('res_ha_warn'));
         }
       });
     }
@@ -3934,7 +4790,7 @@ function runInfraCheck(mode) {
       if(r.gpu > 0 && taints.length > 0) {
         var hasGpuTol = (n.tolerations || []).length > 0;
         if(!hasGpuTol) {
-          resourceIssues.push(n.label + ': GPU(' + r.gpu + ')를 요청하지만 toleration이 없습니다. GPU 노드 테인트에 대한 toleration 설정을 확인하세요.');
+          resourceIssues.push(n.label + ': GPU(' + r.gpu + ') ' + t('res_gpu_no_tol'));
         }
       }
       // nodeSelector가 존재하는데 매칭되는 라벨이 클러스터에 없는 경우
@@ -3942,7 +4798,7 @@ function runInfraCheck(mode) {
         Object.keys(n.nodeSelector).forEach(function(sel) {
           var found = nodeLabels.some(function(l) { return l.key + '=' + l.value === sel; });
           if(!found) {
-            resourceIssues.push(n.label + ': nodeSelector "' + sel + '"에 매칭되는 클러스터 노드 라벨이 없습니다.');
+            resourceIssues.push(n.label + ': nodeSelector "' + sel + '"' + t('res_no_selector'));
           }
         });
       }
@@ -3970,39 +4826,47 @@ function renderInfraCheckResult(results, connectivity, unusedResources, resource
 
   // ── 모드 토글 ──
   var modeBar = document.createElement('div');
-  modeBar.style.cssText = 'display:flex;gap:0;margin-bottom:14px;border-radius:8px;overflow:hidden;border:1px solid #30363d;';
+  modeBar.style.cssText = 'display:flex;gap:0;margin-bottom:14px;border-radius:8px;overflow:hidden;border:1px solid var(--border);';
 
   function makeBtn(label, mode, active) {
     var btn = document.createElement('button');
     btn.style.cssText = 'flex:1;padding:8px 0;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:inherit;transition:all .15s;';
     if(active) {
-      btn.style.background = mode === 'dev' ? '#1a3d2b' : '#1f3a5f';
-      btn.style.color = mode === 'dev' ? '#3fb950' : '#58a6ff';
+      btn.style.background = mode === 'dev' ? 'rgba(52,211,153,0.12)' : 'rgba(91,160,245,0.12)';
+      btn.style.color = mode === 'dev' ? 'var(--green)' : 'var(--accent)';
     } else {
-      btn.style.background = '#0d1117';
-      btn.style.color = '#6e7681';
+      btn.style.background = 'var(--bg)';
+      btn.style.color = 'var(--text3)';
     }
     btn.textContent = label;
     btn.addEventListener('click', function() { runInfraCheck(mode); });
     return btn;
   }
-  modeBar.appendChild(makeBtn('🔧 개발 (필수만)', 'dev', isDev));
-  modeBar.appendChild(makeBtn('🚀 운영 (전체)', 'prod', !isDev));
+  modeBar.appendChild(makeBtn(loomLang==='en'?'🔧 Dev (Required Only)':'🔧 개발 (필수만)', 'dev', isDev));
+  modeBar.appendChild(makeBtn(loomLang==='en'?'🚀 Prod (Full)':'🚀 운영 (전체)', 'prod', !isDev));
   body.appendChild(modeBar);
 
   // ── 점수 요약 ──
   var scoreColor = score >= 80 ? '#3fb950' : score >= 50 ? '#d29922' : '#f85149';
-  var modeLabel = isDev ? '개발' : '운영';
+  var modeLabel = isDev ? (loomLang==='en'?'Dev':'개발') : (loomLang==='en'?'Prod':'운영');
   var verdict;
   if(isDev) {
-    verdict = failRequired > 0 ? '개발 환경 구성 미완' : '개발 환경 구성 완료';
+    verdict = failRequired > 0
+      ? (loomLang==='en'?'Dev setup incomplete':'개발 환경 구성 미완')
+      : (loomLang==='en'?'Dev setup complete':'개발 환경 구성 완료');
   } else {
-    verdict = failRequired > 0 ? '운영 불가' : (failOptional > 3 ? '운영 위험' : (score >= 80 ? '운영 가능' : '개선 필요'));
+    verdict = failRequired > 0
+      ? (loomLang==='en'?'Not production-ready':'운영 불가')
+      : (failOptional > 3
+        ? (loomLang==='en'?'Production risk':'운영 위험')
+        : (score >= 80
+          ? (loomLang==='en'?'Production-ready':'운영 가능')
+          : (loomLang==='en'?'Needs improvement':'개선 필요')));
   }
-  var verdictColor = failRequired > 0 ? '#f85149' : (score >= 80 ? '#3fb950' : '#d29922');
+  var verdictColor = failRequired > 0 ? 'var(--red)' : (score >= 80 ? 'var(--green)' : 'var(--yellow)');
 
   var summary = document.createElement('div');
-  summary.style.cssText = 'display:flex;align-items:center;gap:20px;padding:16px;background:#0d1117;border-radius:10px;margin-bottom:16px;';
+  summary.style.cssText = 'display:flex;align-items:center;gap:20px;padding:16px;background:var(--bg);border-radius:10px;margin-bottom:16px;';
 
   var ring = document.createElement('div');
   ring.style.cssText = 'width:72px;height:72px;border-radius:50%;border:4px solid ' + scoreColor + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;';
@@ -4015,8 +4879,8 @@ function renderInfraCheckResult(results, connectivity, unusedResources, resource
   info.style.cssText = 'flex:1;';
 
   var modeTag = document.createElement('span');
-  modeTag.style.cssText = 'font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;margin-right:8px;background:' + (isDev ? 'rgba(63,185,80,0.15)' : 'rgba(88,166,255,0.15)') + ';color:' + (isDev ? '#3fb950' : '#58a6ff');
-  modeTag.textContent = modeLabel + ' 모드';
+  modeTag.style.cssText = 'font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;margin-right:8px;background:' + (isDev ? 'rgba(52,211,153,0.15)' : 'rgba(91,160,245,0.15)') + ';color:' + (isDev ? 'var(--green)' : 'var(--accent)');
+  modeTag.textContent = modeLabel + (loomLang==='en'?' mode':' 모드');
 
   var verdictEl = document.createElement('div');
   verdictEl.style.cssText = 'font-size:16px;font-weight:700;color:' + verdictColor + ';margin-bottom:4px;display:flex;align-items:center;gap:8px;';
@@ -4025,10 +4889,10 @@ function renderInfraCheckResult(results, connectivity, unusedResources, resource
   info.appendChild(verdictEl);
 
   var detail = document.createElement('div');
-  detail.style.cssText = 'font-size:11px;color:#8b949e;line-height:1.6;';
-  detail.textContent = passCount + '/' + total + ' 카테고리 충족';
-  if(failRequired > 0) detail.textContent += ' · 필수 누락 ' + failRequired + '건';
-  if(!isDev && failOptional > 0) detail.textContent += ' · 권장 누락 ' + failOptional + '건';
+  detail.style.cssText = 'font-size:11px;color:var(--text2);line-height:1.6;';
+  detail.textContent = passCount + '/' + total + (loomLang==='en'?' categories passed':' 카테고리 충족');
+  if(failRequired > 0) detail.textContent += ' · ' + (loomLang==='en'?'Required missing ':'필수 누락 ') + failRequired + (loomLang==='en'?'':'건');
+  if(!isDev && failOptional > 0) detail.textContent += ' · ' + (loomLang==='en'?'Recommended missing ':'권장 누락 ') + failOptional + (loomLang==='en'?'':'건');
   info.appendChild(detail);
 
   summary.appendChild(ring);
@@ -4037,8 +4901,8 @@ function renderInfraCheckResult(results, connectivity, unusedResources, resource
 
   // ── 카테고리별 결과 ──
   var secTitle = document.createElement('div');
-  secTitle.style.cssText = 'font-size:12px;font-weight:700;color:#e6edf3;margin-bottom:8px;';
-  secTitle.textContent = isDev ? '개발 필수 구성요소' : '구성요소 체크리스트';
+  secTitle.style.cssText = 'font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;';
+  secTitle.textContent = isDev ? (loomLang==='en'?'Required Dev Components':'개발 필수 구성요소') : (loomLang==='en'?'Component Checklist':'구성요소 체크리스트');
   body.appendChild(secTitle);
 
   results.forEach(function(r) {
@@ -4051,20 +4915,20 @@ function renderInfraCheckResult(results, connectivity, unusedResources, resource
     header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;';
 
     var nameEl = document.createElement('span');
-    nameEl.style.cssText = 'font-size:12px;font-weight:600;color:#e6edf3;';
+    nameEl.style.cssText = 'font-size:12px;font-weight:600;color:var(--text);';
     nameEl.textContent = (r.found ? '✔ ' : '✘ ') + r.name;
 
     var badge = document.createElement('span');
     badge.style.cssText = 'font-size:10px;padding:2px 6px;border-radius:3px;font-weight:600;';
     if(r.found) {
       badge.style.background = 'rgba(63,185,80,0.2)'; badge.style.color = '#3fb950';
-      badge.textContent = '충족';
+      badge.textContent = loomLang==='en'?'Pass':'충족';
     } else if(r.required) {
       badge.style.background = 'rgba(248,81,73,0.2)'; badge.style.color = '#f85149';
-      badge.textContent = '필수 누락';
+      badge.textContent = loomLang==='en'?'Required':'필수 누락';
     } else {
       badge.style.background = 'rgba(210,153,34,0.2)'; badge.style.color = '#d29922';
-      badge.textContent = '권장';
+      badge.textContent = loomLang==='en'?'Recommended':'권장';
     }
     header.appendChild(nameEl);
     header.appendChild(badge);
@@ -4072,18 +4936,18 @@ function renderInfraCheckResult(results, connectivity, unusedResources, resource
 
     if(r.found && r.matchedNodes.length > 0) {
       var matched = document.createElement('div');
-      matched.style.cssText = 'font-size:10px;color:#8b949e;margin-top:3px;padding-left:18px;';
-      matched.textContent = '매칭: ' + r.matchedNodes.map(function(n) { return n.label; }).join(', ');
+      matched.style.cssText = 'font-size:10px;color:var(--text2);margin-top:3px;padding-left:18px;';
+      matched.textContent = (loomLang==='en'?'Matched: ':'매칭: ') + r.matchedNodes.map(function(n) { return n.label; }).join(', ');
       row.appendChild(matched);
     }
     if(!r.found) {
       var descEl = document.createElement('div');
-      descEl.style.cssText = 'font-size:10px;color:#8b949e;margin-top:3px;padding-left:18px;';
+      descEl.style.cssText = 'font-size:10px;color:var(--text2);margin-top:3px;padding-left:18px;';
       descEl.textContent = r.desc;
       row.appendChild(descEl);
       var sugEl = document.createElement('div');
-      sugEl.style.cssText = 'font-size:10px;color:#58a6ff;margin-top:2px;padding-left:18px;';
-      sugEl.textContent = '추천: ' + r.suggestions.join(', ');
+      sugEl.style.cssText = 'font-size:10px;color:var(--accent);margin-top:2px;padding-left:18px;';
+      sugEl.textContent = (loomLang==='en'?'Suggestion: ':'추천: ') + r.suggestions.join(', ');
       row.appendChild(sugEl);
     }
     body.appendChild(row);
@@ -4092,8 +4956,8 @@ function renderInfraCheckResult(results, connectivity, unusedResources, resource
   // ── 미사용 리소스 ──
   if(unusedResources.length > 0) {
     var unusedTitle = document.createElement('div');
-    unusedTitle.style.cssText = 'font-size:12px;font-weight:700;color:#e6edf3;margin:14px 0 8px;';
-    unusedTitle.textContent = '미사용 / 의심 리소스 (' + unusedResources.length + '건)';
+    unusedTitle.style.cssText = 'font-size:12px;font-weight:700;color:var(--text);margin:14px 0 8px;';
+    unusedTitle.textContent = (loomLang==='en'?'Unused / Suspicious Resources (':'미사용 / 의심 리소스 (') + unusedResources.length + (loomLang==='en'?')':'건)');
     body.appendChild(unusedTitle);
 
     unusedResources.forEach(function(u) {
@@ -4106,7 +4970,7 @@ function renderInfraCheckResult(results, connectivity, unusedResources, resource
       row.appendChild(issueEl);
 
       var actionEl = document.createElement('div');
-      actionEl.style.cssText = 'font-size:10px;color:#8b949e;margin-top:2px;padding-left:18px;';
+      actionEl.style.cssText = 'font-size:10px;color:var(--text2);margin-top:2px;padding-left:18px;';
       actionEl.textContent = '→ ' + u.action;
       row.appendChild(actionEl);
 
@@ -4123,8 +4987,8 @@ function renderInfraCheckResult(results, connectivity, unusedResources, resource
   // ── 연결성 이슈 ──
   if(connectivity.length > 0) {
     var connTitle = document.createElement('div');
-    connTitle.style.cssText = 'font-size:12px;font-weight:700;color:#e6edf3;margin:14px 0 8px;';
-    connTitle.textContent = '연결성 이슈 (' + connectivity.length + '건)';
+    connTitle.style.cssText = 'font-size:12px;font-weight:700;color:var(--text);margin:14px 0 8px;';
+    connTitle.textContent = (loomLang==='en'?'Connectivity Issues (':'연결성 이슈 (') + connectivity.length + (loomLang==='en'?')':'건)');
     body.appendChild(connTitle);
 
     connectivity.forEach(function(c) {
@@ -4142,8 +5006,8 @@ function renderInfraCheckResult(results, connectivity, unusedResources, resource
   // ── 리소스 이슈 ──
   if(resourceIssues.length > 0) {
     var resTitle = document.createElement('div');
-    resTitle.style.cssText = 'font-size:12px;font-weight:700;color:#e6edf3;margin:14px 0 8px;';
-    resTitle.textContent = '리소스 이슈 (' + resourceIssues.length + '건)';
+    resTitle.style.cssText = 'font-size:12px;font-weight:700;color:var(--text);margin:14px 0 8px;';
+    resTitle.textContent = (loomLang==='en'?'Resource Issues (':'리소스 이슈 (') + resourceIssues.length + (loomLang==='en'?')':'건)');
     body.appendChild(resTitle);
     resourceIssues.forEach(function(issue) {
       var row = document.createElement('div');
@@ -4157,28 +5021,28 @@ function renderInfraCheckResult(results, connectivity, unusedResources, resource
   var missing = results.filter(function(r) { return !r.found; });
   if(missing.length > 0) {
     var recTitle = document.createElement('div');
-    recTitle.style.cssText = 'font-size:12px;font-weight:700;color:#e6edf3;margin:14px 0 8px;';
-    recTitle.textContent = '추가 필요 노드 요약';
+    recTitle.style.cssText = 'font-size:12px;font-weight:700;color:var(--text);margin:14px 0 8px;';
+    recTitle.textContent = loomLang==='en'?'Missing Nodes Summary':'추가 필요 노드 요약';
     body.appendChild(recTitle);
 
     var table = document.createElement('div');
-    table.style.cssText = 'background:#0d1117;border-radius:8px;padding:10px 14px;font-size:11px;';
+    table.style.cssText = 'background:var(--bg);border-radius:8px;padding:10px 14px;font-size:11px;';
     var thead = document.createElement('div');
-    thead.style.cssText = 'display:grid;grid-template-columns:1fr 80px 1fr;gap:8px;padding-bottom:6px;border-bottom:1px solid #21262d;color:#8b949e;font-weight:600;';
-    var th1 = document.createElement('span'); th1.textContent = '카테고리';
-    var th2 = document.createElement('span'); th2.textContent = '중요도'; th2.style.textAlign = 'center';
-    var th3 = document.createElement('span'); th3.textContent = '추천 솔루션';
+    thead.style.cssText = 'display:grid;grid-template-columns:1fr 80px 1fr;gap:8px;padding-bottom:6px;border-bottom:1px solid var(--surface2);color:var(--text2);font-weight:600;';
+    var th1 = document.createElement('span'); th1.textContent = loomLang==='en'?'Category':'카테고리';
+    var th2 = document.createElement('span'); th2.textContent = loomLang==='en'?'Priority':'중요도'; th2.style.textAlign = 'center';
+    var th3 = document.createElement('span'); th3.textContent = loomLang==='en'?'Suggestion':'추천 솔루션';
     thead.appendChild(th1); thead.appendChild(th2); thead.appendChild(th3);
     table.appendChild(thead);
 
     missing.forEach(function(r) {
       var tr = document.createElement('div');
-      tr.style.cssText = 'display:grid;grid-template-columns:1fr 80px 1fr;gap:8px;padding:5px 0;border-bottom:1px solid #161b22;color:#c9d1d9;';
+      tr.style.cssText = 'display:grid;grid-template-columns:1fr 80px 1fr;gap:8px;padding:5px 0;border-bottom:1px solid var(--surface2);color:var(--text);';
       var td1 = document.createElement('span'); td1.textContent = r.name.split('(')[0].trim();
       var td2 = document.createElement('span');
-      td2.style.cssText = 'text-align:center;font-weight:600;color:' + (r.required ? '#f85149' : '#d29922');
-      td2.textContent = r.required ? '필수' : '권장';
-      var td3 = document.createElement('span'); td3.style.color = '#58a6ff';
+      td2.style.cssText = 'text-align:center;font-weight:600;color:' + (r.required ? 'var(--red)' : 'var(--yellow)');
+      td2.textContent = r.required ? (loomLang==='en'?'Required':'필수') : (loomLang==='en'?'Recommended':'권장');
+      var td3 = document.createElement('span'); td3.style.color = 'var(--accent)';
       td3.textContent = r.suggestions[0];
       tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
       table.appendChild(tr);
@@ -4222,13 +5086,13 @@ function updateResourceDashboard() {
 
     const label = barId.replace('res','').replace('Bar','');
     if (used > total) {
-      badges.push({ text: label + ' 초과 (+' + (used - total) + unit + ')', cls: 'over' });
+      badges.push({ text: label + (loomLang==='en'?' Over (+':' 초과 (+') + (used - total) + unit + ')', cls: 'over' });
     } else if (pctUsed > 85) {
-      badges.push({ text: label + ' 주의 (잔여 ' + remaining + unit + ')', cls: 'warn' });
+      badges.push({ text: label + (loomLang==='en'?' Warning (rem. ':' 주의 (잔여 ') + remaining + unit + ')', cls: 'warn' });
     } else if (min > total) {
-      badges.push({ text: label + ' 최소 미달', cls: 'critical' });
+      badges.push({ text: label + (loomLang==='en'?' Below min':' 최소 미달'), cls: 'critical' });
     } else {
-      badges.push({ text: label + ' 여유 (' + remaining + unit + ')', cls: 'ok' });
+      badges.push({ text: label + (loomLang==='en'?' OK (rem. ':' 여유 (') + remaining + unit + ')', cls: 'ok' });
     }
   }
 
@@ -4260,8 +5124,8 @@ function updateResourceDashboard() {
   detail.textContent = '';
   if (totals.perNode.length === 0) {
     var empty = document.createElement('div');
-    empty.style.color = '#6e7681';
-    empty.textContent = '인프라 노드 없음';
+    empty.style.color = 'var(--text3)';
+    empty.textContent = t('rd_no_infra');
     detail.appendChild(empty);
   } else {
     totals.perNode.forEach(function(p) {
@@ -4275,10 +5139,23 @@ function updateResourceDashboard() {
         return function() { focusOnNode(nodeId); };
       })(p.id));
       var nameSpan = document.createElement('span');
-      nameSpan.style.color = matches ? '#e6edf3' : '#6e7681';
+      nameSpan.style.color = matches ? 'var(--text)' : 'var(--text3)';
       nameSpan.textContent = p.label + (p.rep > 1 ? ' \u00d7' + p.rep : '') + (p.ns !== 'default' ? ' [' + p.ns + ']' : '');
       var valSpan = document.createElement('span');
-      valSpan.textContent = p.maxCpu + 'm / ' + p.maxMem + 'Mi' + (p.gpu > 0 ? ' / GPU:' + p.gpu : '');
+      valSpan.style.cssText = 'display:flex;align-items:center;gap:2px;';
+      var valText = document.createElement('span');
+      valText.textContent = p.maxCpu + 'm / ' + p.maxMem + 'Mi' + (p.gpu > 0 ? ' / GPU:' + p.gpu : '');
+      valSpan.appendChild(valText);
+      // IaC mini buttons
+      if (node && getWorkloadType(node.type)) {
+        var btnY = document.createElement('button'); btnY.className='iac-mini-btn'; btnY.textContent='Y'; btnY.title=t('iac_yaml');
+        btnY.addEventListener('click', (function(id){return function(e){e.stopPropagation();showNodeK8sYAML(id);};})(p.id));
+        var btnT = document.createElement('button'); btnT.className='iac-mini-btn'; btnT.textContent='T'; btnT.title=t('iac_terraform');
+        btnT.addEventListener('click', (function(id){return function(e){e.stopPropagation();showNodeTerraform(id);};})(p.id));
+        var btnH = document.createElement('button'); btnH.className='iac-mini-btn'; btnH.textContent='H'; btnH.title=t('iac_helm');
+        btnH.addEventListener('click', (function(id){return function(e){e.stopPropagation();showNodeHelm(id);};})(p.id));
+        valSpan.appendChild(btnY); valSpan.appendChild(btnT); valSpan.appendChild(btnH);
+      }
       row.appendChild(nameSpan);
       row.appendChild(valSpan);
       detail.appendChild(row);
@@ -4322,12 +5199,12 @@ function updateK8sSummary() {
   var totalDisk = nc * disk;
   var el = document.getElementById('k8sSummary');
   var warn = '';
-  if(rCpu >= cpu) warn += ' [CPU 예약 초과!]';
-  if(rMem >= mem) warn += ' [MEM 예약 초과!]';
+  if(rCpu >= cpu) warn += t('k8s_cpu_reserve_warn');
+  if(rMem >= mem) warn += t('k8s_mem_reserve_warn');
   var gpuN = parseInt(document.getElementById('k8sGpuNodes').value) || 0;
   var gpuP = parseInt(document.getElementById('k8sGpuPerNode').value) || 0;
   var totalGpu = gpuN * gpuP;
-  var gpuText = totalGpu > 0 ? '   GPU: ' + totalGpu + '개 (' + gpuN + '\u00d7' + gpuP + ')' : '';
+  var gpuText = totalGpu > 0 ? '   GPU: ' + totalGpu + (loomLang==='en'?' units (':' 개 (') + gpuN + '\u00d7' + gpuP + ')' : '';
   el.textContent = 'CPU: ' + totalCpu + 'm (' + nc + '\u00d7' + cpuPerNode + 'm)   MEM: ' + totalMem + 'Mi (' + nc + '\u00d7' + memPerNode + 'Mi)   DISK: ' + totalDisk + 'Gi (' + nc + '\u00d7' + disk + 'Gi)' + gpuText + warn;
   el.style.color = warn ? '#f85149' : '';
 }
@@ -4348,10 +5225,10 @@ function applyK8sConfig() {
   k8sConfig.gpuModel    = document.getElementById('k8sGpuModel').value.trim();
   // 예약 리소스가 노드 리소스보다 크면 경고
   if(k8sConfig.reservedCpu >= k8sConfig.nodeCpu) {
-    alert('경고: 예약 CPU(' + k8sConfig.reservedCpu + 'm)가 노드 CPU(' + k8sConfig.nodeCpu + 'm)보다 크거나 같습니다.\n예약값은 노드당 시스템 예약량(예: 500m)입니다.');
+    alert(t('k8s_cpu_over'));
   }
   if(k8sConfig.reservedMem >= k8sConfig.nodeMem) {
-    alert('경고: 예약 MEM(' + k8sConfig.reservedMem + 'Mi)이 노드 MEM(' + k8sConfig.nodeMem + 'Mi)보다 크거나 같습니다.');
+    alert(t('k8s_mem_over'));
   }
   k8sConfig.enabled = true;
   closeK8sConfig();
@@ -4425,7 +5302,7 @@ function addK8sNamespace() {
   var ns = input.value.trim();
   if(!ns) return;
   if(!k8sConfig.namespaces) k8sConfig.namespaces = ['default'];
-  if(k8sConfig.namespaces.includes(ns)) { alert('이미 존재하는 네임스페이스입니다.'); return; }
+  if(k8sConfig.namespaces.includes(ns)) { alert(t('k8s_ns_dup')); return; }
   k8sConfig.namespaces.push(ns);
   input.value = '';
   renderK8sScheduling();
@@ -4447,7 +5324,7 @@ function addK8sTaint() {
   if(!k8sConfig.taints) k8sConfig.taints = [];
   // 중복 체크
   if(k8sConfig.taints.some(function(t) { return t.key === key && t.value === val && t.effect === effect; })) {
-    alert('동일한 테인트가 이미 존재합니다.'); return;
+    alert(t('k8s_taint_dup')); return;
   }
   k8sConfig.taints.push({ key: key, value: val, effect: effect });
   document.getElementById('k8sTaintKey').value = '';
@@ -4474,7 +5351,7 @@ function addK8sLabel() {
   if(!key) return;
   if(!k8sConfig.nodeLabels) k8sConfig.nodeLabels = [];
   if(k8sConfig.nodeLabels.some(function(l) { return l.key === key && l.value === val; })) {
-    alert('동일한 라벨이 이미 존재합니다.'); return;
+    alert(t('k8s_label_dup')); return;
   }
   k8sConfig.nodeLabels.push({ key: key, value: val });
   document.getElementById('k8sLabelKey').value = '';
@@ -4520,8 +5397,8 @@ function updateNodeSchedProps() {
   var taints = k8sConfig.taints || [];
   if(taints.length === 0) {
     var hint = document.createElement('div');
-    hint.style.cssText = 'font-size:9px;color:#6e7681;';
-    hint.textContent = 'K8s 설정에서 테인트를 먼저 추가하세요';
+    hint.style.cssText = 'font-size:9px;color:var(--text3);';
+    hint.textContent = t('k8s_taint_hint');
     tolList.appendChild(hint);
   } else {
     taints.forEach(function(t, i) {
@@ -4561,8 +5438,8 @@ function updateNodeSchedProps() {
   var labels = k8sConfig.nodeLabels || [];
   if(labels.length === 0) {
     var hint2 = document.createElement('div');
-    hint2.style.cssText = 'font-size:9px;color:#6e7681;';
-    hint2.textContent = 'K8s 설정에서 노드 라벨을 먼저 추가하세요';
+    hint2.style.cssText = 'font-size:9px;color:var(--text3);';
+    hint2.textContent = t('k8s_label_hint');
     nSelList.appendChild(hint2);
   } else {
     labels.forEach(function(l) {
@@ -4644,7 +5521,7 @@ function updateFilterUI() {
   var curNs = nsSel.value;
   nsSel.textContent = '';
   var allOpt = document.createElement('option');
-  allOpt.value = ''; allOpt.textContent = '전체';
+  allOpt.value = ''; allOpt.textContent = t('filter_all');
   nsSel.appendChild(allOpt);
   (k8sConfig.namespaces || []).forEach(function(ns) {
     var opt = document.createElement('option');
@@ -4659,11 +5536,11 @@ function updateFilterUI() {
   var curTol = tolSel.value;
   tolSel.textContent = '';
   var allTol = document.createElement('option');
-  allTol.value = ''; allTol.textContent = '전체';
+  allTol.value = ''; allTol.textContent = t('filter_all');
   tolSel.appendChild(allTol);
   // "없음" 옵션 — toleration이 없는 노드
   var noneTol = document.createElement('option');
-  noneTol.value = '__none__'; noneTol.textContent = '(toleration 없음)';
+  noneTol.value = '__none__'; noneTol.textContent = t('filter_none_tol');
   tolSel.appendChild(noneTol);
   (k8sConfig.taints || []).forEach(function(t) {
     var val = t.key + ':' + t.value + ':' + t.effect;
@@ -4679,11 +5556,11 @@ function updateFilterUI() {
   var curNSel = nSelSel.value;
   nSelSel.textContent = '';
   var allNSel = document.createElement('option');
-  allNSel.value = ''; allNSel.textContent = '전체';
+  allNSel.value = ''; allNSel.textContent = t('filter_all');
   nSelSel.appendChild(allNSel);
   // "없음" 옵션 — nodeSelector가 없는 노드
   var noneNSel = document.createElement('option');
-  noneNSel.value = '__none__'; noneNSel.textContent = '(selector 없음)';
+  noneNSel.value = '__none__'; noneNSel.textContent = t('filter_none_sel');
   nSelSel.appendChild(noneNSel);
   (k8sConfig.nodeLabels || []).forEach(function(l) {
     var val = l.key + '=' + l.value;
@@ -4852,7 +5729,7 @@ function updateLayerList() {
     if(state.layers.length > 1) {
       const delBtn = document.createElement('span');
       delBtn.style.cssText = 'font-size:10px;color:var(--text3);cursor:pointer;padding:0 2px';
-      delBtn.title = '삭제';
+      delBtn.title = t('layer_delete_btn');
       delBtn.textContent = '\u2715';
       delBtn.onclick = (e) => { e.stopPropagation(); removeLayer(l.id); };
       row.appendChild(delBtn);
@@ -4878,7 +5755,7 @@ function addLayer() {
 
 function removeLayer(id) {
   if(state.layers.length <= 1) return;
-  if(!confirm('이 레이어를 삭제하시겠습니까? 노드는 Layer 1로 이동됩니다.')) return;
+  if(!confirm(t('layer_confirm_del'))) return;
   state.nodes.forEach(n => { if((n.layer || 1) === id) n.layer = 1; });
   state.layers = state.layers.filter(l => l.id !== id);
   if(state.activeLayer === id) state.activeLayer = null;
@@ -4889,7 +5766,7 @@ function removeLayer(id) {
 function renameLayer(id) {
   const layer = state.layers.find(l => l.id === id);
   if(!layer) return;
-  const name = prompt('레이어 이름:', layer.name);
+  const name = prompt(t('layer_rename_prompt'), layer.name);
   if(name && name.trim()) {
     layer.name = name.trim();
     render();
@@ -4972,15 +5849,15 @@ function createExportCanvas() {
   var minY = Math.min.apply(null, allY) - pad, maxY = Math.max.apply(null, allY) + pad;
   var tmpCanvas = document.createElement('canvas');
   tmpCanvas.width = maxX - minX; tmpCanvas.height = maxY - minY;
-  var tc = tmpCanvas.getContext('2d');
-  tc.fillStyle = '#0d1117'; tc.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
-  tc.translate(-minX, -minY);
+  var tctx = tmpCanvas.getContext('2d');
+  tctx.fillStyle = themeColor('bg'); tctx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
+  tctx.translate(-minX, -minY);
   renderToCanvas(tmpCanvas);
   return tmpCanvas;
 }
 
 function exportPNG() {
-  if(!state.nodes.length) { alert('노드가 없습니다'); return; }
+  if(!state.nodes.length) { alert(t('no_nodes')); return; }
   var tmpCanvas = createExportCanvas();
   if(!tmpCanvas) return;
   var link = document.createElement('a');
@@ -5010,7 +5887,7 @@ function exportJSON() {
     meta: {
       exportedAt: now.toISOString(),
       editorVersion: CURRENT_VERSION,
-      tool: 'InfraFlow'
+      tool: 'Loom'
     },
     nodes: exportNodes,
     edges: state.edges,
@@ -5029,12 +5906,21 @@ function exportJSON() {
 // ════════════════════════════════════════════════════════
 function toggleExportMenu(e) {
   e.stopPropagation();
+  closeHelpMenu();
   document.getElementById('exportDropdown').classList.toggle('open');
 }
 function closeExportMenu() {
   document.getElementById('exportDropdown').classList.remove('open');
 }
-document.addEventListener('click', function() { closeExportMenu(); });
+function toggleHelpMenu(e) {
+  e.stopPropagation();
+  closeExportMenu();
+  document.getElementById('helpDropdown').classList.toggle('open');
+}
+function closeHelpMenu() {
+  document.getElementById('helpDropdown').classList.remove('open');
+}
+document.addEventListener('click', function() { closeExportMenu(); closeHelpMenu(); });
 
 // ════════════════════════════════════════════════════════
 // COMMON EXPORT DATA
@@ -5084,8 +5970,8 @@ function getExportTableData() {
 // EXCEL EXPORT
 // ════════════════════════════════════════════════════════
 function exportExcel() {
-  if (typeof XLSX === 'undefined') { alert('SheetJS 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.'); return; }
-  if (!state.nodes.length) { alert('노드가 없습니다'); return; }
+  if (typeof XLSX === 'undefined') { alert(t('xlsx_loading')); return; }
+  if (!state.nodes.length) { alert(t('no_nodes')); return; }
 
   var wb = XLSX.utils.book_new();
   var td = getExportTableData();
@@ -5156,16 +6042,16 @@ function loadKoreanFont() {
 
 function exportPDF() {
   if (!window.jspdf || !window.jspdf.jsPDF) {
-    alert('jsPDF 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.'); return;
+    alert(t('pdf_loading')); return;
   }
-  if (!state.nodes.length) { alert('노드가 없습니다'); return; }
+  if (!state.nodes.length) { alert(t('no_nodes')); return; }
 
   // 폰트 로드 후 PDF 생성
   loadKoreanFont().then(function(fontBase64) {
     _buildPDF(fontBase64);
   }).catch(function(err) {
     console.error('Font load error:', err);
-    alert('폰트 로딩 실패. 기본 폰트로 생성합니다.');
+    alert(t('pdf_font_fail'));
     _buildPDF(null);
   });
 }
@@ -5191,7 +6077,7 @@ function _buildPDF(fontBase64) {
   doc.rect(0, 0, 297, 210, 'F');
   doc.setTextColor(230, 237, 243);
   doc.setFont(fontName); doc.setFontSize(28);
-  doc.text('InfraFlow Report', 148.5, 70, { align: 'center' });
+  doc.text('Loom Report', 148.5, 70, { align: 'center' });
   doc.setFontSize(12);
   doc.setTextColor(139, 148, 158);
   doc.text(dateStr + ' ' + timeStr, 148.5, 85, { align: 'center' });
@@ -5230,7 +6116,7 @@ function _buildPDF(fontBase64) {
       doc.rect(0, 0, 297, 12, 'F');
       doc.setFont(fontName); doc.setFontSize(8);
       doc.setTextColor(80, 80, 80);
-      doc.text('InfraFlow - Node Details', 10, 8);
+      doc.text('Loom - Node Details', 10, 8);
     }
   });
 
@@ -5350,7 +6236,7 @@ function importJSON() {
           showMigrationNotice(result.fromVersion, CURRENT_VERSION);
         }
         state.dirty = false;
-      } catch(err) { console.error('Import error:', err); alert('파일 로딩 오류: ' + err.message); }
+      } catch(err) { console.error('Import error:', err); alert(t('import_error') + err.message); }
     };
     reader.readAsText(file);
   };
@@ -5363,162 +6249,12 @@ function showMigrationNotice(fromVer, toVer) {
     'background:#1f6feb;color:#fff;padding:10px 20px;border-radius:8px;font-size:12px;' +
     'font-family:Pretendard,sans-serif;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,0.5);' +
     'display:flex;align-items:center;gap:8px;transition:opacity .5s;';
-  toast.textContent = 'v' + fromVer + ' \u2192 v' + toVer + ' 마이그레이션 완료 \u2014 K8s 리소스 기본값이 인프라 노드에 적용되었습니다. JSON을 다시 저장하면 새 형식으로 유지됩니다.';
+  toast.textContent = 'v' + fromVer + ' \u2192 v' + toVer + ' ' + t('migrate_toast');
   document.body.appendChild(toast);
   setTimeout(function() { toast.style.opacity = '0'; }, 4000);
   setTimeout(function() { toast.remove(); }, 4500);
 }
 
-// ════════════════════════════════════════════════════════
-// ONTOLOGY TEMPLATE LOADER  (Excel 기반 워크플로우 v2)
-// ════════════════════════════════════════════════════════
-function loadOntologyTemplate() {
-  saveHistory();
-  state.nodes = [];
-  state.edges = [];
-  state.nextId = 1;
-  document.getElementById('hint').style.opacity = '0';
-
-  function n(type, label, x, y, w, h, desc, alert, color) {
-    const cfg = NODE_TYPES[type] || NODE_TYPES.server;
-    state.nodes.push({
-      id: state.nextId++, type, label,
-      x, y, w: w || cfg.w, h: h || cfg.h,
-      color: color || cfg.color, desc: desc || '', alert: alert || ''
-    });
-    return state.nextId - 1;
-  }
-  function e(from, to, label, style, color) {
-    state.edges.push({
-      id: state.nextId++, from, to,
-      label: label || '', style: style || 'solid',
-      color: color || '#58a6ff'
-    });
-  }
-
-  // ══════════════════════════════════════════════════════
-  // 상세 플로우 v4 — 지정 컴포넌트 모두 포함
-  // 수평 레이아웃: 좌(사용자) → 우(결과)
-  // 수직: 위=인프라/네트워크, 중=에이전트, 아래=스토리지
-  // ══════════════════════════════════════════════════════
-
-  // ─────────────────────────────────────────────────────
-  // ROW 0 · 사용자 & 프론트엔드  (y=30)
-  // ─────────────────────────────────────────────────────
-  const user     = n('start',   '사용자',            40,  48, 100, 50, '원가표준 담당자');
-  const frontend = n('service', 'Frontend',          185, 35, 155, 72,
-                     'Excel 업로드\nPOST /upload\nGET /stream (SSE)', '', '#1a2840');
-
-  // ─────────────────────────────────────────────────────
-  // ROW 1 · K8s 네트워크  (y=30, x=380)
-  // ─────────────────────────────────────────────────────
-  const gNet   = n('group',   'K8s Network Layer', 375, 25, 310, 85);
-  const ingress= n('gateway', 'NGINX\nIngress',    390, 45, 130, 60,
-                   'L7 라우팅·TLS\nrate-limit', '', '#2a1040');
-  const k8ssvc = n('service', 'K8s Service\n(ClusterIP)', 545, 45, 130, 60,
-                   'kube-proxy IPVS\nRound-robin LB', '', '#1a1a40');
-
-  // ─────────────────────────────────────────────────────
-  // ROW 2 · JT Foundry Deploy 그룹  (y=140)
-  // ─────────────────────────────────────────────────────
-  const gFoundry = n('group', 'JT Foundry  —  Agent Deploy Platform', 60, 132, 1190, 390);
-
-  // ── Orchestration Agent Pod (중앙 허브) ──
-  const gOrch  = n('group',   'Orchestration Agent Pods  (ReplicaSet)', 80, 158, 430, 150);
-  const orch   = n('server',  'Orchestration\nAgent',  100, 185, 165, 85,
-                   'SSE 스트림 응답\nTool/Skill 선택\n서브에이전트 호출', 'ok', '#1f2d45');
-  const tools  = n('note',    'Tools / Skills\n• parse_excel\n• run_vlm\n• validate\n• store_result',
-                   290, 180, 200, 95);
-
-  // ── 파싱 에이전트 ──
-  const gParse = n('group',   'Parsing Agent', 545, 158, 340, 150);
-  const parseA = n('service', 'Path A\n(openpyxl)',  560, 185, 145, 65,
-                   'Excel → 셀·수식\n직접 텍스트 추출', '', '#1a2a10');
-  const parseB = n('service', 'Path B\n(PDF→Image)', 725, 185, 145, 65,
-                   'LibreOffice 변환\npdf2image PNG', '', '#2a1a00');
-
-  // ── EwL Solution ──
-  const gEwL   = n('group',   'EwL Solution  (별도 Endpoint)', 545, 258, 340, 100);
-  const ewl    = n('service', 'EwL / VLM\nEndpoint',  560, 278, 155, 68,
-                   'POST /vlm/analyze\nGPU · 이미지→텍스트', 'warn', '#3a1500');
-  const ewlOut = n('storage', 'VLM Result',            735, 278, 130, 68,
-                   'JSON 추출 결과', '', '#2a1500');
-
-  // ── 검증 에이전트 ──
-  const gValid = n('group',   'Validation Agent', 920, 158, 300, 200);
-  const valid  = n('service', 'Validation\nAgent', 935, 185, 160, 75,
-                   '규칙 기반 검증\n누락값·형식 체크', '', '#2a1a30');
-  const decide = n('decision','Pass?',             955, 285, 110, 60, 'Fail → 재처리');
-
-  // ─────────────────────────────────────────────────────
-  // ROW 3 · PV & DB  (y=560)
-  // ─────────────────────────────────────────────────────
-  const gStore = n('group', 'Persistent Storage', 60, 555, 1190, 100);
-
-  const pv     = n('storage',  'PV / MinIO',       80,  578, 155, 62,
-                   'K8s PVC\n원본 Excel 보관', '', '#0e2a2a');
-  const psql   = n('database', 'PostgreSQL',        260, 578, 155, 62,
-                   '파싱 결과\n검증 규칙 저장', '', '#0e2a1a');
-  const redis  = n('queue',    'Redis',             440, 578, 130, 62,
-                   '작업 상태·캐시\n중간 결과 임시 저장', '', '#3a2800');
-  const retry  = n('queue',    'Dead-letter\n(Kafka)', 600, 578, 145, 62,
-                   'Fail 재처리 큐', 'warn', '#3a1500');
-
-  // ─────────────────────────────────────────────────────
-  // ROW 4 · 응답  (y=690)
-  // ─────────────────────────────────────────────────────
-  const resp   = n('end', '사용자\n결과 수신', 185, 692, 155, 52,
-                   '검증완료 파싱결과\nSSE stream 종료');
-
-  // ═════════════════════════════════════════════════════
-  // EDGES
-  // ═════════════════════════════════════════════════════
-
-  // 사용자 ↔ Frontend
-  e(user,    frontend, 'Excel 업로드',           'solid',  '#58a6ff');
-  e(frontend,resp,     'SSE 결과 수신',           'dashed', '#58a6ff');
-
-  // Frontend → K8s → Orch
-  e(frontend, ingress, 'POST /upload\nGET /stream','solid', '#58a6ff');
-  e(ingress,  k8ssvc,  'L7 라우팅',               'solid',  '#f778ba');
-  e(k8ssvc,   orch,    'Pod 분배',                'solid',  '#f778ba');
-
-  // Orch ↔ SSE 응답
-  e(orch,    frontend, 'event-stream\n(진행상태)', 'dashed', '#58a6ff');
-
-  // Orch → Tools → 서브에이전트
-  e(orch,   tools,   'Tool/Skill 선택',           'dashed', '#d29922');
-  e(orch,   parseA,  '① parse_excel\n(Path A)',   'solid',  '#3fb950');
-  e(orch,   parseB,  '① parse_excel\n(Path B)',   'solid',  '#ffa657');
-
-  // Path B → EwL
-  e(parseB, ewl,    'POST /vlm/analyze\n이미지 전달','solid','#ffa657');
-  e(ewl,    ewlOut, 'VLM 응답',                   'solid',  '#ffa657');
-
-  // 파싱 결과 → Orch
-  e(parseA, orch,   'Result A 반환',              'dashed', '#3fb950');
-  e(ewlOut, orch,   'Result B 반환',              'dashed', '#ffa657');
-
-  // Orch → 검증 에이전트
-  e(orch,   valid,  '② validate\n(A+B 병합 결과)','solid',  '#bc8cff');
-  e(valid,  decide, '검증 수행',                  'solid',  '#bc8cff');
-  e(decide, orch,   'Pass / Fail 반환',           'dashed', '#bc8cff');
-
-  // Fail 재처리
-  e(decide, retry,  'Fail → 큐 등록',             'dashed', '#f85149');
-  e(retry,  orch,   '재호출',                      'dashed', '#f85149');
-
-  // Orch → Storage
-  e(orch,   pv,     'xlsx 저장 (PVC)',             'solid',  '#39d353');
-  e(orch,   redis,  '상태 등록',                   'dashed', '#d29922');
-  e(decide, psql,   'Pass → 최종 저장',            'solid',  '#3fb950');
-
-  // Fit view
-  state.panX = 20; state.panY = 20; state.zoom = 0.78;
-  drawGrid();
-  render();
-  document.getElementById('statusZoom').textContent = '확대: 78%';
-}
 
 
 
@@ -5890,7 +6626,7 @@ function renderRecentIcons() {
     if(!info) return;
     const el = document.createElement('div');
     el.title = info.label;
-    el.style.cssText = 'cursor:pointer;width:28px;height:28px;padding:2px;background:#21262d;border:1px solid #30363d;border-radius:5px;display:flex;align-items:center;justify-content:center;';
+    el.style.cssText = 'cursor:pointer;width:28px;height:28px;padding:2px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;';
     const svg = SVG_ICONS[id];
     if(svg) el.innerHTML = svg.replace('viewBox', 'width="22" height="22" viewBox');
     el.onclick = () => addIconNodeAtCenter(id, info.label);
@@ -5967,7 +6703,7 @@ function renderIconGrid(tab, searchQuery) {
   });
 
   if(!icons.length) {
-    grid.innerHTML = '<div style="color:#8b949e;font-size:12px;padding:20px;grid-column:1/-1;">검색 결과 없음</div>';
+    grid.innerHTML = '<div style="color:var(--text2);font-size:12px;padding:20px;grid-column:1/-1;">' + t('ip_no_result') + '</div>';
   }
 }
 
@@ -6053,7 +6789,7 @@ const AI_SERVICES = {
     endpoint: 'http://localhost:11434/api/chat',
     models: [],
     defaultModel: '',
-    keyPlaceholder: '(불필요)',
+    keyPlaceholder: '(not needed)',
     noKey: true,
     customEndpoint: true
   }
@@ -6213,7 +6949,7 @@ async function callAIService(systemPrompt, messages) {
   const key = aiConfig.keys[svc] || '';
 
   if (!def.noKey && !key) {
-    throw new Error('API Key를 입력해주세요.');
+    throw new Error(t('ai_key_required'));
   }
 
   let resp;
@@ -6356,8 +7092,8 @@ function renderAIChat() {
   while (area.firstChild) area.removeChild(area.firstChild);
   if (aiMessages.length === 0) {
     const empty = document.createElement('div');
-    empty.style.cssText = 'text-align:center;color:#6e7681;padding:40px 20px;font-size:13px;';
-    empty.textContent = 'AI에게 다이어그램 생성/수정을 요청하세요.';
+    empty.style.cssText = 'text-align:center;color:var(--text3);padding:40px 20px;font-size:13px;';
+    empty.textContent = t('ai_empty');
     area.appendChild(empty);
     return;
   }
@@ -6371,24 +7107,24 @@ function renderAIChat() {
     textEl.style.wordBreak = 'break-word';
     if (msg.role === 'assistant' && msg.diagram) {
       var d = msg.diagram;
-      textEl.textContent = '\u2714 다이어그램 생성 완료: 노드 ' + d.nodes.length + '개, 엣지 ' + (d.edges||[]).length + '개';
+      textEl.textContent = '\u2714 ' + t('ai_done') + ': ' + (loomLang==='en' ? d.nodes.length + ' nodes, ' + (d.edges||[]).length + ' edges' : '노드 ' + d.nodes.length + '개, 엣지 ' + (d.edges||[]).length + '개');
       bubble.appendChild(textEl);
       if (!msg.applied) {
         var btn = document.createElement('button');
         btn.className = 'ai-apply-btn';
-        btn.textContent = '적용하기';
+        btn.textContent = t('ai_apply');
         btn.setAttribute('data-idx', idx);
         btn.onclick = function() { applyAIResponse(parseInt(this.getAttribute('data-idx'))); };
         bubble.appendChild(btn);
       } else {
         var badge = document.createElement('span');
         badge.className = 'ai-applied';
-        badge.textContent = '\u2713 적용됨';
+        badge.textContent = t('ai_applied');
         bubble.appendChild(badge);
       }
     } else if (msg.role === 'assistant' && msg.error) {
       textEl.style.color = '#f85149';
-      textEl.textContent = '오류: ' + msg.error;
+      textEl.textContent = t('ai_error') + msg.error;
       bubble.appendChild(textEl);
     } else {
       textEl.textContent = msg.displayText || msg.content;
@@ -6407,13 +7143,13 @@ async function sendAIMessage() {
   if (!text) return;
 
   var useGroups = document.getElementById('aiUseGroups').checked;
-  var userMsg = text + (useGroups ? '\n\n그룹 노드를 사용해 관련 컴포넌트를 묶어줘.' : '');
+  var userMsg = text + (useGroups ? '\n\n' + t('ai_group_hint') : '');
   if (aiMode === 'append' && state.nodes.length > 0) {
     var cur = JSON.stringify({ nodes: state.nodes, edges: state.edges });
-    userMsg += '\n\n기존 다이어그램에 추가해줘. 기존 노드 ID와 겹치지 않게 새 ID를 부여하고, 기존 노드도 그대로 포함해서 전체 JSON을 반환해줘.\n\n현재 다이어그램:\n' + cur;
+    userMsg += '\n\n' + t('ai_append_hint') + '\n\n' + (loomLang==='en'?'Current diagram':'현재 다이어그램') + ':\n' + cur;
   } else if (aiMode === 'modify' && state.nodes.length > 0) {
     var cur2 = JSON.stringify({ nodes: state.nodes, edges: state.edges });
-    userMsg += '\n\n아래 기존 다이어그램을 수정해줘. 전체 수정된 JSON을 반환해줘.\n\n현재 다이어그램:\n' + cur2;
+    userMsg += '\n\n' + t('ai_modify_hint') + '\n\n' + (loomLang==='en'?'Current diagram':'현재 다이어그램') + ':\n' + cur2;
   }
 
   aiMessages.push({ role: 'user', content: userMsg, displayText: text });
@@ -6453,7 +7189,7 @@ async function sendAIMessage() {
 
   aiLoading = false;
   sendBtn.disabled = false;
-  sendBtn.textContent = '전송';
+  sendBtn.textContent = t('ai_send');
   renderAIChat();
 }
 
@@ -6539,7 +7275,7 @@ function fitView() {
   state.panX = pad - minX*state.zoom;
   state.panY = pad - minY*state.zoom;
   drawGrid();
-  document.getElementById('statusZoom').textContent = `확대: ${Math.round(state.zoom*100)}%`;
+  document.getElementById('statusZoom').textContent = `${loomLang==='en'?'Zoom':'확대'}: ${Math.round(state.zoom*100)}%`;
 }
 
 // ════════════════════════════════════════════════════════
@@ -6582,9 +7318,29 @@ render();
       return;
     }
   } catch(e) { console.warn('Autosave load failed:', e); }
-  // Fallback: load template
-  setTimeout(() => loadOntologyTemplate(), 100);
+  // No autosave — show empty canvas
 })();
+
+// Apply theme & lang on init
+applyTheme();
+applyLang();
 </script>
+
+<!-- IaC Export Modal -->
+<div id="iacModal" class="iac-modal" onclick="if(event.target===this)closeIaCModal()">
+  <div class="iac-modal-content">
+    <div class="iac-modal-header">
+      <span id="iacModalTitle">K8s YAML</span>
+      <div class="iac-btns">
+        <button onclick="copyIaCCode()">📋 <span data-i18n="iac_copy">복사</span></button>
+        <button onclick="downloadIaCCode()">💾 <span data-i18n="iac_download">다운로드</span></button>
+        <button onclick="closeIaCModal()">✕</button>
+      </div>
+    </div>
+    <pre id="iacModalCode"></pre>
+  </div>
+</div>
+<div id="iacToast" class="iac-toast"></div>
+
 </body>
 </html>
