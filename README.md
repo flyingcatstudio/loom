@@ -1,3 +1,7 @@
+<p align="right">
+  <strong>English</strong> · <a href="README.ko.md">한국어</a>
+</p>
+
 <p align="center">
   <img src="https://img.shields.io/badge/Loom-Architecture%20Weaver-58a6ff?style=for-the-badge&labelColor=0d1117" alt="Loom" />
 </p>
@@ -5,15 +9,15 @@
 <h1 align="center">Loom</h1>
 
 <p align="center">
-  <strong>인프라의 흐름을 직조하는 K8s 아키텍처 에디터</strong><br/>
-  베틀이 실을 엮어 천을 만들듯, Loom은 인프라 구성요소를 엮어 아키텍처를 만듭니다.
+  <strong>k8s Architecture Editor — Weave Your Infrastructure</strong><br/>
+  Like a loom weaves threads into fabric, Loom weaves infrastructure components into architecture.
 </p>
 
 <p align="center">
-  <a href="https://aiotool.net">🌐 바로 사용하기</a> &nbsp;·&nbsp;
-  <a href="#-설치-방법">📦 설치</a> &nbsp;·&nbsp;
-  <a href="#-사용-매뉴얼">📖 매뉴얼</a> &nbsp;·&nbsp;
-  <a href="#-라이선스">📄 라이선스</a>
+  <a href="https://aiotool.net">🌐 Try Now</a> &nbsp;·&nbsp;
+  <a href="#-installation">📦 Install</a> &nbsp;·&nbsp;
+  <a href="#-user-guide">📖 Guide</a> &nbsp;·&nbsp;
+  <a href="#-license">📄 License</a>
 </p>
 
 <p align="center">
@@ -25,283 +29,306 @@
 
 ---
 
-## 📋 개요
+## 📋 Overview
 
-> *"마블의 설계자들은 단순히 건물을 짓는 사람이 아니라, 우주의 흐름을 정의하는 사람들입니다."*
+**Loom** is inspired by the **Temporal Loom** from the MCU series *Loki*.
 
-**Loom**은 MCU 드라마 <로키>의 **Temporal Loom(시간의 직조기)** 에서 영감을 받았습니다.
+A **single HTML file** editor for rapidly designing Kubernetes infrastructure architecture. It runs directly in the browser with no installation, and works instantly in **air-gapped (secure/on-premise) environments**.
 
-Kubernetes 인프라 아키텍처를 빠르게 설계하기 위한 **단일 HTML 파일** 기반 에디터입니다. 설치 없이 브라우저에서 바로 실행되며, 인터넷이 차단된 **보안망(에어갭 환경)에서도 즉시 사용** 가능합니다.
+> **Single-file philosophy** — Although `index.html` is large, Loom intentionally keeps everything in a single file. This ensures anyone can start immediately by just opening one file — no build tools, no dependencies, no server required. Portability and ease of use take priority over code splitting.
 
-K8s 클러스터의 리소스(CPU, Memory, Disk, GPU) 사용량을 노드별로 설정하고 **실시간 대시보드**에서 한눈에 확인할 수 있습니다. AI 다이어그램 자동 생성은 Claude, OpenAI, Gemini뿐 아니라 **Ollama를 통한 로컬 LLM**도 지원하여 보안망에서도 AI 기능을 활용할 수 있습니다.
+Configure k8s cluster resources (CPU, Memory, Disk, GPU) per node and monitor them on a **real-time dashboard**. AI diagram generation supports Claude, OpenAI, Gemini, and **local LLMs via Ollama** for use in secure networks.
 
-### 왜 Loom인가?
+### Why Loom?
 
-| 특징 | Loom | 기존 도구 |
-|------|------|-----------|
-| **설치** | 불필요 (HTML 파일 1개) | 설치/가입 필요 |
-| **비용** | 무료 | 대부분 유료 |
-| **보안망** | 즉시 사용 가능 | 인터넷 필요 |
-| **K8s 리소스 관리** | 실시간 대시보드 내장 | 별도 도구 필요 |
-| **AI 생성** | 로컬 LLM (Ollama) 지원 | 클라우드 API만 지원 |
-| **내보내기** | JSON / Excel / PDF / PNG / K8s YAML / Terraform / Helm | 제한적 |
+| Feature | Loom | Existing Tools |
+|---------|------|----------------|
+| **Install** | Not required (single HTML file) | Install/signup required |
+| **Cost** | Free | Mostly paid |
+| **Air-gap** | Works instantly | Internet required |
+| **k8s Resource Mgmt** | Built-in real-time dashboard | Separate tools needed |
+| **AI Generation** | Local LLM (Ollama) support | Cloud API only |
+| **Export** | JSON / Excel / PDF / PNG / k8s YAML / Terraform / Helm | Limited |
 
-### 주요 기능
+### Key Features
 
-- **캔버스 기반 다이어그램 에디터** — 노드 생성, 연결, 그룹핑, 레이어 관리
-- **120+ 클라우드 아이콘** — AWS, GCP, Azure, Kubernetes, 오픈소스 아이콘 내장
-- **K8s 리소스 대시보드** — 클러스터 하드웨어 설정, 노드별 CPU/메모리/디스크/GPU 리소스 관리
-- **인프라 완성도 체크** — 필수 구성요소 누락, 네트워크 연결, 리소스 초과 자동 감지
-- **AI 다이어그램 생성** — 텍스트 설명으로 아키텍처 자동 생성 (Claude / OpenAI / Gemini / Ollama)
-- **다양한 내보내기** — JSON, Excel (리소스 시트 포함), PDF (표지+다이어그램+상세표), PNG
-- **IaC 코드 내보내기** — K8s YAML, Terraform (HCL), Helm Values를 노드별 또는 전체 인프라로 생성
-- **연결선 Waypoint** — 연결선 경로를 꺾어서 세밀하게 제어
-- **자동 레이아웃** — 노드 자동 배치
-- **다크/라이트 테마** — 사용 환경에 맞는 테마 전환
-- **한국어/영어 지원** — UI 전체 다국어 전환
-- **Undo/Redo** — 전체 작업 이력 관리
+- **Canvas-based diagram editor** — Create nodes, connections, groups, and manage layers
+- **Layer visibility toggle** — Show/hide layers with eye icon; hidden layers are excluded from canvas, selection, and resource calculations
+- **120+ cloud icons** — AWS, GCP, Azure, Kubernetes, and open-source icons built in
+- **k8s resource dashboard** — Cluster hardware config, per-node CPU/Memory/Disk/GPU management (visible layers only)
+- **Infrastructure completeness check** — Auto-detect missing components, network issues, resource overcommit
+- **AI diagram generation** — Generate architecture from text (Claude / OpenAI / Gemini / Ollama)
+- **Rich export options** — JSON, Excel (with resource sheet), PDF (cover + diagram + detail table), PNG
+- **IaC code export** — k8s YAML, Terraform (HCL), Helm Values per node or full infrastructure
+- **Edge waypoints** — Bend connection paths for precise routing
+- **Auto layout** — Automatic node arrangement
+- **Dark / Light theme** — Node text color auto-adapts to background for readability across themes
+- **Session persistence** — Browser refresh restores the full state including pan, zoom, layers, and k8s config
+- **Korean / English** — Full UI language toggle
+- **Undo / Redo** — Complete action history
 
 ---
 
-## 🖼 스크린샷
+## 🖼 Screenshots
 
-### AI 프롬프트로 아키텍처 설계
+### AI Prompt Architecture Design
 
-AI에게 텍스트로 아키텍처를 설명하면 다이어그램을 자동 생성합니다.
+Describe your architecture in text and AI generates the diagram automatically.
 
 <p align="center">
   <img src="sample/prompt_example.png" alt="AI Prompt Example" width="500" />
 </p>
 
-### 설계 결과 다이어그램
+### Generated Diagram
 
-AI가 생성한 CI/CD 파이프라인 아키텍처 — 그룹으로 구성된 전체 흐름을 한눈에 확인할 수 있습니다.
+AI-generated CI/CD pipeline architecture — view the full flow organized by groups.
 
 <p align="center">
   <img src="sample/diagram_example.png" alt="Diagram Example" width="800" />
 </p>
 
-### K8s 클러스터 설정
+### k8s Cluster Settings
 
-워커 노드의 CPU, Memory, Disk, GPU 사양과 시스템 예약 리소스를 설정합니다. 총 할당 가능 리소스가 자동으로 계산됩니다.
+Configure worker node CPU, Memory, Disk, GPU specs and system-reserved resources. Total allocatable resources are calculated automatically.
 
 <p align="center">
-  <img src="sample/k8s_setting_example.png" alt="K8s Cluster Settings" width="500" />
+  <img src="sample/k8s_setting_example.png" alt="k8s Cluster Settings" width="500" />
 </p>
 
-### K8s 리소스 현황 대시보드
+### k8s Resource Dashboard
 
-설정된 클러스터 리소스와 다이어그램 내 노드들의 리소스 요구사항을 비교하여 사용률과 상태를 실시간으로 보여줍니다.
+Compares cluster resources with node resource requests in the diagram, showing utilization and status in real time.
 
 <p align="center">
-  <img src="sample/k8s_resource_example.png" alt="K8s Resource Dashboard" width="300" />
+  <img src="sample/k8s_resource_example.png" alt="k8s Resource Dashboard" width="300" />
 </p>
 
 ---
 
-## 📦 설치 방법
+## 📦 Installation
 
-### 방법 1: 온라인 사용 (설치 불필요)
+### Option 1: Online (No Install)
 
-**[https://aiotool.net](https://aiotool.net)** 에 접속하면 바로 사용할 수 있습니다.
+Visit **[https://aiotool.net](https://aiotool.net)** to start immediately.
 
-### 방법 2: 로컬 파일 다운로드
+### Option 2: Local File Download
 
 ```bash
-# 저장소 클론
+# Clone the repository
 git clone https://github.com/flyingcatstudio/loom.git
 
-# 브라우저에서 열기
+# Open in browser
 open index.html
 ```
 
-또는 `index.html` 파일 하나만 다운로드하여 브라우저에서 열면 됩니다.
+Or simply download the single `index.html` file and open it in your browser.
 
-> **보안망(에어갭) 환경**: HTML 파일을 USB 등으로 복사 후 브라우저에서 열면 됩니다. 외부 의존성 없이 동작합니다. (폰트만 CDN 사용 — 오프라인에서는 시스템 폰트로 대체됩니다)
+> **Air-gapped environment**: Copy the HTML file via USB and open in a browser. No external dependencies. (Fonts use CDN — falls back to system fonts when offline)
 
-### 방법 3: AI 기능 (Ollama 로컬 LLM)
+### Option 3: AI Feature (Ollama Local LLM — On-Premise)
 
-보안망에서 AI 기능을 사용하려면 Ollama를 설치하세요:
+To use AI features in an air-gapped environment, download Ollama and models **from an internet-connected machine** first.
+
+#### Step 1: Prepare on an Internet-Connected Machine
 
 ```bash
-# Ollama 설치 (macOS)
-brew install ollama
+# Download Ollama installer
+# macOS: https://ollama.com/download/Ollama-darwin.zip
+# Linux: https://ollama.com/download/ollama-linux-amd64.tgz
+# Windows: https://ollama.com/download/OllamaSetup.exe
 
-# 모델 다운로드
+# Download model files (after installing Ollama)
 ollama pull llama3
+```
 
-# Ollama 서버 시작
+Model file locations:
+- **macOS / Linux**: `~/.ollama/models/`
+- **Windows**: `%USERPROFILE%\.ollama\models\`
+
+#### Step 2: Transfer to Secure Network
+
+Copy the downloaded files to the air-gapped PC via USB or approved media:
+
+1. **Ollama installer package** (zip / tgz / exe)
+2. **Entire models folder** (`~/.ollama/models/`)
+
+#### Step 3: Install and Run in Secure Network
+
+```bash
+# 1. Run/extract the Ollama installer
+
+# 2. Copy model files to ~/.ollama/models/
+cp -r /USB_PATH/models/ ~/.ollama/models/
+
+# 3. Start the Ollama server
 ollama serve
 ```
 
-Loom의 **✦ AI 생성** 패널에서 서비스를 `Ollama`로 선택하면 로컬 LLM으로 다이어그램을 생성할 수 있습니다.
+In Loom's **✦ AI Generate** panel, select `Ollama` as the service to generate diagrams with a local LLM.
 
 ---
 
-## 📖 사용 매뉴얼
+## 📖 User Guide
 
-### 기본 조작
+### Basic Controls
 
-| 동작 | 방법 |
-|------|------|
-| **노드 생성** | 캔버스 빈 곳 더블클릭 / 왼쪽 팔레트에서 드래그 |
-| **노드 이동** | 노드를 드래그 |
-| **노드 크기 조정** | 선택 후 우하단 핸들 드래그 |
-| **연결선 생성** | `C` 키 또는 연결 도구 선택 → 시작 노드 클릭 → 끝 노드 클릭 |
-| **선택** | `V` 키 또는 선택 도구로 클릭 |
-| **다중 선택** | `Shift+Click` 또는 빈 곳에서 드래그(마키) |
-| **전체 선택** | `Ctrl+A` |
-| **캔버스 이동** | `Space` 누른 채 드래그 / 마우스 휠 클릭 드래그 |
-| **확대/축소** | 마우스 휠 스크롤 / 상단 +/−/100% 버튼 |
-| **이름 변경** | 노드 더블클릭 |
-| **삭제** | `Delete` 또는 `Backspace` |
-| **실행 취소/다시 실행** | `Ctrl+Z` / `Ctrl+Y` |
-| **복사/붙여넣기** | `Ctrl+C` / `Ctrl+V` |
-| **잘라내기** | `Ctrl+X` |
+| Action | How |
+|--------|-----|
+| **Create node** | Double-click empty canvas / Drag from left palette |
+| **Move node** | Drag the node |
+| **Resize node** | Select, then drag bottom-right handle |
+| **Create connection** | `C` key or connect tool → click source → click target |
+| **Select** | `V` key or select tool, then click |
+| **Multi-select** | `Shift+Click` or drag marquee on empty area |
+| **Select all** | `Ctrl+A` |
+| **Pan canvas** | Hold `Space` + drag / Middle-click drag |
+| **Zoom** | Mouse wheel / Top +/−/100% buttons |
+| **Rename** | Double-click a node |
+| **Delete** | `Delete` or `Backspace` |
+| **Undo / Redo** | `Ctrl+Z` / `Ctrl+Y` |
+| **Copy / Paste** | `Ctrl+C` / `Ctrl+V` |
+| **Cut** | `Ctrl+X` |
 
-### 연결선 편집
+### Edge Editing
 
-| 동작 | 방법 |
-|------|------|
-| **연결선 선택** | 연결선 클릭 |
-| **연결 대상 변경** | 끝점 핸들(●)을 다른 노드로 드래그 |
-| **끝점 위치 고정** | `Alt` + 끝점 핸들 드래그 (노드 테두리 위 고정) |
-| **끝점 고정 해제** | 끝점 핸들 더블클릭 |
-| **경로 꺾기 (Waypoint)** | 연결선 선택 → 중간점(⊕) 드래그 |
-| **꺾인점 삭제** | 꺾인점(●) 더블클릭 |
-| **연결 스타일** | 우측 패널에서 실선/점선/양방향 선택 |
+| Action | How |
+|--------|-----|
+| **Select edge** | Click on the edge |
+| **Change target** | Drag endpoint handle (●) to another node |
+| **Pin endpoint** | `Alt` + drag endpoint handle (pins to node border) |
+| **Unpin endpoint** | Double-click endpoint handle |
+| **Add waypoint** | Select edge → drag midpoint (⊕) |
+| **Remove waypoint** | Double-click waypoint (●) |
+| **Edge style** | Choose solid/dashed/bidirectional in right panel |
 
-### K8s 리소스 관리
+### k8s Resource Management
 
-#### 1. 클러스터 설정
+#### 1. Cluster Settings
 
-상단 **☸ K8s 리소스** 버튼을 클릭하여 클러스터를 설정합니다:
+Click the **☸ k8s Resources** button in the toolbar:
 
-- **하드웨어 탭**: 워커 노드 수, 노드당 CPU/Memory/Disk, GPU 노드, 시스템 예약 리소스
-- **스케줄링 탭**: 네임스페이스, Taint, 노드 라벨 설정
-
-<p align="center">
-  <img src="sample/k8s_setting_example.png" alt="K8s Cluster Settings" width="450" />
-</p>
-
-#### 2. 노드별 리소스 할당
-
-인프라 노드 (Server, Database 등)를 선택하면 우측 패널에 나타나는 항목:
-
-- **📦 스케줄링**: 네임스페이스 배정, Toleration, NodeSelector
-- **☸ 리소스**: Min/Max CPU, Memory, Disk, GPU, Replicas
-
-#### 3. 리소스 대시보드
-
-우측 하단 **☸ K8s Resource** 섹션에서 실시간 확인:
-
-- CPU/Memory/Disk/GPU 사용률 바 (Min~Max 범위 표시)
-- 상태 뱃지: `OK` `Warning` `Critical` `Over`
-- 캔버스 위 각 노드에도 CPU 미니바 표시
+- **Hardware tab**: Worker node count, per-node CPU/Memory/Disk, GPU nodes, system-reserved resources
+- **Scheduling tab**: Namespaces, Taints, Node Labels
 
 <p align="center">
-  <img src="sample/k8s_resource_example.png" alt="K8s Resource Dashboard" width="250" />
+  <img src="sample/k8s_setting_example.png" alt="k8s Cluster Settings" width="450" />
 </p>
 
-#### 4. 인프라 완성도 체크
+#### 2. Per-Node Resource Allocation
 
-상단 **✅ 인프라 체크** 버튼으로 아키텍처 검증:
+Select an infrastructure node (Server, Database, etc.) to see in the right panel:
 
-- 필수 인프라 구성요소 존재 여부
-- 네트워크 연결 상태
-- 미사용 리소스 감지
-- 리소스 초과 경고
+- **📦 Scheduling**: Namespace assignment, Toleration, NodeSelector
+- **☸ Resources**: Min/Max CPU, Memory, Disk, GPU, Replicas
 
-### AI 다이어그램 생성
+#### 3. Resource Dashboard
 
-상단 **✦ AI 생성** 버튼으로 AI 패널을 엽니다.
+Check the **☸ k8s Resource** section at the bottom right:
+
+- CPU/Memory/Disk/GPU utilization bars (Min~Max range)
+- Status badges: `OK` `Warning` `Critical` `Over`
+- CPU mini-bars displayed on each node in the canvas
+
+<p align="center">
+  <img src="sample/k8s_resource_example.png" alt="k8s Resource Dashboard" width="250" />
+</p>
+
+#### 4. Infrastructure Completeness Check
+
+Click **✅ Infra Check** in the toolbar to validate architecture:
+
+- Required infrastructure component existence
+- Network connectivity status
+- Unused resource detection
+- Resource overcommit warnings
+
+### AI Diagram Generation
+
+Open the AI panel with the **✦ AI Generate** button.
 
 <p align="center">
   <img src="sample/prompt_example.png" alt="AI Prompt" width="450" />
 </p>
 
-#### 지원 AI 서비스
+#### Supported AI Services
 
-| 서비스 | 모델 | 요구사항 |
-|--------|------|----------|
-| **Ollama** (로컬) | llama3, codellama, mistral 등 | Ollama 설치 |
-| **Claude** | Sonnet, Opus, Haiku | API 키 |
-| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-3.5 | API 키 |
-| **Gemini** | Gemini | API 키 |
+| Service | Models | Requirements |
+|---------|--------|--------------|
+| **Ollama** (local) | llama3, codellama, mistral, etc. | Ollama installed |
+| **Claude** | Sonnet, Opus, Haiku | API key |
+| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-3.5 | API key |
+| **Gemini** | Gemini | API key |
 
-#### 사용법
+#### Usage
 
-1. AI 패널에서 서비스 선택 및 설정
-2. 생성 모드 선택:
-   - **새로 생성**: 처음부터 다이어그램 생성
-   - **기존에 추가**: 현재 다이어그램에 추가
-   - **현재 수정**: 현재 다이어그램 수정
-3. 텍스트로 아키텍처 설명 입력 (예: *"K8s 마이크로서비스: API Gateway, 서비스 3개, PostgreSQL, Redis, Kafka"*)
-4. `Ctrl+Enter`로 전송
+1. Select and configure AI service in the AI panel
+2. Choose generation mode:
+   - **New**: Generate diagram from scratch
+   - **Add**: Add to existing diagram
+   - **Modify**: Modify current diagram
+3. Enter architecture description (e.g., *"k8s microservices: API Gateway, 3 services, PostgreSQL, Redis, Kafka"*)
+4. Press `Ctrl+Enter` to send
 
 <p align="center">
   <img src="sample/diagram_example.png" alt="Generated Diagram" width="800" />
 </p>
 
-### 내보내기 / 가져오기
+### Export / Import
 
-상단 **Import/Export** 드롭다운 메뉴:
+Use the **Import/Export** dropdown menu in the toolbar:
 
-| 형식 | 설명 |
-|------|------|
-| **JSON** 💾 | 전체 다이어그램 저장/불러오기 (K8s 설정 포함) |
-| **Excel** 📊 | 노드 목록 + K8s 리소스 요약 시트 |
-| **PDF** 📄 | 표지 + 다이어그램 + 노드 상세표 + 리소스 요약 |
-| **PNG** 📷 | 다이어그램 이미지 캡처 |
-| **K8s YAML** ☸ | Deployment / StatefulSet / Service / PVC 매니페스트 |
-| **Terraform** ⛅ | HCL 형식의 kubernetes provider 리소스 코드 |
-| **Helm Values** ⎈ | values.yaml 형식의 서비스별 설정 |
+| Format | Description |
+|--------|-------------|
+| **JSON** 💾 | Save/load full diagram (includes k8s config) |
+| **Excel** 📊 | Node list + k8s resource summary sheet |
+| **PDF** 📄 | Cover + diagram + node detail table + resource summary |
+| **PNG** 📷 | Diagram image capture |
+| **k8s YAML** ☸ | Deployment / StatefulSet / Service / PVC manifests |
+| **Terraform** ⛅ | HCL format kubernetes provider resource code |
+| **Helm Values** ⎈ | Per-service settings in values.yaml format |
 
-> JSON 형식은 자동 저장(localStorage)되며, v1 → v2 마이그레이션을 자동으로 지원합니다.
+#### IaC Code Export
 
-#### IaC 코드 내보내기
+Export your designed architecture as deployable IaC (Infrastructure as Code).
 
-설계한 아키텍처를 실제 배포 가능한 IaC(Infrastructure as Code) 코드로 내보낼 수 있습니다.
+**Full export**: Select k8s YAML / Terraform / Helm Values from the Export dropdown
 
-**전체 내보내기**: Export 드롭다운 메뉴에서 K8s YAML / Terraform / Helm Values 선택
+**Per-node export**: Click `[Y]` `[T]` `[H]` mini buttons on each node in the k8s resource dashboard
 
-**노드별 내보내기**: 우측 K8s 리소스 대시보드에서 각 노드의 `[Y]` `[T]` `[H]` 미니 버튼 클릭
-
-| 노드 타입 | K8s 리소스 | 서비스 타입 |
-|-----------|-----------|------------|
+| Node Type | k8s Resource | Service Type |
+|-----------|-------------|--------------|
 | Server, Service, Queue | Deployment + Service(ClusterIP) | ClusterIP |
 | Gateway | Deployment + Service(LoadBalancer) | LoadBalancer |
 | Database | StatefulSet + Service(headless) + PVC | ClusterIP (headless) |
 | Storage | PersistentVolumeClaim | — |
 
-생성된 코드에는 노드에 설정된 리소스 요구사항(CPU/Memory/Disk/GPU), 레플리카 수, Toleration, NodeSelector가 모두 반영됩니다.
+Generated code includes resource requests (CPU/Memory/Disk/GPU), replica count, Tolerations, and NodeSelectors configured on each node.
 
 ---
 
 ## 🗺 Roadmap
 
-추후 업데이트 예정인 기능들입니다. 기여와 제안을 환영합니다!
+Planned features for future updates. Contributions and suggestions are welcome!
 
-- [x] 다크/라이트 테마 전환
-- [x] 한국어/영어 UI 전환
-- [ ] 실시간 협업 (멀티 유저)
-- [x] Helm Values / K8s YAML 자동 생성
-- [x] Terraform 코드 내보내기
-- [ ] 더 많은 클라우드 아이콘 추가
-
----
-
-## 📄 라이선스
-
-이 프로젝트는 [**GNU Affero General Public License v3.0 (AGPL-3.0)**](LICENSE) 하에 배포됩니다.
-
-**상업적 목적으로 재판매하는 것을 제외하면** 자유롭게 사용할 수 있습니다. 단, 수정한 코드는 반드시 동일한 라이선스로 소스 코드를 공개해야 합니다.
-
-> 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+- [x] Dark / Light theme toggle
+- [x] Korean / English UI toggle
+- [x] Helm Values / k8s YAML auto-generation
+- [x] Terraform code export
+- [ ] Template sharing
 
 ---
 
-## 🏢 제작
+## 📄 License
+
+This project is distributed under the [**GNU Affero General Public License v3.0 (AGPL-3.0)**](LICENSE).
+
+**Free to use except for commercial resale.** Modified code must be released under the same license with source code disclosed.
+
+> See the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🏢 Credits
 
 <p align="center">
   <strong>FCStudio</strong><br/>
@@ -311,5 +338,5 @@ Loom의 **✦ AI 생성** 패널에서 서비스를 `Ollama`로 선택하면 로
 ---
 
 <p align="center">
-  <sub>Made with ❤️ by <strong>FCStudio</strong></sub>
+  <sub>Made with 🐱 by <strong>FCStudio</strong></sub>
 </p>

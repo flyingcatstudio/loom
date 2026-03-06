@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Loom — Architecture Weaver</title>
-<meta name="description" content="Loom — 설치 없이 브라우저에서 실행되는 K8s 아키텍처 에디터. AI 다이어그램 생성, 실시간 리소스 대시보드, K8s YAML / Terraform / Helm 코드 내보내기.">
-<meta name="keywords" content="Loom, K8s, Kubernetes, architecture, diagram, editor, AI, Terraform, Helm, YAML, infrastructure">
+<meta name="description" content="Loom — 설치 없이 브라우저에서 실행되는 k8s 아키텍처 에디터. AI 다이어그램 생성, 실시간 리소스 대시보드, k8s YAML / Terraform / Helm 코드 내보내기.">
+<meta name="keywords" content="Loom, k8s, Kubernetes, architecture, diagram, editor, AI, Terraform, Helm, YAML, infrastructure">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -629,8 +629,8 @@
 
   <div class="spacer"></div>
 
-  <button class="tbtn" onclick="openK8sConfig()" title="K8s 클러스터 하드웨어 리소스 설정" style="color:var(--accent);" data-i18n="tb_k8s">☸ K8s 리소스</button>
-  <button class="tbtn" onclick="runInfraCheck()" title="K8s 인프라 완성도 체크" style="color:var(--green);" data-i18n="tb_infra">✅ 인프라 체크</button>
+  <button class="tbtn" onclick="openK8sConfig()" title="k8s 클러스터 하드웨어 리소스 설정" style="color:var(--accent);" data-i18n="tb_k8s">☸ k8s 리소스</button>
+  <button class="tbtn" onclick="runInfraCheck()" title="k8s 인프라 완성도 체크" style="color:var(--green);" data-i18n="tb_infra">✅ 인프라 체크</button>
   <button class="tbtn" onclick="openAIPanel()" title="AI로 다이어그램 생성" style="color:var(--purple);" data-i18n="tb_ai">✦ AI 생성</button>
   <button class="tbtn" onclick="importJSON()">📥 Import</button>
   <div class="export-dropdown" id="exportDropdown">
@@ -651,7 +651,7 @@
       </button>
       <div class="export-dropdown-sep"></div>
       <button class="export-dropdown-item" onclick="generateK8sYAMLAll();closeExportMenu();">
-        <span class="exp-icon">☸</span> <span data-i18n="iac_yaml">K8s YAML</span>
+        <span class="exp-icon">☸</span> <span data-i18n="iac_yaml">k8s YAML</span>
       </button>
       <button class="export-dropdown-item" onclick="generateTerraformAll();closeExportMenu();">
         <span class="exp-icon">⛅</span> <span data-i18n="iac_terraform">Terraform</span>
@@ -972,7 +972,7 @@
     </div>
 
     <div class="panel-section" id="resDashboardSection" style="display:none">
-      <h3 data-i18n="rp_k8s_status">☸ K8s 리소스 현황</h3>
+      <h3 data-i18n="rp_k8s_status">☸ k8s 리소스 현황</h3>
       <div id="resDashboard">
         <div class="res-bar-wrap">
           <div class="res-bar-label"><span class="name">CPU</span><span class="val" id="resCpuVal">–</span></div>
@@ -1091,7 +1091,7 @@
 <div id="infraCheckOverlay" onclick="closeInfraCheck()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:1200;"></div>
 <div id="infraCheckPanel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:640px;max-width:95vw;max-height:85vh;background:var(--surface);border:1px solid var(--border2);border-radius:14px;z-index:1201;box-shadow:0 24px 80px rgba(0,0,0,0.5);font-family:Pretendard,sans-serif;overflow:hidden;flex-direction:column;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--surface2);">
-    <h2 style="font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;margin:0;" data-i18n="ic_title">✅ K8s 인프라 완성도 체크</h2>
+    <h2 style="font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;margin:0;" data-i18n="ic_title">✅ k8s 인프라 완성도 체크</h2>
     <button onclick="closeInfraCheck()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;">✕</button>
   </div>
   <div id="infraCheckBody" style="padding:20px;overflow-y:auto;flex:1;"></div>
@@ -1101,7 +1101,7 @@
 <div id="k8sConfigOverlay" onclick="closeK8sConfig()"></div>
 <div id="k8sConfigPanel">
   <div class="k8s-header">
-    <h2 data-i18n="k8s_title">☸ K8s 클러스터 설정</h2>
+    <h2 data-i18n="k8s_title">☸ k8s 클러스터 설정</h2>
     <button onclick="closeK8sConfig()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;">✕</button>
   </div>
   <div class="k8s-body">
@@ -1292,7 +1292,7 @@
   <!-- Quick prompts -->
   <div style="padding:4px 18px;display:flex;flex-wrap:wrap;gap:5px;flex-shrink:0;">
     <span style="font-size:11px;color:var(--text2);align-self:center;" data-i18n="ai_example">예시:</span>
-    <button class="ai-quick" onclick="setQuick('K8s 마이크로서비스: API Gateway, 서비스 3개, PostgreSQL, Redis, Kafka')">K8s 마이크로서비스</button>
+    <button class="ai-quick" onclick="setQuick('k8s 마이크로서비스: API Gateway, 서비스 3개, PostgreSQL, Redis, Kafka')">k8s 마이크로서비스</button>
     <button class="ai-quick" onclick="setQuick('CI/CD 파이프라인: GitHub → Build → Test → Deploy → Production')">CI/CD 파이프라인</button>
     <button class="ai-quick" onclick="setQuick('데이터 처리 파이프라인: S3 → Kafka → Spark → Elasticsearch → Grafana')">데이터 파이프라인</button>
     <button class="ai-quick" onclick="setQuick('3-tier 웹 아키텍처: Load Balancer, WAS 클러스터, DB 마스터/슬레이브')">3-tier 웹</button>
@@ -1423,7 +1423,7 @@ function applyTheme() {
   document.documentElement.dataset.theme = loomTheme;
   const btn = document.getElementById('btnTheme');
   if (btn) btn.textContent = loomTheme === 'dark' ? '☀' : '☾';
-  if (typeof drawGrid === 'function') { drawGrid(); draw(); }
+  if (typeof drawGrid === 'function') { drawGrid(); render();  }
 }
 
 function toggleTheme() {
@@ -1437,7 +1437,7 @@ const T = {
   ko: {
     // Topbar
     tb_new: '📄 새로 만들기', tb_select: '선택', tb_connect: '연결', tb_pan: '이동',
-    tb_k8s: '☸ K8s 리소스', tb_infra: '✅ 인프라 체크', tb_ai: '✦ AI 생성',
+    tb_k8s: '☸ k8s 리소스', tb_infra: '✅ 인프라 체크', tb_ai: '✦ AI 생성',
     tb_png: 'PNG (이미지)',
     // Left panel
     lp_cloud: '☁ 클라우드 / 솔루션',
@@ -1471,7 +1471,7 @@ const T = {
     rp_filter: '🔍 필터',
     rp_all_opt: '전체',
     rp_clear_filter: '필터 초기화',
-    rp_k8s_status: '☸ K8s 리소스 현황',
+    rp_k8s_status: '☸ k8s 리소스 현황',
     rp_status_label: '상태', rp_detail_label: '상세 (Max 기준)',
     // Statusbar
     sb_tool: '도구: 선택', sb_zoom: (loomLang==='en'?'Zoom: 100%':'확대: 100%'), sb_sel: '선택: 없음',
@@ -1484,9 +1484,9 @@ const T = {
     ctx_collapse: '▶ 그룹 접기', ctx_front: '⬆ 앞으로', ctx_back: '⬇ 뒤로',
     ctx_connect: '↗ 연결 시작', ctx_delete: '🗑 삭제',
     // Infra check panel
-    ic_title: '✅ K8s 인프라 완성도 체크',
-    // K8s config
-    k8s_title: '☸ K8s 클러스터 설정',
+    ic_title: '✅ k8s 인프라 완성도 체크',
+    // k8s config
+    k8s_title: '☸ k8s 클러스터 설정',
     k8s_hw: '하드웨어', k8s_sched: '스케줄링',
     k8s_hw_desc: '클러스터의 총 가용 리소스를 설정하면, 다이어그램 내 인프라 노드들의 리소스 합계와 비교하여 여유/부족을 표시합니다.',
     k8s_worker: '워커 노드 구성',
@@ -1541,7 +1541,7 @@ const T = {
     unused_no_conn_action: '다른 노드와 연결하거나 삭제 검토',
     unused_dup_action: '역할 분담이 맞는지 확인, 불필요 노드 정리 검토',
     dup_suffix: '개 중복',
-    res_gpu_no_node: 'GPU 노드 미설정: GPU를 사용하는 워크로드가 있지만 K8s에 GPU 노드가 설정되지 않았습니다',
+    res_gpu_no_node: 'GPU 노드 미설정: GPU를 사용하는 워크로드가 있지만 k8s에 GPU 노드가 설정되지 않았습니다',
     res_ha_warn: '고가용성(HA) 위해 2+ 권장',
     res_gpu_no_tol: 'GPU를 요청하지만 toleration이 없습니다. GPU 노드 테인트에 대한 toleration 설정을 확인하세요.',
     res_no_selector: '에 매칭되는 클러스터 노드 라벨이 없습니다.',
@@ -1550,8 +1550,8 @@ const T = {
     k8s_ns_dup: '이미 존재하는 네임스페이스입니다.',
     k8s_taint_dup: '동일한 테인트가 이미 존재합니다.',
     k8s_label_dup: '동일한 라벨이 이미 존재합니다.',
-    k8s_taint_hint: 'K8s 설정에서 테인트를 먼저 추가하세요',
-    k8s_label_hint: 'K8s 설정에서 노드 라벨을 먼저 추가하세요',
+    k8s_taint_hint: 'k8s 설정에서 테인트를 먼저 추가하세요',
+    k8s_label_hint: 'k8s 설정에서 노드 라벨을 먼저 추가하세요',
     filter_all: '전체',
     filter_none_tol: '(toleration 없음)',
     filter_none_sel: '(selector 없음)',
@@ -1563,7 +1563,7 @@ const T = {
     pdf_loading: 'jsPDF 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.',
     pdf_font_fail: '폰트 로딩 실패. 기본 폰트로 생성합니다.',
     import_error: '파일 로딩 오류: ',
-    migrate_toast: '마이그레이션 완료 — K8s 리소스 기본값이 인프라 노드에 적용되었습니다. JSON을 다시 저장하면 새 형식으로 유지됩니다.',
+    migrate_toast: '마이그레이션 완료 — k8s 리소스 기본값이 인프라 노드에 적용되었습니다. JSON을 다시 저장하면 새 형식으로 유지됩니다.',
     ai_empty: 'AI에게 다이어그램 생성/수정을 요청하세요.',
     ai_done: '다이어그램 생성 완료',
     ai_apply: '적용하기',
@@ -1576,14 +1576,14 @@ const T = {
     k8s_cpu_reserve_warn: ' [CPU 예약 초과!]',
     k8s_mem_reserve_warn: ' [MEM 예약 초과!]',
     ip_key_ph: '(불필요)',
-    iac_yaml: 'K8s YAML', iac_terraform: 'Terraform', iac_helm: 'Helm Values',
+    iac_yaml: 'k8s YAML', iac_terraform: 'Terraform', iac_helm: 'Helm Values',
     iac_copy: '복사', iac_download: '다운로드',
     iac_no_workload: '내보낼 워크로드 노드가 없습니다',
     iac_copied: '클립보드에 복사됨', iac_export_all: '전체 인프라',
   },
   en: {
     tb_new: '📄 New', tb_select: 'Select', tb_connect: 'Connect', tb_pan: 'Pan',
-    tb_k8s: '☸ K8s Resources', tb_infra: '✅ Infra Check', tb_ai: '✦ AI Generate',
+    tb_k8s: '☸ k8s Resources', tb_infra: '✅ Infra Check', tb_ai: '✦ AI Generate',
     tb_png: 'PNG (Image)',
     lp_cloud: '☁ Cloud / Solutions',
     lp_icon_btn: 'Icon Picker (AWS / GCP / Azure / OSS)',
@@ -1614,7 +1614,7 @@ const T = {
     rp_filter: '🔍 Filter',
     rp_all_opt: 'All',
     rp_clear_filter: 'Clear Filters',
-    rp_k8s_status: '☸ K8s Resources',
+    rp_k8s_status: '☸ k8s Resources',
     rp_status_label: 'Status', rp_detail_label: 'Detail (Max)',
     sb_tool: 'Tool: Select', sb_zoom: 'Zoom: 100%', sb_sel: 'Selected: None',
     sb_help: 'Space+Drag: Pan · Shift+Click: Multi-select · Ctrl+A: All',
@@ -1623,8 +1623,8 @@ const T = {
     ctx_cut: '✂ Cut', ctx_copy: '📋 Copy', ctx_paste: '📎 Paste',
     ctx_collapse: '▶ Collapse Group', ctx_front: '⬆ Bring Front', ctx_back: '⬇ Send Back',
     ctx_connect: '↗ Start Connect', ctx_delete: '🗑 Delete',
-    ic_title: '✅ K8s Infra Completeness Check',
-    k8s_title: '☸ K8s Cluster Settings',
+    ic_title: '✅ k8s Infra Completeness Check',
+    k8s_title: '☸ k8s Cluster Settings',
     k8s_hw: 'Hardware', k8s_sched: 'Scheduling',
     k8s_hw_desc: 'Set total cluster resources. Compare against infra node totals to show surplus/deficit.',
     k8s_worker: 'Worker Node Config',
@@ -1675,7 +1675,7 @@ const T = {
     unused_no_conn_action: 'Connect to other nodes or consider removing',
     unused_dup_action: 'Verify role assignments, consider consolidating',
     dup_suffix: ' duplicates',
-    res_gpu_no_node: 'GPU node not configured: workloads require GPU but no GPU nodes are set in K8s',
+    res_gpu_no_node: 'GPU node not configured: workloads require GPU but no GPU nodes are set in k8s',
     res_ha_warn: 'HA recommended: 2+ replicas',
     res_gpu_no_tol: 'Requests GPU but has no toleration. Check toleration settings for GPU node taints.',
     res_no_selector: ' has no matching cluster node label.',
@@ -1684,8 +1684,8 @@ const T = {
     k8s_ns_dup: 'Namespace already exists.',
     k8s_taint_dup: 'Taint already exists.',
     k8s_label_dup: 'Label already exists.',
-    k8s_taint_hint: 'Add taints in K8s settings first',
-    k8s_label_hint: 'Add node labels in K8s settings first',
+    k8s_taint_hint: 'Add taints in k8s settings first',
+    k8s_label_hint: 'Add node labels in k8s settings first',
     filter_all: 'All',
     filter_none_tol: '(no toleration)',
     filter_none_sel: '(no selector)',
@@ -1697,7 +1697,7 @@ const T = {
     pdf_loading: 'jsPDF library is loading. Please try again shortly.',
     pdf_font_fail: 'Font loading failed. Using default font.',
     import_error: 'File loading error: ',
-    migrate_toast: 'Migration complete — K8s resource defaults applied to infra nodes. Save JSON again to keep the new format.',
+    migrate_toast: 'Migration complete — k8s resource defaults applied to infra nodes. Save JSON again to keep the new format.',
     ai_empty: 'Ask AI to create or modify diagrams.',
     ai_done: 'Diagram generated',
     ai_apply: 'Apply',
@@ -1710,7 +1710,7 @@ const T = {
     k8s_cpu_reserve_warn: ' [CPU reservation exceeded!]',
     k8s_mem_reserve_warn: ' [MEM reservation exceeded!]',
     ip_key_ph: '(not needed)',
-    iac_yaml: 'K8s YAML', iac_terraform: 'Terraform', iac_helm: 'Helm Values',
+    iac_yaml: 'k8s YAML', iac_terraform: 'Terraform', iac_helm: 'Helm Values',
     iac_copy: 'Copy', iac_download: 'Download',
     iac_no_workload: 'No workload nodes to export',
     iac_copied: 'Copied to clipboard', iac_export_all: 'All Infrastructure',
@@ -1801,7 +1801,7 @@ let state = {
   edgePinDragging: false, // Alt+drag: 끝점 위치만 조정
   wpDragging: null,       // { edgeId, index } — waypoint 드래그 중
   dirty: false,
-  layers: [{id:1, name:'Layer 1'}],
+  layers: [{id:1, name:'Layer 1', visible:true}],
   activeLayer: null,  // null = 전체 레이어
   clipboard: null,    // { nodes: [...], edges: [...] }
   fontSize: 12,       // 캔버스 기본 폰트 크기 (px, 고정)
@@ -2004,6 +2004,15 @@ function toScreen(wx, wy) {
 // RENDER
 // ════════════════════════════════════════════════════════
 // Cached theme colors for canvas drawing (refreshed on every render)
+function contrastTextColor(bgHex) {
+  if(!bgHex || bgHex.charAt(0) !== '#') return '#e6edf3';
+  var hex = bgHex.replace('#','');
+  if(hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  var r = parseInt(hex.substr(0,2),16), g = parseInt(hex.substr(2,2),16), b = parseInt(hex.substr(4,2),16);
+  var lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+  return lum > 0.5 ? '#1c2028' : '#e6edf3';
+}
+
 function refreshThemeColors() {
   const s = getComputedStyle(document.documentElement);
   tc.accent = s.getPropertyValue('--accent').trim();
@@ -2027,16 +2036,21 @@ function render() {
   ctx.translate(state.panX, state.panY);
   ctx.scale(state.zoom, state.zoom);
 
-  // Draw groups first (bottom layer) — 숨겨진 자식 그룹 제외
-  state.nodes.filter(n=>n.type==='group' && !n._groupHidden).forEach(n => drawNode(n));
-  // Draw other nodes (접힌 그룹 안 노드 제외)
-  state.nodes.filter(n=>n.type!=='group' && !n._groupHidden).forEach(n => drawNode(n));
+  // Draw groups first (bottom layer) — 숨겨진 자식 그룹 및 비표시 레이어 제외
+  state.nodes.filter(n=>n.type==='group' && !n._groupHidden && isLayerVisible(n.layer||1)).forEach(n => drawNode(n));
+  // Draw other nodes (접힌 그룹 안 노드 및 비표시 레이어 제외)
+  state.nodes.filter(n=>n.type!=='group' && !n._groupHidden && isLayerVisible(n.layer||1)).forEach(n => drawNode(n));
   // Draw edges (접힌 그룹 안 완전 내부 연결은 제외, 리다이렉트 엣지는 중복 방지)
   const drawnEdgePairs = new Set();
   state.edges.filter(e => !isEdgeHiddenByCollapse(e)).forEach(e => {
     const rSrc = resolveEdgeNode(e.from);
     const rDst = resolveEdgeNode(e.to);
     if(!rSrc || !rDst || rSrc.id === rDst.id) return;
+    // 숨겨진 레이어의 엣지 제외
+    const srcNode = state.nodes.find(n=>n.id===e.from);
+    const dstNode = state.nodes.find(n=>n.id===e.to);
+    if(srcNode && !isLayerVisible(srcNode.layer||1)) return;
+    if(dstNode && !isLayerVisible(dstNode.layer||1)) return;
     // 리다이렉트된 엣지 중복 방지
     const srcId = rSrc.id, dstId = rDst.id;
     if(srcId !== e.from || dstId !== e.to) {
@@ -2234,7 +2248,7 @@ function drawNode(n) {
   const { x, y, w, h, type, label, color, desc, alert } = n;
   const cfg = NODE_TYPES[type] || NODE_TYPES.server;
   const bgColor = color || cfg.color;
-  const textColor = n.fontColor || tc.text;
+  const textColor = n.fontColor || contrastTextColor(bgColor);
   const isMultiSel = state.multiSelect.includes(n.id);
   const isSel = state.selected === n.id;
   const borderColor = (isSel || isMultiSel)
@@ -2347,7 +2361,7 @@ function drawNode(n) {
     wrapText(ctx, label, x+8, y+18, w-16, 14);
     // Desc
     if(desc) {
-      ctx.fillStyle = n.fontColor || tc.text2;
+      ctx.fillStyle = n.fontColor || contrastTextColor(bgColor);
       ctx.font = font('400', 10);
       // Count label lines (including \n and word-wrap)
       ctx.save();
@@ -2507,7 +2521,7 @@ function drawNode(n) {
     ctx.fillRect(x+w-6, y+h-6, 8, 8);
   }
 
-  // K8s resource mini-bar on infrastructure nodes
+  // k8s resource mini-bar on infrastructure nodes
   if(k8sConfig.enabled && !NON_INFRA_TYPES.includes(type)) {
     var res = getNodeResources(n);
     var avail = getAvailableResources();
@@ -2954,6 +2968,7 @@ function hitNode(wx, wy, skipLayerFilter) {
   // 클릭 위치의 모든 노드 수집 후 면적 오름차순 정렬 (작은 것 우선)
   const hits = state.nodes.filter(n =>
     !n._groupHidden &&
+    isLayerVisible(n.layer||1) &&
     wx >= n.x && wx <= n.x+n.w && wy >= n.y && wy <= n.y+n.h &&
     (skipLayerFilter || state.activeLayer === null || (n.layer || 1) === state.activeLayer)
   ).sort((a, b) => (a.w*a.h) - (b.w*b.h));
@@ -2965,6 +2980,7 @@ function hitNode(wx, wy, skipLayerFilter) {
 function hitNodeAll(wx, wy, skipLayerFilter) {
   return state.nodes.filter(n =>
     !n._groupHidden &&
+    isLayerVisible(n.layer||1) &&
     wx >= n.x && wx <= n.x+n.w && wy >= n.y && wy <= n.y+n.h &&
     (skipLayerFilter || state.activeLayer === null || (n.layer || 1) === state.activeLayer)
   ).sort((a, b) => (a.w*a.h) - (b.w*b.h));
@@ -2977,6 +2993,10 @@ function hitResizeHandle(n, wx, wy) {
 function hitEdge(wx, wy) {
   for(const e of state.edges) {
     if(isEdgeHiddenByCollapse(e)) continue;
+    const srcNode = state.nodes.find(n=>n.id===e.from);
+    const dstNode = state.nodes.find(n=>n.id===e.to);
+    if(srcNode && !isLayerVisible(srcNode.layer||1)) continue;
+    if(dstNode && !isLayerVisible(dstNode.layer||1)) continue;
     const src = resolveEdgeNode(e.from);
     const dst = resolveEdgeNode(e.to);
     if(!src||!dst||src.id===dst.id) continue;
@@ -3403,6 +3423,7 @@ canvas.addEventListener('mousemove', e => {
     state.multiSelect = state.nodes
       .filter(n =>
         !n._groupHidden &&
+        isLayerVisible(n.layer||1) &&
         n.x >= rx && n.x+n.w <= rx+rw &&
         n.y >= ry && n.y+n.h <= ry+rh &&
         (state.activeLayer === null || (n.layer || 1) === state.activeLayer))
@@ -3534,6 +3555,7 @@ canvas.addEventListener('mouseup', e => {
       state.multiSelect = state.nodes
         .filter(n =>
           !n._groupHidden &&
+          isLayerVisible(n.layer||1) &&
           n.x >= rx && n.x+n.w <= rx+rw &&
           n.y >= ry && n.y+n.h <= ry+rh)
         .map(n => n.id);
@@ -3635,7 +3657,7 @@ document.addEventListener('keydown', ev => {
   if((ev.ctrlKey || ev.metaKey) && ev.key==='a') {
     ev.preventDefault();
     state.multiSelect = state.nodes
-      .filter(n => !n._groupHidden && (state.activeLayer === null || (n.layer || 1) === state.activeLayer))
+      .filter(n => !n._groupHidden && isLayerVisible(n.layer||1) && (state.activeLayer === null || (n.layer || 1) === state.activeLayer))
       .map(n => n.id);
     state.selected = null;
     document.getElementById('statusSel').textContent = `${loomLang==='en'?'Selected':'선택'}: ${state.multiSelect.length}${loomLang==='en'?' items':'개'}`;
@@ -3791,7 +3813,7 @@ function updatePropPanel() {
   document.getElementById('propDesc').value = n.desc||'';
   document.getElementById('propType').value = n.type;
   document.getElementById('propAlert').value = n.alert||'';
-  document.getElementById('propFontColor').value = n.fontColor || '#e6edf3';
+  document.getElementById('propFontColor').value = n.fontColor || contrastTextColor(n.color || (NODE_TYPES[n.type]||NODE_TYPES.server).color);
   document.getElementById('propW').value = n.w;
   document.getElementById('propH').value = n.h;
   // Layer dropdown
@@ -3923,7 +3945,7 @@ function clipboardPaste() {
   state.clipboard.nodes.forEach(function(orig) {
     const newId = state.nextId++;
     idMap[orig.id] = newId;
-    newNodes.push({...orig, id: newId, x: orig.x + 30, y: orig.y + 30});
+    newNodes.push({...orig, id: newId, x: orig.x + 30, y: orig.y + 30, layer: state.activeLayer || orig.layer});
   });
   newNodes.forEach(function(n) { state.nodes.push(n); });
   // 엣지 복원 (ID 매핑)
@@ -4025,10 +4047,21 @@ function newDiagram() {
   state.history = [];
   state.future = [];
   state.dirty = false;
-  state.layers = [{id:1, name:'Layer 1'}];
+  state.layers = [{id:1, name:'Layer 1', visible:true}];
   state.activeLayer = null;
   state.filters = { namespace: null, toleration: null, nodeSelector: null };
+  state.panX = 0; state.panY = 0; state.zoom = 1;
   k8sConfig.enabled = false;
+  k8sConfig.nodeCount = 3;
+  k8sConfig.nodeCpu = 4000;
+  k8sConfig.nodeMem = 8192;
+  k8sConfig.nodeDisk = 100;
+  k8sConfig.nodeGpu = 0;
+  k8sConfig.reservedCpu = 500;
+  k8sConfig.reservedMem = 512;
+  k8sConfig.gpuNodes = 0;
+  k8sConfig.gpuPerNode = 0;
+  k8sConfig.gpuModel = '';
   k8sConfig.namespaces = ['default'];
   k8sConfig.taints = [];
   k8sConfig.nodeLabels = [];
@@ -4058,7 +4091,10 @@ function saveHistory() {
       layers: state.layers,
       activeLayer: state.activeLayer,
       fontSize: state.fontSize,
-      panelFontSize: state.panelFontSize
+      panelFontSize: state.panelFontSize,
+      panX: state.panX,
+      panY: state.panY,
+      zoom: state.zoom
     }));
   } catch(e) { /* quota exceeded — ignore */ }
 }
@@ -4148,7 +4184,7 @@ function getNodeResources(n) {
 }
 
 function calcResourceTotals() {
-  const infra = state.nodes.filter(n => !NON_INFRA_TYPES.includes(n.type));
+  const infra = state.nodes.filter(n => !NON_INFRA_TYPES.includes(n.type) && isLayerVisible(n.layer || 1));
   let minCpu=0, maxCpu=0, minMem=0, maxMem=0, minDisk=0, maxDisk=0, totalGpu=0;
   const perNode = [];
   infra.forEach(n => {
@@ -4167,7 +4203,7 @@ function calcResourceTotals() {
 }
 
 // ════════════════════════════════════════════════════════
-// IaC EXPORT (K8s YAML / Terraform / Helm Values)
+// IaC EXPORT (k8s YAML / Terraform / Helm Values)
 // ════════════════════════════════════════════════════════
 
 var iacState = { code: '', filename: '', format: '' };
@@ -4195,7 +4231,7 @@ function getIaCNodes() {
   });
 }
 
-// ── K8s YAML generation ──
+// ── k8s YAML generation ──
 
 function generateK8sYAML(node) {
   var name = sanitizeK8sName(node.label);
@@ -4522,7 +4558,7 @@ function getAvailableResources() {
 }
 
 // ════════════════════════════════════════════════════════
-// INFRA CHECK — K8s 인프라 완성도 검증
+// INFRA CHECK — k8s 인프라 완성도 검증
 // ════════════════════════════════════════════════════════
 var _infraCheckMode = 'prod'; // 'dev' | 'prod'
 
@@ -4540,8 +4576,8 @@ var INFRA_CATEGORIES = [
     suggestions: ['NGINX Ingress Controller', 'Traefik', 'AWS ALB Ingress', 'Istio Gateway']
   },
   {
-    name: 'K8s Service (ClusterIP / NodePort)',
-    nameEn: 'K8s Service (ClusterIP / NodePort)',
+    name: 'k8s Service (ClusterIP / NodePort)',
+    nameEn: 'k8s Service (ClusterIP / NodePort)',
     desc: 'Pod 간 통신을 위한 서비스 디스커버리',
     descEn: 'Service discovery for inter-Pod communication',
     keywords: ['service', 'clusterip', 'nodeport', 'kube-proxy', 'k8s service', 'k8s svc'],
@@ -4635,7 +4671,7 @@ var INFRA_CATEGORIES = [
     descEn: 'Secure management of sensitive data and configuration',
     keywords: ['secret', 'vault', 'configmap', 'config', 'sealed-secret', '시크릿', '설정'],
     typeHint: 'service', devRequired: false, prodRequired: false,
-    suggestions: ['K8s Secret + ConfigMap', 'HashiCorp Vault', 'Sealed Secrets']
+    suggestions: ['k8s Secret + ConfigMap', 'HashiCorp Vault', 'Sealed Secrets']
   },
   {
     name: 'RBAC / 보안 (Security)',
@@ -4644,7 +4680,7 @@ var INFRA_CATEGORIES = [
     descEn: 'Role-based access control and network policies',
     keywords: ['rbac', 'security', 'network policy', 'opa', 'gatekeeper', 'cert-manager', 'tls', '보안', '인증'],
     typeHint: 'service', devRequired: false, prodRequired: false,
-    suggestions: ['K8s RBAC', 'NetworkPolicy', 'cert-manager (TLS)', 'OPA Gatekeeper']
+    suggestions: ['k8s RBAC', 'NetworkPolicy', 'cert-manager (TLS)', 'OPA Gatekeeper']
   },
   {
     name: 'DNS / 서비스 메시 (Service Mesh)',
@@ -5240,7 +5276,7 @@ function applyK8sConfig() {
   render();
 }
 
-// ── K8s Tab Switching ──
+// ── k8s Tab Switching ──
 function switchK8sTab(tab) {
   document.querySelectorAll('#k8sConfigPanel .k8s-tab').forEach(function(t) { t.classList.remove('active'); });
   document.querySelectorAll('#k8sConfigPanel .k8s-tab-content').forEach(function(c) { c.classList.remove('active'); });
@@ -5254,7 +5290,7 @@ function switchK8sTab(tab) {
   }
 }
 
-// ── K8s Scheduling Render ──
+// ── k8s Scheduling Render ──
 function renderK8sScheduling() {
   // Namespaces
   var nsList = document.getElementById('k8sNsList');
@@ -5721,8 +5757,17 @@ function updateLayerList() {
     row.onclick = () => setActiveLayer(l.id);
     row.ondblclick = () => renameLayer(l.id);
 
+    const isVisible = l.visible !== false;
+
+    const eyeBtn = document.createElement('span');
+    eyeBtn.style.cssText = `font-size:13px;cursor:pointer;padding:0 2px;color:${isVisible?'var(--text2)':'var(--text3)'};opacity:${isVisible?1:0.4}`;
+    eyeBtn.textContent = isVisible ? '\u25C9' : '\u25CB';
+    eyeBtn.title = isVisible ? 'Hide layer' : 'Show layer';
+    eyeBtn.onclick = (e) => { e.stopPropagation(); toggleLayerVisibility(l.id); };
+    row.appendChild(eyeBtn);
+
     const nameSpan = document.createElement('span');
-    nameSpan.style.cssText = `font-size:11px;flex:1;color:${isActive?'var(--accent)':'var(--text2)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap`;
+    nameSpan.style.cssText = `font-size:11px;flex:1;color:${isActive?'var(--accent)':'var(--text2)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${isVisible?'':'opacity:0.4;text-decoration:line-through'}`;
     nameSpan.textContent = l.name;
     row.appendChild(nameSpan);
 
@@ -5752,7 +5797,7 @@ function setActiveLayer(id) {
 
 function addLayer() {
   const maxId = state.layers.reduce((m, l) => Math.max(m, l.id), 0);
-  state.layers.push({id: maxId + 1, name: 'Layer ' + (maxId + 1)});
+  state.layers.push({id: maxId + 1, name: 'Layer ' + (maxId + 1), visible:true});
   state.activeLayer = maxId + 1;
   saveHistory();
   render();
@@ -5778,6 +5823,19 @@ function renameLayer(id) {
   }
 }
 
+function toggleLayerVisibility(id) {
+  const layer = state.layers.find(l => l.id === id);
+  if(!layer) return;
+  layer.visible = layer.visible === false ? true : false;
+  saveHistory();
+  render();
+}
+
+function isLayerVisible(layerId) {
+  const layer = state.layers.find(l => l.id === layerId);
+  return layer ? layer.visible !== false : true;
+}
+
 // ════════════════════════════════════════════════════════
 // MINIMAP
 // ════════════════════════════════════════════════════════
@@ -5785,17 +5843,18 @@ function updateMinimap() {
   const mc = document.getElementById('minimapCanvas');
   const mctx = mc.getContext('2d');
   mc.width = mc.offsetWidth; mc.height = mc.offsetHeight;
-  if(!state.nodes.length) return;
+  const visibleNodes = state.nodes.filter(n => !n._groupHidden && isLayerVisible(n.layer||1));
+  if(!visibleNodes.length) return;
 
-  const allX = state.nodes.flatMap(n=>[n.x,n.x+n.w]);
-  const allY = state.nodes.flatMap(n=>[n.y,n.y+n.h]);
+  const allX = visibleNodes.flatMap(n=>[n.x,n.x+n.w]);
+  const allY = visibleNodes.flatMap(n=>[n.y,n.y+n.h]);
   const minX=Math.min(...allX)-20, maxX=Math.max(...allX)+20;
   const minY=Math.min(...allY)-20, maxY=Math.max(...allY)+20;
   const scaleX=mc.width/(maxX-minX), scaleY=mc.height/(maxY-minY);
   const sc=Math.min(scaleX,scaleY)*0.9;
 
   mctx.clearRect(0,0,mc.width,mc.height);
-  state.nodes.forEach(n => {
+  visibleNodes.forEach(n => {
     const cfg=NODE_TYPES[n.type]||NODE_TYPES.server;
     mctx.fillStyle=n.color||cfg.color;
     mctx.strokeStyle=cfg.border;
@@ -5993,12 +6052,12 @@ function exportExcel() {
   ws['!autofilter'] = { ref: XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:wsData.length-1,c:td.headers.length-1}}) };
   XLSX.utils.book_append_sheet(wb, ws, 'Nodes');
 
-  // Sheet 2: K8s Summary
+  // Sheet 2: k8s Summary
   if (k8sConfig.enabled) {
     var avail = getAvailableResources();
     var totals = calcResourceTotals();
     var k8sData = [
-      ['K8s Cluster Summary'],
+      ['k8s Cluster Summary'],
       [],
       ['Worker Nodes', k8sConfig.nodeCount],
       ['CPU per Node (m)', k8sConfig.nodeCpu],
@@ -6017,7 +6076,7 @@ function exportExcel() {
     }
     var ws2 = XLSX.utils.aoa_to_sheet(k8sData);
     ws2['!cols'] = [{wch:22},{wch:12},{wch:12},{wch:12},{wch:14}];
-    XLSX.utils.book_append_sheet(wb, ws2, 'K8s Summary');
+    XLSX.utils.book_append_sheet(wb, ws2, 'k8s Summary');
   }
 
   var ts = formatTimestamp();
@@ -6125,12 +6184,12 @@ function _buildPDF(fontBase64) {
     }
   });
 
-  // --- K8s Summary (if enabled) ---
+  // --- k8s Summary (if enabled) ---
   if (k8sConfig.enabled) {
     doc.addPage();
     doc.setFont(fontName); doc.setFontSize(14);
     doc.setTextColor(30, 30, 30);
-    doc.text('K8s Resource Summary', 10, 20);
+    doc.text('k8s Resource Summary', 10, 20);
 
     var avail = getAvailableResources();
     var totals = calcResourceTotals();
@@ -6353,7 +6412,7 @@ regSVG('az-aad', `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><r
 regSVG('az-vnet', `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="3" fill="#0062AD"/><circle cx="5" cy="12" r="2" fill="none" stroke="white" stroke-width="1.5"/><circle cx="12" cy="5.5" r="2" fill="none" stroke="white" stroke-width="1.5"/><circle cx="19" cy="12" r="2" fill="none" stroke="white" stroke-width="1.5"/><circle cx="12" cy="18.5" r="2" fill="none" stroke="white" stroke-width="1.5"/><line x1="7" y1="11" x2="10.3" y2="7.2" stroke="white" stroke-width="1.3"/><line x1="13.7" y1="7.2" x2="17" y2="11" stroke="white" stroke-width="1.3"/><line x1="17" y1="13" x2="13.7" y2="16.8" stroke="white" stroke-width="1.3"/><line x1="10.3" y1="16.8" x2="7" y2="13" stroke="white" stroke-width="1.3"/></svg>`);
 
 // ── Kubernetes & Container ───────────────────────────────
-// Using the actual K8s helm-wheel style
+// Using the actual k8s helm-wheel style
 regSVG('k8s', `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="12" fill="#326CE5"/><circle cx="12" cy="12" r="4" fill="none" stroke="white" stroke-width="1.5"/><circle cx="12" cy="12" r="1.5" fill="white"/><line x1="12" y1="2" x2="12" y2="8" stroke="white" stroke-width="1.8"/><line x1="12" y1="16" x2="12" y2="22" stroke="white" stroke-width="1.8"/><line x1="2" y1="12" x2="8" y2="12" stroke="white" stroke-width="1.8"/><line x1="16" y1="12" x2="22" y2="12" stroke="white" stroke-width="1.8"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17" stroke="white" stroke-width="1.8"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07" stroke="white" stroke-width="1.8"/><line x1="19.07" y1="4.93" x2="14.83" y2="9.17" stroke="white" stroke-width="1.8"/><line x1="9.17" y1="14.83" x2="4.93" y2="19.07" stroke="white" stroke-width="1.8"/></svg>`);
 regSVG('k8s-pod', `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="3" fill="#326CE5"/><rect x="3.5" y="8" width="17" height="8" rx="4" fill="none" stroke="white" stroke-width="1.5"/><circle cx="7.5" cy="12" r="2" fill="white"/><circle cx="12" cy="12" r="2" fill="white"/><circle cx="16.5" cy="12" r="2" fill="white"/></svg>`);
 regSVG('k8s-deploy', `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="3" fill="#326CE5"/><rect x="2.5" y="5" width="8" height="6.5" rx="1" fill="none" stroke="white" stroke-width="1.4"/><rect x="2.5" y="13.5" width="8" height="5.5" rx="1" fill="none" stroke="white" stroke-width="1.4"/><rect x="13.5" y="9" width="8" height="6" rx="1" fill="none" stroke="white" stroke-width="1.4"/><line x1="10.5" y1="8.25" x2="13.5" y2="10.5" stroke="white" stroke-width="1.2"/><line x1="10.5" y1="16.25" x2="13.5" y2="13.5" stroke="white" stroke-width="1.2"/></svg>`);
@@ -6530,7 +6589,7 @@ const ICON_CATALOG = [
     {id:'az-keyvault',label:'Key Vault'},{id:'az-aad',label:'Entra ID'},
     {id:'az-vnet',label:'VNet'},
   ]},
-  { tab: 'K8s', icons: [
+  { tab: 'k8s', icons: [
     {id:'k8s',label:'Kubernetes'},{id:'k8s-pod',label:'Pod'},
     {id:'k8s-deploy',label:'Deployment'},{id:'k8s-service',label:'Service'},
     {id:'k8s-ingress',label:'Ingress'},{id:'k8s-configmap',label:'ConfigMap'},
@@ -6871,7 +6930,7 @@ You output ONLY a valid JSON object — no markdown fences, no explanation, no e
 AWS: aws-ec2, aws-eks, aws-ecs, aws-fargate, aws-lambda, aws-s3, aws-rds, aws-dynamodb, aws-elasticache, aws-redshift, aws-opensearch, aws-sqs, aws-sns, aws-msk, aws-kinesis, aws-eventbridge, aws-elb, aws-cloudfront, aws-apigateway, aws-route53, aws-vpc, aws-glue, aws-athena, aws-stepfunctions, aws-sagemaker, aws-bedrock, aws-iam, aws-cognito, aws-secretsmanager, aws-cloudwatch, aws-codepipeline
 GCP: gcp-gce, gcp-gke, gcp-cloudrun, gcp-functions, gcp-gcs, gcp-cloudsql, gcp-bigquery, gcp-spanner, gcp-firestore, gcp-bigtable, gcp-pubsub, gcp-dataflow, gcp-vertex, gcp-lb, gcp-cdn, gcp-vpc, gcp-iam, gcp-monitoring, gcp-workflows
 Azure: az-vm, az-aks, az-functions, az-blob, az-sqldb, az-cosmos, az-redis, az-servicebus, az-eventhub, az-apim, az-agw, az-adf, az-synapse, az-openai, az-monitor, az-devops, az-keyvault, az-aad, az-vnet
-K8s/Container: k8s, k8s-pod, k8s-deploy, k8s-service, k8s-ingress, k8s-configmap, k8s-secret, k8s-pvc, k8s-namespace, docker, helm, istio, argocd, fluxcd
+k8s/Container: k8s, k8s-pod, k8s-deploy, k8s-service, k8s-ingress, k8s-configmap, k8s-secret, k8s-pvc, k8s-namespace, docker, helm, istio, argocd, fluxcd
 DB: postgresql, mysql, mariadb, mongodb, redis, elasticsearch, cassandra, neo4j, clickhouse, influxdb, weaviate, pinecone
 Messaging: kafka, rabbitmq, nats, pulsar, mqtt, grpc
 Observability: prometheus, grafana, jaeger, loki, opentelemetry, datadog
@@ -6886,7 +6945,7 @@ General: user, browser, mobile, slack, minio, keycloak, oauth2
 - queue: message queue, event bus, Kafka topic, stream
 - storage: file storage, object store, PV, S3, MinIO
 - gateway: API gateway, ingress, load balancer, proxy, reverse proxy
-- service: microservice, API endpoint, REST service, K8s service
+- service: microservice, API endpoint, REST service, k8s service
 - process: processing step, pipeline stage, transformation, workflow step
 - decision: conditional branch, A/B decision, validation
 - start: entry point, user, client, trigger
@@ -6918,7 +6977,7 @@ General: user, browser, mobile, slack, minio, keycloak, oauth2
 - Event/async: "#d29922" (yellow), dashed
 - Error/fail: "#f85149" (red), dashed
 - Success/pass: "#3fb950" (green), solid
-- Internal K8s: "#f778ba" (pink)
+- Internal k8s: "#f778ba" (pink)
 - Storage writes: "#39d353" (green), solid
 
 ## Examples of node IDs and references
@@ -6941,7 +7000,7 @@ function buildSystemPrompt() {
     prompt += '\n\n## Current diagram data\n' + JSON.stringify({ nodes: state.nodes, edges: state.edges });
   }
   if (k8sConfig && k8sConfig.enabled) {
-    prompt += '\n\n## K8s cluster config\n' + JSON.stringify(k8sConfig);
+    prompt += '\n\n## k8s cluster config\n' + JSON.stringify(k8sConfig);
   }
   prompt += '\n\n## Multi-turn instructions\n- Maintain context from previous messages in this conversation.\n- Always return the COMPLETE diagram JSON (all nodes and edges), not just changes.\n- If the user asks to modify, return the full updated JSON.\n- CRITICAL: When existing diagram data is provided, preserve all existing node positions (x,y) and sizes (w,h) exactly. Place new nodes outside the existing layout boundary. Only add new edges to connect new nodes to existing ones.';
   return prompt;
@@ -7316,9 +7375,11 @@ render();
         });
       });
       state.nextId = Math.max(...[...state.nodes,...state.edges].map(x=>x.id||0), 0) + 1;
+      if(d.panX != null) state.panX = d.panX;
+      if(d.panY != null) state.panY = d.panY;
+      if(d.zoom != null) state.zoom = d.zoom;
       state.dirty = false;
       document.getElementById('hint').style.opacity = '0';
-      fitView();
       render();
       return;
     }
@@ -7335,7 +7396,7 @@ applyLang();
 <div id="iacModal" class="iac-modal" onclick="if(event.target===this)closeIaCModal()">
   <div class="iac-modal-content">
     <div class="iac-modal-header">
-      <span id="iacModalTitle">K8s YAML</span>
+      <span id="iacModalTitle">k8s YAML</span>
       <div class="iac-btns">
         <button onclick="copyIaCCode()">📋 <span data-i18n="iac_copy">복사</span></button>
         <button onclick="downloadIaCCode()">💾 <span data-i18n="iac_download">다운로드</span></button>
