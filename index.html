@@ -34,7 +34,7 @@
   }
 
   [data-theme="light"] {
-    --bg: #f5f6f8;
+    --bg: #ffffff;
     --surface: #ffffff;
     --surface2: #f0f1f4;
     --surface3: #e4e6ec;
@@ -683,6 +683,7 @@
   <div class="sep"></div>
   <button class="tbtn" id="btnLang" onclick="toggleLang()">KO</button>
   <button class="tbtn" id="btnTheme" onclick="toggleTheme()">☀</button>
+  <button class="tbtn" id="btnGrid" onclick="toggleGrid()" title="Grid">▦</button>
 </div>
 
 <!-- MAIN -->
@@ -1414,6 +1415,7 @@
 // ════════════════════════════════════════════════════════
 let loomTheme = localStorage.getItem('loom_theme') || 'dark';
 let loomLang = localStorage.getItem('loom_lang') || 'ko';
+let loomGrid = localStorage.getItem('loom_grid');
 
 function themeColor(name) {
   return getComputedStyle(document.documentElement).getPropertyValue('--' + name).trim();
@@ -1804,6 +1806,7 @@ let state = {
   layers: [{id:1, name:'Layer 1', visible:true}],
   activeLayer: null,  // null = 전체 레이어
   clipboard: null,    // { nodes: [...], edges: [...] }
+  gridVisible: true,
   fontSize: 12,       // 캔버스 기본 폰트 크기 (px, 고정)
   panelFontSize: 12,  // 우측 패널 폰트 크기 (px, 조절 가능)
   filters: { namespace: null, toleration: null, nodeSelector: null },  // null = 전체
@@ -1966,9 +1969,18 @@ function applyPanelFontSize() {
 // ════════════════════════════════════════════════════════
 // GRID
 // ════════════════════════════════════════════════════════
+function toggleGrid() {
+  state.gridVisible = !state.gridVisible;
+  localStorage.setItem('loom_grid', state.gridVisible ? '1' : '0');
+  const btn = document.getElementById('btnGrid');
+  if(btn) btn.style.opacity = state.gridVisible ? '1' : '0.4';
+  drawGrid();
+}
+
 function drawGrid() {
   const w = gridCanvas.width, h = gridCanvas.height;
   gctx.clearRect(0,0,w,h);
+  if(!state.gridVisible) return;
   const gridSize = 20 * state.zoom;
   const offX = state.panX % gridSize;
   const offY = state.panY % gridSize;
@@ -4154,9 +4166,14 @@ function autoLayout() {
 // STATS & LAYERS
 // ════════════════════════════════════════════════════════
 function updateStats() {
-  document.getElementById('statNodes').textContent = state.nodes.filter(n=>n.type!=='group').length;
-  document.getElementById('statEdges').textContent = state.edges.length;
-  document.getElementById('statGroups').textContent = state.nodes.filter(n=>n.type==='group').length;
+  const vis = state.nodes.filter(n => isLayerVisible(n.layer||1));
+  document.getElementById('statNodes').textContent = vis.filter(n=>n.type!=='group').length;
+  document.getElementById('statEdges').textContent = state.edges.filter(e => {
+    const s = state.nodes.find(n=>n.id===e.from);
+    const d = state.nodes.find(n=>n.id===e.to);
+    return (!s || isLayerVisible(s.layer||1)) && (!d || isLayerVisible(d.layer||1));
+  }).length;
+  document.getElementById('statGroups').textContent = vis.filter(n=>n.type==='group').length;
   updateResourceDashboard();
 }
 
@@ -7387,9 +7404,10 @@ render();
   // No autosave — show empty canvas
 })();
 
-// Apply theme & lang on init
+// Apply theme & lang & grid on init
 applyTheme();
 applyLang();
+if(loomGrid === '0') { state.gridVisible = false; var gb = document.getElementById('btnGrid'); if(gb) gb.style.opacity = '0.4'; drawGrid(); }
 </script>
 
 <!-- IaC Export Modal -->
