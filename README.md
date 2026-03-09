@@ -58,6 +58,7 @@ Configure k8s cluster resources (CPU, Memory, Disk, GPU) per node and monitor th
 - **k8s resource dashboard** — Cluster hardware config, per-node CPU/Memory/Disk/GPU management (visible layers only)
 - **Infrastructure completeness check** — Auto-detect missing components, network issues, resource overcommit
 - **AI diagram generation** — Generate architecture from text (Claude / OpenAI / Gemini / Ollama)
+- **Share via URL** — Generate a shareable link containing the full diagram (LZ-String compressed hash fragment)
 - **Rich export options** — JSON, Excel (with resource sheet), PDF (cover + diagram + detail table), PNG
 - **IaC code export** — k8s YAML, Terraform (HCL), Helm Values per node or full infrastructure
 - **Edge waypoints** — Bend connection paths for precise routing
@@ -286,6 +287,17 @@ Use the **Import/Export** dropdown menu in the toolbar:
 | **k8s YAML** ☸ | Deployment / StatefulSet / Service / PVC manifests |
 | **Terraform** ⛅ | HCL format kubernetes provider resource code |
 | **Helm Values** ⎈ | Per-service settings in values.yaml format |
+| **Share Link** 🔗 | Generate a shareable URL containing the full diagram |
+
+#### Share Link
+
+Share your diagram via a single URL — no file exchange needed.
+
+1. Open **Export ▾** → click **🔗 Share Link**
+2. Copy the generated URL or click **📧 Send via Email**
+3. The recipient opens the link and the diagram loads automatically
+
+> **Technical note**: Diagram data is compressed with LZ-String and embedded in the URL **hash fragment** (`#data=...`), not as a query parameter (`?data=...`). Hash fragments are processed client-side only and are never sent to the server, which avoids CDN/server URI length limits (e.g., CloudFront 414 errors). Very large diagrams (32,000+ chars) may exceed browser limits — in that case, share as a JSON file instead.
 
 #### IaC Code Export
 
@@ -314,7 +326,7 @@ Planned features for future updates. Contributions and suggestions are welcome!
 - [x] Korean / English UI toggle
 - [x] Helm Values / k8s YAML auto-generation
 - [x] Terraform code export
-- [ ] Template sharing
+- [x] Share diagram via URL link
 
 ---
 

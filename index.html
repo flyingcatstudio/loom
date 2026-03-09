@@ -590,6 +590,7 @@
   .export-dropdown-sep { height:1px; background:var(--border); margin:4px 0; }
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.2/jspdf.plugin.autotable.min.js"></script>
 </head>
@@ -658,6 +659,10 @@
       </button>
       <button class="export-dropdown-item" onclick="generateHelmValues();closeExportMenu();">
         <span class="exp-icon">⎈</span> <span data-i18n="iac_helm">Helm Values</span>
+      </button>
+      <div class="export-dropdown-sep"></div>
+      <button class="export-dropdown-item" onclick="openShareModal();closeExportMenu();">
+        <span class="exp-icon">🔗</span> <span data-i18n="share_title">공유 링크</span>
       </button>
     </div>
   </div>
@@ -1405,6 +1410,45 @@
   font-size:12px; font-weight:600; z-index:10000; opacity:0; transition:opacity 0.3s;
 }
 .iac-toast.show { opacity:1; }
+
+/* Share Modal */
+.share-modal {
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;
+}
+.share-modal.active { display:flex; }
+.share-modal-content {
+  width:90%; max-width:520px; background:var(--surface);
+  border:1px solid var(--border); border-radius:12px; padding:24px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+}
+.share-modal-title {
+  font-weight:700; font-size:15px; color:var(--text); margin-bottom:16px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.share-modal-title button {
+  background:none; border:none; color:var(--text2); font-size:16px; cursor:pointer;
+}
+.share-url-box {
+  display:flex; gap:6px; margin-bottom:12px;
+}
+.share-url-box input {
+  flex:1; padding:8px 10px; background:var(--bg); border:1px solid var(--border);
+  border-radius:6px; color:var(--text); font-size:12px; font-family:'JetBrains Mono',monospace;
+}
+.share-url-box button, .share-actions button {
+  height:34px; padding:0 14px; border-radius:6px; border:1px solid var(--border);
+  background:var(--surface2); color:var(--text); font-size:12px; cursor:pointer;
+  display:flex; align-items:center; gap:5px; white-space:nowrap;
+}
+.share-url-box button:hover, .share-actions button:hover { background:var(--surface3); }
+.share-actions { display:flex; gap:8px; margin-top:14px; }
+.share-actions .share-email-btn { background:var(--accent2); border-color:var(--accent2); color:#fff; }
+.share-actions .share-email-btn:hover { opacity:0.85; }
+.share-size-info {
+  margin-top:10px; font-size:11px; color:var(--text3); line-height:1.5;
+}
+.share-size-warn { color:var(--yellow); }
 </style>
 
 <div class="tooltip" id="tooltip"></div>
@@ -1582,6 +1626,15 @@ const T = {
     iac_copy: '복사', iac_download: '다운로드',
     iac_no_workload: '내보낼 워크로드 노드가 없습니다',
     iac_copied: '클립보드에 복사됨', iac_export_all: '전체 인프라',
+    share_title: '🔗 공유 링크',
+    share_copy: '📋 복사',
+    share_email: '📧 메일로 보내기',
+    share_copied: '링크가 클립보드에 복사되었습니다',
+    share_no_nodes: '공유할 노드가 없습니다',
+    share_size_ok: '링크 길이: {len}자',
+    share_size_warn: '⚠ 링크가 깁니다 ({len}자). 일부 이메일 클라이언트에서 잘릴 수 있습니다.',
+    share_size_over: '⚠ 다이어그램이 너무 커서 URL로 공유할 수 없습니다. JSON 파일로 공유해주세요.',
+    share_loaded: '공유된 다이어그램을 불러왔습니다',
   },
   en: {
     tb_new: '📄 New', tb_select: 'Select', tb_connect: 'Connect', tb_pan: 'Pan',
@@ -1716,6 +1769,15 @@ const T = {
     iac_copy: 'Copy', iac_download: 'Download',
     iac_no_workload: 'No workload nodes to export',
     iac_copied: 'Copied to clipboard', iac_export_all: 'All Infrastructure',
+    share_title: '🔗 Share Link',
+    share_copy: '📋 Copy',
+    share_email: '📧 Send via Email',
+    share_copied: 'Link copied to clipboard',
+    share_no_nodes: 'No nodes to share',
+    share_size_ok: 'Link length: {len} chars',
+    share_size_warn: '⚠ Link is long ({len} chars). May be truncated by some email clients.',
+    share_size_over: '⚠ Diagram too large for URL sharing. Please share as JSON file instead.',
+    share_loaded: 'Shared diagram loaded',
   }
 };
 
@@ -5983,6 +6045,127 @@ function exportJSON() {
 }
 
 // ════════════════════════════════════════════════════════
+// SHARE VIA LINK / EMAIL
+// ════════════════════════════════════════════════════════
+function getShareData() {
+  var exportNodes = state.nodes.map(function(n) {
+    var copy = Object.assign({}, n);
+    if(copy.collapsed && copy._origW) {
+      copy.x = copy._origX; copy.y = copy._origY;
+      copy.w = copy._origW; copy.h = copy._origH;
+    }
+    delete copy.collapsed; delete copy._origX; delete copy._origY;
+    delete copy._origW; delete copy._origH; delete copy._hiddenChildren;
+    delete copy._groupHidden;
+    return copy;
+  });
+  return {
+    version: CURRENT_VERSION,
+    nodes: exportNodes,
+    edges: state.edges,
+    k8sConfig: k8sConfig,
+    layers: state.layers
+  };
+}
+
+function buildShareUrl() {
+  var data = getShareData();
+  var json = JSON.stringify(data);
+  var compressed = LZString.compressToEncodedURIComponent(json);
+  return 'https://aiotool.net/loom/#data=' + compressed;
+}
+
+function openShareModal() {
+  if(!state.nodes.length) { alert(t('share_no_nodes')); return; }
+  var url = buildShareUrl();
+  var input = document.getElementById('shareUrlInput');
+  var info = document.getElementById('shareSizeInfo');
+  var len = url.length;
+
+  if(len > 32000) {
+    input.value = '';
+    info.textContent = t('share_size_over').replace('{len}', len);
+    info.classList.add('share-size-warn');
+    document.getElementById('shareModal').classList.add('active');
+    return;
+  }
+
+  input.value = url;
+  info.classList.remove('share-size-warn');
+  if(len > 8000) {
+    info.textContent = t('share_size_warn').replace('{len}', len);
+    info.classList.add('share-size-warn');
+  } else {
+    info.textContent = t('share_size_ok').replace('{len}', len);
+  }
+  document.getElementById('shareModal').classList.add('active');
+}
+
+function closeShareModal() {
+  document.getElementById('shareModal').classList.remove('active');
+}
+
+function copyShareUrl() {
+  var input = document.getElementById('shareUrlInput');
+  if(!input.value) return;
+  navigator.clipboard.writeText(input.value).then(function() {
+    var toast = document.getElementById('iacToast');
+    toast.textContent = t('share_copied');
+    toast.classList.add('show');
+    setTimeout(function() { toast.classList.remove('show'); }, 2000);
+  });
+}
+
+function sendShareEmail() {
+  var input = document.getElementById('shareUrlInput');
+  if(!input.value) return;
+  var subject = encodeURIComponent('Loom — Architecture Diagram');
+  var body = encodeURIComponent('Loom 다이어그램을 확인해주세요:\n\n' + input.value);
+  window.open('mailto:?subject=' + subject + '&body=' + body);
+}
+
+function loadFromUrlParam() {
+  var hash = window.location.hash;
+  if(!hash || !hash.startsWith('#data=')) return false;
+  var compressed = hash.substring(6);  // '#data='.length === 6
+  if(!compressed) return false;
+  try {
+    var json = LZString.decompressFromEncodedURIComponent(compressed);
+    if(!json) return false;
+    var d = JSON.parse(json);
+    var result = migrateData(d);
+    d = result.data;
+    state.nodes = d.nodes || [];
+    state.edges = d.edges || [];
+    if(d.k8sConfig) Object.assign(k8sConfig, d.k8sConfig);
+    if(d.layers && d.layers.length) { state.layers = d.layers; } else { state.layers = [{id:1, name:'Layer 1'}]; }
+    state.activeLayer = d.activeLayer != null ? d.activeLayer : null;
+    state.nodes.forEach(function(n) { if(n.layer == null) n.layer = 1; });
+    state.nodes.filter(function(g) { return g.type === 'group' && g.collapsed; }).forEach(function(g) {
+      (g._hiddenChildren || []).forEach(function(saved) {
+        var n = state.nodes.find(function(nd) { return nd.id === saved.id; });
+        if(n) n._groupHidden = true;
+      });
+    });
+    state.nextId = Math.max.apply(null, [].concat(state.nodes, state.edges).map(function(x) { return x.id || 0; }).concat([0])) + 1;
+    state.dirty = false;
+    document.getElementById('hint').style.opacity = '0';
+    // Clean up URL (remove ?data= param to avoid re-loading on refresh)
+    window.history.replaceState({}, '', window.location.pathname + window.location.search);
+    render();
+    // Show toast
+    var toast = document.getElementById('iacToast');
+    toast.textContent = t('share_loaded');
+    toast.classList.add('show');
+    setTimeout(function() { toast.classList.remove('show'); }, 3000);
+    return true;
+  } catch(e) {
+    console.warn('Failed to load shared data:', e);
+    return false;
+  }
+}
+
+// ════════════════════════════════════════════════════════
 // EXPORT DROPDOWN TOGGLE
 // ════════════════════════════════════════════════════════
 function toggleExportMenu(e) {
@@ -7365,8 +7548,10 @@ function fitView() {
 state.panX = 40; state.panY = 40;
 render();
 
-// Auto-load: restore from localStorage, else load template
+// Auto-load: check URL params first, then localStorage, else empty
 (function autoLoad() {
+  // URL 공유 링크에서 로드 시도
+  if(loadFromUrlParam()) return;
   try {
     const saved = localStorage.getItem('infraflow_autosave');
     if(saved) {
@@ -7409,6 +7594,24 @@ applyTheme();
 applyLang();
 if(loomGrid === '0') { state.gridVisible = false; var gb = document.getElementById('btnGrid'); if(gb) gb.style.opacity = '0.4'; drawGrid(); }
 </script>
+
+<!-- Share Modal -->
+<div id="shareModal" class="share-modal" onclick="if(event.target===this)closeShareModal()">
+  <div class="share-modal-content">
+    <div class="share-modal-title">
+      <span data-i18n="share_title">🔗 공유 링크</span>
+      <button onclick="closeShareModal()">✕</button>
+    </div>
+    <div class="share-url-box">
+      <input type="text" id="shareUrlInput" readonly>
+      <button onclick="copyShareUrl()"><span data-i18n="share_copy">📋 복사</span></button>
+    </div>
+    <div class="share-size-info" id="shareSizeInfo"></div>
+    <div class="share-actions">
+      <button class="share-email-btn" onclick="sendShareEmail()"><span data-i18n="share_email">📧 메일로 보내기</span></button>
+    </div>
+  </div>
+</div>
 
 <!-- IaC Export Modal -->
 <div id="iacModal" class="iac-modal" onclick="if(event.target===this)closeIaCModal()">
