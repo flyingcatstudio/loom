@@ -6047,8 +6047,64 @@ function exportJSON() {
 // ════════════════════════════════════════════════════════
 // SHARE VIA LINK / EMAIL
 // ════════════════════════════════════════════════════════
+// Short key mapping for share URL compression
+var SHARE_NODE_KEYS = {
+  id:'i', type:'t', label:'l', x:'x', y:'y', w:'w', h:'h',
+  color:'c', desc:'d', alert:'a', layer:'r',
+  namespace:'ns', tolerations:'tl', nodeSelector:'sl',
+  resMinCpu:'rc', resMaxCpu:'rC', resMinMem:'rm', resMaxMem:'rM',
+  resMinDisk:'rd', resMaxDisk:'rD', resGpu:'rg', resReplicas:'rp',
+  fontColor:'fc', icon:'ic', waypoints:'wp', customIcon:'ci'
+};
+var SHARE_NODE_KEYS_REV = {};
+Object.keys(SHARE_NODE_KEYS).forEach(function(k) { SHARE_NODE_KEYS_REV[SHARE_NODE_KEYS[k]] = k; });
+
+var SHARE_EDGE_KEYS = { id:'i', from:'f', to:'t', style:'s', color:'c', label:'l', waypoints:'w', bidir:'b' };
+var SHARE_EDGE_KEYS_REV = {};
+Object.keys(SHARE_EDGE_KEYS).forEach(function(k) { SHARE_EDGE_KEYS_REV[SHARE_EDGE_KEYS[k]] = k; });
+
+var SHARE_K8S_KEYS = {
+  nodeCount:'nc', nodeCpu:'cc', nodeMem:'cm', nodeDisk:'cd', nodeGpu:'cg',
+  reservedCpu:'rc', reservedMem:'rm', gpuNodes:'gn', gpuPerNode:'gp',
+  gpuModel:'gm', namespaces:'ns', taints:'ta', nodeLabels:'nl', enabled:'en'
+};
+var SHARE_K8S_KEYS_REV = {};
+Object.keys(SHARE_K8S_KEYS).forEach(function(k) { SHARE_K8S_KEYS_REV[SHARE_K8S_KEYS[k]] = k; });
+
+// Default values to omit when equal
+var SHARE_NODE_DEFAULTS = {
+  desc:'', alert:'', layer:1, namespace:'default',
+  resGpu:0, fontColor:undefined
+};
+
+function shortenObj(obj, keyMap, defaults) {
+  var out = {};
+  Object.keys(obj).forEach(function(k) {
+    if(k.startsWith('_')) return;  // skip internal fields
+    var v = obj[k];
+    if(v === undefined || v === null) return;
+    // skip defaults
+    if(defaults && defaults.hasOwnProperty(k) && v === defaults[k]) return;
+    // skip empty arrays/objects
+    if(Array.isArray(v) && v.length === 0) return;
+    if(typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0) return;
+    var short = keyMap[k] || k;
+    out[short] = v;
+  });
+  return out;
+}
+
+function expandObj(obj, keyRevMap) {
+  var out = {};
+  Object.keys(obj).forEach(function(k) {
+    var full = keyRevMap[k] || k;
+    out[full] = obj[k];
+  });
+  return out;
+}
+
 function getShareData() {
-  var exportNodes = state.nodes.map(function(n) {
+  var nodes = state.nodes.map(function(n) {
     var copy = Object.assign({}, n);
     if(copy.collapsed && copy._origW) {
       copy.x = copy._origX; copy.y = copy._origY;
@@ -6057,15 +6113,83 @@ function getShareData() {
     delete copy.collapsed; delete copy._origX; delete copy._origY;
     delete copy._origW; delete copy._origH; delete copy._hiddenChildren;
     delete copy._groupHidden;
-    return copy;
+    // Strip resource defaults per type
+    var def = DEFAULT_RESOURCES[copy.type];
+    if(def) {
+      if(copy.resMinCpu  === def.minCpu)  delete copy.resMinCpu;
+      if(copy.resMaxCpu  === def.maxCpu)  delete copy.resMaxCpu;
+      if(copy.resMinMem  === def.minMem)  delete copy.resMinMem;
+      if(copy.resMaxMem  === def.maxMem)  delete copy.resMaxMem;
+      if(copy.resMinDisk === def.minDisk) delete copy.resMinDisk;
+      if(copy.resMaxDisk === def.maxDisk) delete copy.resMaxDisk;
+      if(copy.resGpu     === def.gpu)     delete copy.resGpu;
+      if(copy.resReplicas=== def.replicas)delete copy.resReplicas;
+    }
+    // Strip default w/h per type
+    var cfg = NODE_TYPES[copy.type];
+    if(cfg) {
+      if(copy.w === cfg.w) delete copy.w;
+      if(copy.h === cfg.h) delete copy.h;
+      if(copy.color === cfg.color) delete copy.color;
+    }
+    return shortenObj(copy, SHARE_NODE_KEYS, SHARE_NODE_DEFAULTS);
   });
-  return {
-    version: CURRENT_VERSION,
-    nodes: exportNodes,
-    edges: state.edges,
-    k8sConfig: k8sConfig,
-    layers: state.layers
-  };
+  var edges = state.edges.map(function(e) {
+    return shortenObj(e, SHARE_EDGE_KEYS, { style:'solid' });
+  });
+  var out = { n: nodes, e: edges };
+  // Only include k8sConfig if enabled
+  if(k8sConfig.enabled) {
+    out.k = shortenObj(k8sConfig, SHARE_K8S_KEYS, {});
+  }
+  // Only include layers if more than default single layer
+  if(state.layers.length > 1 || (state.layers.length === 1 && state.layers[0].name !== 'Layer 1')) {
+    out.l = state.layers;
+  }
+  return out;
+}
+
+function expandShareData(d) {
+  var nodes = (d.n || []).map(function(sn) {
+    var n = expandObj(sn, SHARE_NODE_KEYS_REV);
+    // Restore default w/h/color from NODE_TYPES
+    var cfg = NODE_TYPES[n.type];
+    if(cfg) {
+      if(n.w == null) n.w = cfg.w;
+      if(n.h == null) n.h = cfg.h;
+      if(n.color == null) n.color = cfg.color;
+    }
+    // Restore default resource values
+    if(n.layer == null) n.layer = 1;
+    if(n.desc == null) n.desc = '';
+    if(n.alert == null) n.alert = '';
+    if(n.namespace == null) n.namespace = 'default';
+    if(!n.tolerations) n.tolerations = [];
+    if(!n.nodeSelector) n.nodeSelector = {};
+    var def = DEFAULT_RESOURCES[n.type];
+    if(def) {
+      if(n.resMinCpu  == null) n.resMinCpu  = def.minCpu;
+      if(n.resMaxCpu  == null) n.resMaxCpu  = def.maxCpu;
+      if(n.resMinMem  == null) n.resMinMem  = def.minMem;
+      if(n.resMaxMem  == null) n.resMaxMem  = def.maxMem;
+      if(n.resMinDisk == null) n.resMinDisk = def.minDisk;
+      if(n.resMaxDisk == null) n.resMaxDisk = def.maxDisk;
+      if(n.resGpu     == null) n.resGpu     = def.gpu;
+      if(n.resReplicas== null) n.resReplicas= def.replicas;
+    }
+    return n;
+  });
+  var edges = (d.e || []).map(function(se) {
+    var e = expandObj(se, SHARE_EDGE_KEYS_REV);
+    if(!e.style) e.style = 'solid';
+    return e;
+  });
+  var result = { version: CURRENT_VERSION, nodes: nodes, edges: edges };
+  if(d.k) {
+    result.k8sConfig = expandObj(d.k, SHARE_K8S_KEYS_REV);
+  }
+  result.layers = d.l || [{id:1, name:'Layer 1', visible:true}];
+  return result;
 }
 
 function buildShareUrl() {
@@ -6127,33 +6251,25 @@ function sendShareEmail() {
 function loadFromUrlParam() {
   var hash = window.location.hash;
   if(!hash || !hash.startsWith('#data=')) return false;
-  var compressed = hash.substring(6);  // '#data='.length === 6
+  var compressed = hash.substring(6);
   if(!compressed) return false;
   try {
     var json = LZString.decompressFromEncodedURIComponent(compressed);
     if(!json) return false;
-    var d = JSON.parse(json);
-    var result = migrateData(d);
-    d = result.data;
+    var raw = JSON.parse(json);
+    // Support both compact format (has 'n' key) and legacy full format (has 'nodes' key)
+    var d = raw.n ? expandShareData(raw) : migrateData(raw).data;
     state.nodes = d.nodes || [];
     state.edges = d.edges || [];
     if(d.k8sConfig) Object.assign(k8sConfig, d.k8sConfig);
     if(d.layers && d.layers.length) { state.layers = d.layers; } else { state.layers = [{id:1, name:'Layer 1'}]; }
-    state.activeLayer = d.activeLayer != null ? d.activeLayer : null;
+    state.activeLayer = null;
     state.nodes.forEach(function(n) { if(n.layer == null) n.layer = 1; });
-    state.nodes.filter(function(g) { return g.type === 'group' && g.collapsed; }).forEach(function(g) {
-      (g._hiddenChildren || []).forEach(function(saved) {
-        var n = state.nodes.find(function(nd) { return nd.id === saved.id; });
-        if(n) n._groupHidden = true;
-      });
-    });
     state.nextId = Math.max.apply(null, [].concat(state.nodes, state.edges).map(function(x) { return x.id || 0; }).concat([0])) + 1;
     state.dirty = false;
     document.getElementById('hint').style.opacity = '0';
-    // Clean up URL (remove ?data= param to avoid re-loading on refresh)
     window.history.replaceState({}, '', window.location.pathname + window.location.search);
     render();
-    // Show toast
     var toast = document.getElementById('iacToast');
     toast.textContent = t('share_loaded');
     toast.classList.add('show');
