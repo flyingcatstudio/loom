@@ -61,6 +61,105 @@
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--border2); }
 
+  /* ── SUB-INFRA BAR ── */
+  .sub-infra-bar {
+    display: none;
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+  }
+  .sub-infra-bar__glow {
+    position: absolute;
+    inset: -1px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--teal), var(--accent));
+    background-size: 200% 200%;
+    animation: subInfraGlow 4s ease infinite;
+    opacity: 0.5;
+    filter: blur(1px);
+  }
+  @keyframes subInfraGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  .sub-infra-bar__inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--surface);
+    border-radius: 13px;
+    padding: 4px;
+    min-width: 300px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px var(--border) inset;
+  }
+  .sub-infra-bar__back {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .sub-infra-bar__back:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(91,160,245,0.3);
+  }
+  .sub-infra-bar__parent {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    min-width: 0;
+    flex: 1;
+  }
+  .sub-infra-bar__tag {
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--accent);
+    padding: 3px 7px;
+    border-radius: 5px;
+    line-height: 1;
+  }
+  .sub-infra-bar__name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.3px;
+    max-width: 240px;
+  }
+  .sub-infra-bar__path {
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    padding: 0 12px 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+  .sub-infra-bar__path:empty { display: none; }
+
   body {
     background: var(--bg);
     color: var(--text);
@@ -633,7 +732,27 @@
   <button class="tbtn" onclick="openK8sConfig()" title="k8s 클러스터 하드웨어 리소스 설정" style="color:var(--accent);" data-i18n="tb_k8s">☸ k8s 리소스</button>
   <button class="tbtn" onclick="runInfraCheck()" title="k8s 인프라 완성도 체크" style="color:var(--green);" data-i18n="tb_infra">✅ 인프라 체크</button>
   <button class="tbtn" onclick="openAIPanel()" title="AI로 다이어그램 생성" style="color:var(--purple);" data-i18n="tb_ai">✦ AI 생성</button>
-  <button class="tbtn" onclick="importJSON()">📥 Import</button>
+  <div class="export-dropdown" id="importDropdown">
+    <button class="tbtn" onclick="toggleImportMenu(event)">📥 Import ▾</button>
+    <div class="export-dropdown-menu">
+      <button class="export-dropdown-item" onclick="importLoomJSON();closeImportMenu();">
+        <span class="exp-icon">💾</span> Loom JSON
+      </button>
+      <div class="export-dropdown-sep"></div>
+      <button class="export-dropdown-item" onclick="importK8sYAML();closeImportMenu();">
+        <span class="exp-icon">☸</span> k8s YAML
+      </button>
+      <button class="export-dropdown-item" onclick="importTerraform();closeImportMenu();">
+        <span class="exp-icon">⛅</span> Terraform (.tf)
+      </button>
+      <button class="export-dropdown-item" onclick="importDockerCompose();closeImportMenu();">
+        <span class="exp-icon">🐳</span> Docker Compose
+      </button>
+      <button class="export-dropdown-item" onclick="importHelmValues();closeImportMenu();">
+        <span class="exp-icon">⎈</span> Helm Values
+      </button>
+    </div>
+  </div>
   <div class="export-dropdown" id="exportDropdown">
     <button class="tbtn" onclick="toggleExportMenu(event)">📤 Export ▾</button>
     <div class="export-dropdown-menu">
@@ -787,7 +906,24 @@
   <div id="canvasWrap">
     <canvas id="gridCanvas"></canvas>
     <canvas id="mainCanvas"></canvas>
-    <div id="hint"><span data-i18n="hint_1">팔레트에서 노드를 드래그하거나</span><br><span data-i18n="hint_2">더블클릭으로 노드 추가</span></div>
+    <div id="hint"><span data-i18n="hint_1">팔레트에서 노드를 드래그하세요</span></div>
+    <!-- Sub-Infra Breadcrumb -->
+    <div id="subInfraBreadcrumb" class="sub-infra-bar">
+      <div class="sub-infra-bar__glow"></div>
+      <div class="sub-infra-bar__inner">
+        <!-- 뒤로가기 -->
+        <button onclick="exitSubInfra()" class="sub-infra-bar__back" title="Esc">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5.5 8L10 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <!-- 부모 이름 -->
+        <div class="sub-infra-bar__parent">
+          <span class="sub-infra-bar__tag" id="subInfraParentLabel">SUB-NODES</span>
+          <span class="sub-infra-bar__name" id="subInfraParentName"></span>
+        </div>
+        <!-- 경로 -->
+        <span class="sub-infra-bar__path" id="subInfraPath"></span>
+      </div>
+    </div>
     <div id="minimap"><canvas id="minimapCanvas"></canvas></div>
   </div>
 
@@ -925,6 +1061,7 @@
           </div>
         </div>
 
+        <button id="btnSubInfra" class="tbtn" onclick="enterSubInfraSelected()" style="width:100%;justify-content:center;margin-top:6px;display:none;background:rgba(88,166,255,0.12);border-color:#58a6ff44;" data-i18n="rp_sub_infra">🔍 서브노드 보기 / 편집</button>
         <button class="tbtn danger" onclick="deleteSelected()" style="width:100%;justify-content:center;margin-top:6px" data-i18n="rp_delete">🗑 삭제</button>
       </div>
     </div>
@@ -1497,8 +1634,8 @@ const T = {
     lp_all: '전체',
     lp_add_layer: '+ 레이어 추가',
     // Canvas hint
-    hint_1: '팔레트에서 노드를 드래그하거나',
-    hint_2: '더블클릭으로 노드 추가',
+    hint_1: '팔레트에서 노드를 드래그하세요',
+    hint_2: '',
     // Right panel
     rp_panel_font: '패널 폰트',
     rp_props: '⚙ 속성',
@@ -1508,6 +1645,8 @@ const T = {
     rp_layer: '레이어', rp_alert: '경고 표시',
     rp_alert_none: '없음', rp_alert_warn: '⚠ 경고', rp_alert_error: '!! 오류/병목', rp_alert_ok: '✓ 정상',
     rp_sched: '📦 스케줄링', rp_res_req: '☸ 리소스 요구사항',
+    rp_sub_infra: '🔍 서브노드 보기 / 편집',
+    sub_back: '돌아가기',
     rp_delete: '🗑 삭제',
     rp_edge_props: '↗ 연결선 속성',
     rp_edge_label: '라벨', rp_edge_style: '스타일', rp_edge_color: '색상',
@@ -1651,7 +1790,7 @@ const T = {
     lp_all: 'All',
     lp_add_layer: '+ Add Layer',
     hint_1: 'Drag nodes from palette',
-    hint_2: 'or double-click to add',
+    hint_2: '',
     rp_panel_font: 'Panel Font',
     rp_props: '⚙ Properties',
     rp_select_node: 'Select a node',
@@ -1660,6 +1799,8 @@ const T = {
     rp_layer: 'Layer', rp_alert: 'Alert Badge',
     rp_alert_none: 'None', rp_alert_warn: '⚠ Warning', rp_alert_error: '!! Error/Bottleneck', rp_alert_ok: '✓ OK',
     rp_sched: '📦 Scheduling', rp_res_req: '☸ Resource Requests',
+    rp_sub_infra: '🔍 View / Edit Sub-nodes',
+    sub_back: 'Go Back',
     rp_delete: '🗑 Delete',
     rp_edge_props: '↗ Edge Properties',
     rp_edge_label: 'Label', rp_edge_style: 'Style', rp_edge_color: 'Color',
@@ -1799,7 +1940,7 @@ function applyLang() {
   });
   // Hint uses <br>
   const hint = document.getElementById('hint');
-  if (hint) { hint.firstChild.textContent = d.hint_1; hint.lastChild.textContent = d.hint_2; }
+  if (hint && hint.firstChild) { hint.firstChild.textContent = d.hint_1; }
   // Statusbar
   if (document.getElementById('statusTool')) {
     const toolNames = {ko:{select:'선택',connect:'연결',pan:'이동'},en:{select:'Select',connect:'Connect',pan:'Pan'}};
@@ -1872,6 +2013,7 @@ let state = {
   fontSize: 12,       // 캔버스 기본 폰트 크기 (px, 고정)
   panelFontSize: 12,  // 우측 패널 폰트 크기 (px, 조절 가능)
   filters: { namespace: null, toleration: null, nodeSelector: null },  // null = 전체
+  subInfraStack: [],  // stack for sub-infra drill-down navigation
 };
 
 // ════════════════════════════════════════════════════════
@@ -2109,6 +2251,16 @@ function render() {
   ctx.save();
   ctx.translate(state.panX, state.panY);
   ctx.scale(state.zoom, state.zoom);
+
+  // 서브인프라 모드 표시 (좌상단 라벨)
+  if(state.subInfraStack.length) {
+    const parentLabel = state.subInfraStack[state.subInfraStack.length-1].parentLabel;
+    ctx.save();
+    ctx.resetTransform();
+    ctx.fillStyle = 'rgba(88,166,255,0.08)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
 
   // Draw groups first (bottom layer) — 숨겨진 자식 그룹 및 비표시 레이어 제외
   state.nodes.filter(n=>n.type==='group' && !n._groupHidden && isLayerVisible(n.layer||1)).forEach(n => drawNode(n));
@@ -2587,6 +2739,33 @@ function drawNode(n) {
     ctx.textAlign = 'center';
     ctx.fillText(badges[alert], x+w-12, y+15);
     ctx.textAlign = 'left';
+  }
+
+  // Sub-infra badge (노드에 서브노드가 있을 때)
+  if(n.subNodes && n.subNodes.length > 0) {
+    const subTotals = getSubNodeResourceTotals(n);
+    // 서브노드 카운트 뱃지 (좌하단)
+    const badgeTxt = '⊞ ' + n.subNodes.length;
+    ctx.font = font('600', 8);
+    const bw = ctx.measureText(badgeTxt).width + 10;
+    ctx.fillStyle = 'rgba(88,166,255,0.25)';
+    ctx.beginPath(); roundRect(ctx, x + 4, y + h - 18, bw, 14, 4); ctx.fill();
+    ctx.strokeStyle = '#58a6ff66'; ctx.lineWidth = 0.5;
+    ctx.beginPath(); roundRect(ctx, x + 4, y + h - 18, bw, 14, 4); ctx.stroke();
+    ctx.fillStyle = '#58a6ff';
+    ctx.fillText(badgeTxt, x + 9, y + h - 8);
+    // 리소스 요약 (우하단)
+    if(subTotals && subTotals.totalMaxCpu > 0) {
+      const cpuTxt = (subTotals.totalMaxCpu/1000).toFixed(1) + 'C';
+      const memTxt = subTotals.totalMaxMem >= 1024 ? (subTotals.totalMaxMem/1024).toFixed(1)+'Gi' : subTotals.totalMaxMem+'Mi';
+      const resTxt = cpuTxt + ' / ' + memTxt;
+      ctx.font = font('500', 7);
+      const rw = ctx.measureText(resTxt).width + 8;
+      ctx.fillStyle = 'rgba(63,185,80,0.2)';
+      ctx.beginPath(); roundRect(ctx, x + w - rw - 4, y + h - 18, rw, 14, 4); ctx.fill();
+      ctx.fillStyle = '#3fb950';
+      ctx.fillText(resTxt, x + w - rw, y + h - 8);
+    }
   }
 
   // Resize handle
@@ -3714,9 +3893,8 @@ canvas.addEventListener('dblclick', e => {
   const node = hitNode(w.x, w.y);
   if(node) {
     openRenameModal(node);
-  } else {
-    createNode('process', w.x, w.y);
   }
+  // 더 이상 빈 캔버스 더블클릭으로 노드 생성하지 않음 (드래그 전용)
 });
 
 // Ctrl 키 누름/뗌에 따라 커서 즉시 반영
@@ -3825,8 +4003,17 @@ wrap.addEventListener('drop', e => {
   const r = canvas.getBoundingClientRect();
   const sx = e.clientX - r.left;
   const sy = e.clientY - r.top;
-  const w = toWorld(sx, sy);
-  createNode(type, w.x, w.y);
+  const wc = toWorld(sx, sy);
+
+  if(type === '__icon__') {
+    // Icon drop from picker or recent icons
+    const iconId = e.dataTransfer.getData('iconId');
+    const iconLabel = e.dataTransfer.getData('iconLabel');
+    if(!iconId) return;
+    addIconNodeAtPosition(iconId, iconLabel, wc.x, wc.y);
+  } else {
+    createNode(type, wc.x, wc.y);
+  }
 });
 
 // ════════════════════════════════════════════════════════
@@ -3840,6 +4027,10 @@ document.addEventListener('keydown', e => {
   if((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) setTool('connect');
   if(e.key === ' ') { e.preventDefault(); setTool(state.tool === 'pan' ? 'select' : 'pan'); }
   if(e.key === 'Escape') {
+    if(!state.selected && !state.selectedEdge && !state.multiSelect.length && state.subInfraStack.length) {
+      exitSubInfra();
+      return;
+    }
     state.connectFrom = null;
     state.marquee = null;
     clearSelection();
@@ -3901,6 +4092,13 @@ function updatePropPanel() {
   });
   layerSel.value = n.layer || 1;
   document.getElementById('statusSel').textContent = `${loomLang==='en'?'Selected':'선택'}: ${n.label}`;
+  // Sub-infra button: show for all non-flowchart types
+  const btnSub = document.getElementById('btnSubInfra');
+  btnSub.style.display = 'flex';
+  const subCount = (n.subNodes && n.subNodes.length) || 0;
+  btnSub.textContent = subCount > 0
+    ? `🔍 ${loomLang==='en'?'View Sub-nodes':'서브노드 보기'} (${subCount})`
+    : `🔍 ${loomLang==='en'?'Edit Sub-nodes':'서브노드 편집'}`;
   updateNodeResProps();
   updateNodeSchedProps();
 }
@@ -4066,13 +4264,16 @@ function deleteSelected() {
     const ids = new Set(state.multiSelect);
     state.edges = state.edges.filter(e => !ids.has(e.from) && !ids.has(e.to));
     state.nodes = state.nodes.filter(n => !ids.has(n.id));
+    syncSubInfraParent();
     clearSelection();
   } else if(state.selected) {
     state.edges = state.edges.filter(e=>e.from!==state.selected&&e.to!==state.selected);
     state.nodes = state.nodes.filter(n=>n.id!==state.selected);
+    syncSubInfraParent();
     clearSelection();
   } else if(state.selectedEdge) {
     state.edges = state.edges.filter(e=>e.id!==state.selectedEdge);
+    syncSubInfraParent();
     clearSelection();
   }
   render();
@@ -4155,12 +4356,14 @@ function saveHistory() {
   if(state.history.length > 50) state.history.shift();
   state.future = [];
   state.dirty = true;
-  // Autosave to localStorage
+  // Autosave to localStorage (always save root-level state)
   try {
+    const rootNodes = state.subInfraStack.length ? state.subInfraStack[0].nodes : state.nodes;
+    const rootEdges = state.subInfraStack.length ? state.subInfraStack[0].edges : state.edges;
     localStorage.setItem('infraflow_autosave', JSON.stringify({
       version: CURRENT_VERSION,
-      nodes: state.nodes,
-      edges: state.edges,
+      nodes: rootNodes,
+      edges: rootEdges,
       k8sConfig: k8sConfig,
       layers: state.layers,
       activeLayer: state.activeLayer,
@@ -4182,6 +4385,7 @@ function undo() {
   state.future.push(JSON.stringify({nodes:state.nodes,edges:state.edges,nextId:state.nextId}));
   const s = JSON.parse(state.history.pop());
   state.nodes = s.nodes; state.edges = s.edges; state.nextId = s.nextId;
+  syncSubInfraParent();
   clearSelection(); render();
 }
 
@@ -4190,6 +4394,7 @@ function redo() {
   state.history.push(JSON.stringify({nodes:state.nodes,edges:state.edges,nextId:state.nextId}));
   const s = JSON.parse(state.future.pop());
   state.nodes = s.nodes; state.edges = s.edges; state.nextId = s.nextId;
+  syncSubInfraParent();
   clearSelection(); render();
 }
 
@@ -4249,6 +4454,25 @@ var ZERO_RESOURCES = { minCpu:0, maxCpu:0, minMem:0, maxMem:0, minDisk:0, maxDis
 
 function getNodeResources(n) {
   if (NON_INFRA_TYPES.includes(n.type)) return ZERO_RESOURCES;
+
+  // 서브노드가 있으면 자체 리소스 없이 서브노드 리소스 합산만 반환
+  if (n.subNodes && n.subNodes.length > 0) {
+    let minCpu=0, maxCpu=0, minMem=0, maxMem=0, minDisk=0, maxDisk=0, gpu=0, replicas=0;
+    n.subNodes.forEach(sn => {
+      const sr = getNodeResources(sn);  // 재귀적으로 서브노드의 서브노드도 처리
+      const rep = sr.replicas || 1;
+      minCpu  += sr.minCpu * rep;
+      maxCpu  += sr.maxCpu * rep;
+      minMem  += sr.minMem * rep;
+      maxMem  += sr.maxMem * rep;
+      minDisk += sr.minDisk * rep;
+      maxDisk += sr.maxDisk * rep;
+      gpu     += sr.gpu * rep;
+      replicas += rep;
+    });
+    return { minCpu, maxCpu, minMem, maxMem, minDisk, maxDisk, gpu, replicas: replicas || 1 };
+  }
+
   const def = DEFAULT_RESOURCES[n.type] || { minCpu:100, maxCpu:500, minMem:128, maxMem:512, minDisk:1, maxDisk:10, gpu:0, replicas:1 };
   return {
     minCpu:  n.resMinCpu  ?? def.minCpu,
@@ -4263,7 +4487,9 @@ function getNodeResources(n) {
 }
 
 function calcResourceTotals() {
-  const infra = state.nodes.filter(n => !NON_INFRA_TYPES.includes(n.type) && isLayerVisible(n.layer || 1));
+  // 서브노드 뷰에서도 항상 루트(부모) 레벨 노드 기준으로 리소스 전체 현황 계산
+  const rootNodes = state.subInfraStack.length ? state.subInfraStack[0].nodes : state.nodes;
+  const infra = rootNodes.filter(n => !NON_INFRA_TYPES.includes(n.type) && isLayerVisible(n.layer || 1));
   let minCpu=0, maxCpu=0, minMem=0, maxMem=0, minDisk=0, maxDisk=0, totalGpu=0;
   const perNode = [];
   infra.forEach(n => {
@@ -5790,7 +6016,10 @@ document.getElementById('filterNodeSelector').addEventListener('change', functio
 function updateNodeResProps() {
   var n = state.nodes.find(function(n) { return n.id === state.selected; });
   if (!n) return;
+  var isInfra = !NON_INFRA_TYPES.includes(n.type);
+  var hasSubNodes = n.subNodes && n.subNodes.length > 0;
   var r = getNodeResources(n);
+
   document.getElementById('nrMinCpu').value  = r.minCpu;
   document.getElementById('nrMaxCpu').value  = r.maxCpu;
   document.getElementById('nrMinMem').value  = r.minMem;
@@ -5800,8 +6029,32 @@ function updateNodeResProps() {
   document.getElementById('nrGpu').value     = r.gpu;
   document.getElementById('nrReplicas').value= r.replicas;
 
-  var isInfra = !NON_INFRA_TYPES.includes(n.type);
+  // 서브노드가 있으면 리소스 입력 비활성화 (서브노드 합산이므로 직접 편집 불가)
+  var resInputs = ['nrMinCpu','nrMaxCpu','nrMinMem','nrMaxMem','nrMinDisk','nrMaxDisk','nrGpu','nrReplicas'];
+  resInputs.forEach(function(id) {
+    var el = document.getElementById(id);
+    el.disabled = hasSubNodes;
+    el.style.opacity = hasSubNodes ? '0.6' : '1';
+  });
+
   document.getElementById('nodeResSection').style.display = isInfra ? 'block' : 'none';
+
+  // 서브노드 합산 안내 표시
+  var sumNotice = document.getElementById('subResSumNotice');
+  if (!sumNotice) {
+    sumNotice = document.createElement('div');
+    sumNotice.id = 'subResSumNotice';
+    sumNotice.style.cssText = 'font-size:10px;color:#58a6ff;padding:4px 0;display:none;';
+    document.getElementById('nodeResSection').insertBefore(sumNotice, document.querySelector('.node-res-grid'));
+  }
+  if (hasSubNodes && isInfra) {
+    sumNotice.style.display = 'block';
+    sumNotice.textContent = (loomLang==='en'
+      ? '⊞ Aggregated from ' + n.subNodes.length + ' sub-node(s) — edit inside sub-view'
+      : '⊞ 서브노드 ' + n.subNodes.length + '개의 합산값 — 서브노드 뷰에서 편집');
+  } else {
+    sumNotice.style.display = 'none';
+  }
 }
 
 ['nrMinCpu','nrMaxCpu','nrMinMem','nrMaxMem','nrMinDisk','nrMaxDisk','nrGpu','nrReplicas'].forEach(function(id) {
@@ -5916,6 +6169,137 @@ function isLayerVisible(layerId) {
 }
 
 // ════════════════════════════════════════════════════════
+// SUB-INFRA (서브 인프라) DRILL-DOWN
+// ════════════════════════════════════════════════════════
+function enterSubInfraSelected() {
+  if(state.selected) enterSubInfra(state.selected);
+}
+
+function enterSubInfra(nodeId) {
+  const node = state.nodes.find(n => n.id === nodeId);
+  if(!node) return;
+  if(!node.subNodes) { node.subNodes = []; node.subEdges = []; }
+
+  // Save current state to stack
+  state.subInfraStack.push({
+    nodes: state.nodes,
+    edges: state.edges,
+    layers: state.layers,
+    activeLayer: state.activeLayer,
+    selected: state.selected,
+    selectedEdge: state.selectedEdge,
+    zoom: state.zoom,
+    panX: state.panX,
+    panY: state.panY,
+    history: state.history,
+    future: state.future,
+    parentId: nodeId,
+    parentLabel: node.label
+  });
+
+  // Switch to sub-nodes
+  state.nodes = node.subNodes;
+  state.edges = node.subEdges;
+  state.history = [];
+  state.future = [];
+  clearSelection();
+
+  // Reset view
+  state.zoom = 1;
+  state.panX = canvas.width / 3;
+  state.panY = canvas.height / 3;
+
+  updateSubInfraUI();
+  render();
+}
+
+function exitSubInfra() {
+  if(!state.subInfraStack.length) return;
+  const prev = state.subInfraStack.pop();
+
+  // subNodes/subEdges are already updated in-place via references
+  // But undo/redo may have replaced state.nodes, so re-sync parent
+  const parentNode = prev.nodes.find(n => n.id === prev.parentId);
+  if(parentNode) {
+    parentNode.subNodes = state.nodes;
+    parentNode.subEdges = state.edges;
+  }
+
+  state.nodes = prev.nodes;
+  state.edges = prev.edges;
+  state.layers = prev.layers;
+  state.activeLayer = prev.activeLayer;
+  state.history = prev.history;
+  state.future = prev.future;
+  state.zoom = prev.zoom;
+  state.panX = prev.panX;
+  state.panY = prev.panY;
+
+  clearSelection();
+  if(prev.selected) selectNode(prev.selected);
+
+  updateSubInfraUI();
+  render();
+}
+
+function isInSubInfra() {
+  return state.subInfraStack.length > 0;
+}
+
+function syncSubInfraParent() {
+  // After undo/redo or delete that may reassign state.nodes, re-link parent
+  if(!state.subInfraStack.length) return;
+  const top = state.subInfraStack[state.subInfraStack.length - 1];
+  const parentNode = top.nodes.find(n => n.id === top.parentId);
+  if(parentNode) {
+    parentNode.subNodes = state.nodes;
+    parentNode.subEdges = state.edges;
+  }
+}
+
+function getSubNodeResourceTotals(node) {
+  if(!node.subNodes || !node.subNodes.length) return null;
+  let totalMinCpu=0, totalMaxCpu=0, totalMinMem=0, totalMaxMem=0, totalGpu=0, totalReplicas=0;
+  node.subNodes.forEach(sn => {
+    if(NON_INFRA_TYPES.includes(sn.type)) return;
+    const res = getNodeResources(sn);
+    const reps = res.replicas || 1;
+    totalMinCpu += res.minCpu * reps;
+    totalMaxCpu += res.maxCpu * reps;
+    totalMinMem += res.minMem * reps;
+    totalMaxMem += res.maxMem * reps;
+    totalGpu += res.gpu * reps;
+    totalReplicas += reps;
+  });
+  return { totalMinCpu, totalMaxCpu, totalMinMem, totalMaxMem, totalGpu, totalReplicas, count: node.subNodes.length };
+}
+
+function updateSubInfraUI() {
+  const bc = document.getElementById('subInfraBreadcrumb');
+  if(!state.subInfraStack.length) {
+    bc.style.display = 'none';
+    return;
+  }
+  bc.style.display = 'block';
+
+  const top = state.subInfraStack[state.subInfraStack.length - 1];
+
+  // 태그 + 부모 이름
+  document.getElementById('subInfraParentLabel').textContent =
+    loomLang === 'en' ? 'SUB' : 'SUB';
+  document.getElementById('subInfraParentName').textContent = top.parentLabel;
+
+  // 경로 (중첩 2단계 이상일 때)
+  const pathEl = document.getElementById('subInfraPath');
+  if(state.subInfraStack.length > 1) {
+    const parts = state.subInfraStack.map(s => s.parentLabel);
+    pathEl.textContent = parts.join(' › ');
+  } else {
+    pathEl.textContent = '';
+  }
+}
+
+// ════════════════════════════════════════════════════════
 // MINIMAP
 // ════════════════════════════════════════════════════════
 function updateMinimap() {
@@ -6010,11 +6394,14 @@ function exportPNG() {
 }
 
 function exportJSON() {
+  // 서브인프라 모드에서는 루트 레벨 데이터를 내보내기
+  var rootNodes = state.subInfraStack.length ? state.subInfraStack[0].nodes : state.nodes;
+  var rootEdges = state.subInfraStack.length ? state.subInfraStack[0].edges : state.edges;
   var now = new Date();
   var ts = formatTimestamp();
   var filename = 'infraflow-v' + CURRENT_VERSION + '_' + ts + '.json';
-  // export용 노드: 접힌 그룹은 원래 크기로 복원, 내부 임시 필드 제거
-  var exportNodes = state.nodes.map(function(n) {
+
+  function cleanNodeForExport(n) {
     var copy = Object.assign({}, n);
     if(copy.collapsed && copy._origW) {
       copy.x = copy._origX; copy.y = copy._origY;
@@ -6023,8 +6410,14 @@ function exportJSON() {
     delete copy.collapsed; delete copy._origX; delete copy._origY;
     delete copy._origW; delete copy._origH; delete copy._hiddenChildren;
     delete copy._groupHidden;
+    // 서브노드도 재귀적으로 정리
+    if(copy.subNodes && copy.subNodes.length) {
+      copy.subNodes = copy.subNodes.map(cleanNodeForExport);
+    }
     return copy;
-  });
+  }
+
+  var exportNodes = rootNodes.map(cleanNodeForExport);
   var exportData = {
     version: CURRENT_VERSION,
     meta: {
@@ -6033,7 +6426,7 @@ function exportJSON() {
       tool: 'Loom'
     },
     nodes: exportNodes,
-    edges: state.edges,
+    edges: rootEdges,
     k8sConfig: k8sConfig,
     layers: state.layers
   };
@@ -6054,7 +6447,8 @@ var SHARE_NODE_KEYS = {
   namespace:'ns', tolerations:'tl', nodeSelector:'sl',
   resMinCpu:'rc', resMaxCpu:'rC', resMinMem:'rm', resMaxMem:'rM',
   resMinDisk:'rd', resMaxDisk:'rD', resGpu:'rg', resReplicas:'rp',
-  fontColor:'fc', icon:'ic', waypoints:'wp', customIcon:'ci'
+  fontColor:'fc', icon:'ic', waypoints:'wp', customIcon:'ci',
+  subNodes:'sn', subEdges:'se'
 };
 var SHARE_NODE_KEYS_REV = {};
 Object.keys(SHARE_NODE_KEYS).forEach(function(k) { SHARE_NODE_KEYS_REV[SHARE_NODE_KEYS[k]] = k; });
@@ -6284,9 +6678,17 @@ function loadFromUrlParam() {
 // ════════════════════════════════════════════════════════
 // EXPORT DROPDOWN TOGGLE
 // ════════════════════════════════════════════════════════
+function toggleImportMenu(e) {
+  e.stopPropagation();
+  closeExportMenu(); closeHelpMenu();
+  document.getElementById('importDropdown').classList.toggle('open');
+}
+function closeImportMenu() {
+  document.getElementById('importDropdown').classList.remove('open');
+}
 function toggleExportMenu(e) {
   e.stopPropagation();
-  closeHelpMenu();
+  closeImportMenu(); closeHelpMenu();
   document.getElementById('exportDropdown').classList.toggle('open');
 }
 function closeExportMenu() {
@@ -6294,13 +6696,13 @@ function closeExportMenu() {
 }
 function toggleHelpMenu(e) {
   e.stopPropagation();
-  closeExportMenu();
+  closeImportMenu(); closeExportMenu();
   document.getElementById('helpDropdown').classList.toggle('open');
 }
 function closeHelpMenu() {
   document.getElementById('helpDropdown').classList.remove('open');
 }
-document.addEventListener('click', function() { closeExportMenu(); closeHelpMenu(); });
+document.addEventListener('click', function() { closeImportMenu(); closeExportMenu(); closeHelpMenu(); });
 
 // ════════════════════════════════════════════════════════
 // COMMON EXPORT DATA
@@ -6590,7 +6992,7 @@ function migrateData(d) {
   return { data: d, migrated: migrated, fromVersion: ver };
 }
 
-function importJSON() {
+function importLoomJSON() {
   const input=document.createElement('input');
   input.type='file'; input.accept='.json';
   input.onchange=e=>{
@@ -6621,6 +7023,362 @@ function importJSON() {
     reader.readAsText(file);
   };
   input.click();
+}
+
+// ════════════════════════════════════════════════════════
+// INFRASTRUCTURE DESIGN FILE IMPORT
+// ════════════════════════════════════════════════════════
+
+function importFileWithAccept(accept, parser) {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = accept;
+  input.onchange = function(e) {
+    var file = e.target.files[0];
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        var nodes = parser(ev.target.result, file.name);
+        if (!nodes || !nodes.length) {
+          alert('임포트할 리소스를 찾지 못했습니다.');
+          return;
+        }
+        applyImportedNodes(nodes);
+      } catch(err) {
+        console.error('Import error:', err);
+        alert('임포트 오류: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function applyImportedNodes(newNodes) {
+  saveHistory();
+  // 그리드 레이아웃으로 배치
+  var cols = Math.ceil(Math.sqrt(newNodes.length));
+  var gapX = 200, gapY = 120;
+  var startX = 100, startY = 100;
+  // 기존 노드가 있으면 아래쪽에 배치
+  if (state.nodes.length) {
+    var maxY = 0;
+    state.nodes.forEach(function(n) { if (n.y + n.h > maxY) maxY = n.y + n.h; });
+    startY = maxY + 100;
+  }
+  newNodes.forEach(function(n, i) {
+    var col = i % cols;
+    var row = Math.floor(i / cols);
+    var cfg = NODE_TYPES[n.type] || NODE_TYPES.server;
+    n.id = state.nextId++;
+    n.x = startX + col * gapX;
+    n.y = startY + row * gapY;
+    n.w = n.w || cfg.w;
+    n.h = n.h || cfg.h;
+    n.color = n.color || cfg.color;
+    n.layer = 1;
+    n.alert = 'ok';
+    state.nodes.push(n);
+  });
+  clearSelection(); render();
+  document.getElementById('hint').style.opacity = '0';
+  state.dirty = true;
+  showImportNotice(newNodes.length);
+}
+
+function showImportNotice(count) {
+  var toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:60px;left:50%;transform:translateX(-50%);' +
+    'background:#1f6feb;color:#fff;padding:10px 20px;border-radius:8px;font-size:12px;' +
+    'z-index:99999;pointer-events:none;transition:opacity .5s;';
+  toast.textContent = count + '개 리소스를 임포트했습니다.';
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.style.opacity = '0'; }, 2500);
+  setTimeout(function() { toast.remove(); }, 3200);
+}
+
+// ── k8s YAML 파서 ──
+function parseK8sKindToNodeType(kind) {
+  kind = (kind || '').toLowerCase();
+  if (kind === 'deployment') return 'server';
+  if (kind === 'statefulset') return 'database';
+  if (kind === 'persistentvolumeclaim' || kind === 'pvc') return 'storage';
+  if (kind === 'service') return 'service';
+  if (kind === 'ingress' || kind === 'gateway' || kind === 'virtualservice') return 'gateway';
+  if (kind === 'configmap' || kind === 'secret') return 'storage';
+  if (kind === 'daemonset') return 'server';
+  if (kind === 'job' || kind === 'cronjob') return 'process';
+  return null;
+}
+
+function parseK8sResources(container) {
+  var res = {};
+  if (!container || !container.resources) return res;
+  var r = container.resources;
+  if (r.requests) {
+    if (r.requests.cpu) res.resMinCpu = parseCpuMillis(r.requests.cpu);
+    if (r.requests.memory) res.resMinMem = parseMemMi(r.requests.memory);
+  }
+  if (r.limits) {
+    if (r.limits.cpu) res.resMaxCpu = parseCpuMillis(r.limits.cpu);
+    if (r.limits.memory) res.resMaxMem = parseMemMi(r.limits.memory);
+    if (r.limits['nvidia.com/gpu']) res.resGpu = parseInt(r.limits['nvidia.com/gpu']) || 0;
+  }
+  return res;
+}
+
+function parseCpuMillis(v) {
+  v = String(v);
+  if (v.endsWith('m')) return parseInt(v) || 0;
+  return Math.round(parseFloat(v) * 1000) || 0;
+}
+
+function parseMemMi(v) {
+  v = String(v);
+  if (v.endsWith('Gi')) return Math.round(parseFloat(v) * 1024);
+  if (v.endsWith('Mi')) return parseInt(v) || 0;
+  if (v.endsWith('Ki')) return Math.round(parseInt(v) / 1024);
+  return Math.round(parseInt(v) / (1024 * 1024)) || 0;
+}
+
+function parseSimpleYAML(text) {
+  // 간단한 YAML 파서 — multi-document 지원
+  var docs = text.split(/^---$/m).filter(function(s) { return s.trim(); });
+  return docs.map(function(doc) {
+    return parseYAMLBlock(doc.trim());
+  });
+}
+
+function parseYAMLBlock(text) {
+  var result = {};
+  var lines = text.split('\n');
+  var stack = [{ obj: result, indent: -1 }];
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    if (!line.trim() || line.trim().startsWith('#')) continue;
+
+    var indent = line.search(/\S/);
+    var content = line.trim();
+
+    // 스택에서 현재 인덴트에 맞는 부모 찾기
+    while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+      stack.pop();
+    }
+    var parent = stack[stack.length - 1].obj;
+
+    if (content.startsWith('- ')) {
+      // 배열 아이템
+      var arrContent = content.substring(2).trim();
+      if (!Array.isArray(parent)) {
+        continue;
+      }
+      if (arrContent.includes(':')) {
+        var obj = {};
+        var kv = arrContent.split(':');
+        var k = kv[0].trim();
+        var v = kv.slice(1).join(':').trim().replace(/^["']|["']$/g, '');
+        obj[k] = v;
+        parent.push(obj);
+        stack.push({ obj: obj, indent: indent });
+      } else {
+        parent.push(arrContent.replace(/^["']|["']$/g, ''));
+      }
+    } else if (content.includes(':')) {
+      var colonIdx = content.indexOf(':');
+      var key = content.substring(0, colonIdx).trim();
+      var val = content.substring(colonIdx + 1).trim().replace(/^["']|["']$/g, '');
+      if (val === '' || val === '|' || val === '>') {
+        var nextLine = i + 1 < lines.length ? lines[i + 1] : '';
+        var nextIndent = nextLine.search(/\S/);
+        if (nextIndent > indent && nextLine.trim().startsWith('- ')) {
+          parent[key] = [];
+          stack.push({ obj: parent[key], indent: indent + 1 });
+        } else {
+          parent[key] = {};
+          stack.push({ obj: parent[key], indent: indent });
+        }
+      } else {
+        parent[key] = val;
+      }
+    }
+  }
+  return result;
+}
+
+function importK8sYAML() {
+  importFileWithAccept('.yaml,.yml', function(text) {
+    var docs = parseSimpleYAML(text);
+    var nodes = [];
+    docs.forEach(function(doc) {
+      var kind = doc.kind;
+      var nodeType = parseK8sKindToNodeType(kind);
+      if (!nodeType) return;
+      var meta = doc.metadata || {};
+      var label = meta.name || 'unnamed';
+      var ns = meta.namespace || 'default';
+      var node = { type: nodeType, label: label, desc: kind, namespace: ns };
+      // 리소스 파싱
+      var spec = doc.spec || {};
+      var template = spec.template || {};
+      var podSpec = template.spec || {};
+      var containers = podSpec.containers;
+      if (containers && containers.length) {
+        var res = parseK8sResources(containers[0]);
+        Object.assign(node, res);
+      }
+      if (spec.replicas) node.resReplicas = parseInt(spec.replicas) || 1;
+      // PVC
+      if (kind === 'PersistentVolumeClaim') {
+        var pvcRes = (spec.resources || {}).requests || {};
+        if (pvcRes.storage) node.resMaxDisk = parseStorageGi(pvcRes.storage);
+      }
+      nodes.push(node);
+    });
+    return nodes;
+  });
+}
+
+function parseStorageGi(v) {
+  v = String(v);
+  if (v.endsWith('Ti')) return Math.round(parseFloat(v) * 1024);
+  if (v.endsWith('Gi')) return parseInt(v) || 0;
+  if (v.endsWith('Mi')) return Math.round(parseInt(v) / 1024);
+  return parseInt(v) || 0;
+}
+
+// ── Terraform 파서 ──
+function importTerraform() {
+  importFileWithAccept('.tf', function(text) {
+    var nodes = [];
+    var resourceRegex = /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{/g;
+    var match;
+    while ((match = resourceRegex.exec(text)) !== null) {
+      var resType = match[1];
+      var resName = match[2];
+      var nodeType = parseTfResourceToNodeType(resType);
+      if (!nodeType) continue;
+      var block = extractTfBlock(text, match.index + match[0].length);
+      var node = { type: nodeType, label: resName.replace(/_/g, '-'), desc: resType };
+      var nsMatch = block.match(/namespace\s*=\s*"([^"]+)"/);
+      if (nsMatch) node.namespace = nsMatch[1];
+      var repMatch = block.match(/replicas\s*=\s*(\d+)/);
+      if (repMatch) node.resReplicas = parseInt(repMatch[1]);
+      var cpuReq = block.match(/requests[\s\S]*?cpu\s*=\s*"([^"]+)"/);
+      if (cpuReq) node.resMinCpu = parseCpuMillis(cpuReq[1]);
+      var cpuLim = block.match(/limits[\s\S]*?cpu\s*=\s*"([^"]+)"/);
+      if (cpuLim) node.resMaxCpu = parseCpuMillis(cpuLim[1]);
+      var memReq = block.match(/requests[\s\S]*?memory\s*=\s*"([^"]+)"/);
+      if (memReq) node.resMinMem = parseMemMi(memReq[1]);
+      var memLim = block.match(/limits[\s\S]*?memory\s*=\s*"([^"]+)"/);
+      if (memLim) node.resMaxMem = parseMemMi(memLim[1]);
+      var storageMatch = block.match(/storage\s*=\s*"([^"]+)"/);
+      if (storageMatch) node.resMaxDisk = parseStorageGi(storageMatch[1]);
+      nodes.push(node);
+    }
+    return nodes;
+  });
+}
+
+function parseTfResourceToNodeType(resType) {
+  if (resType.includes('deployment')) return 'server';
+  if (resType.includes('stateful_set')) return 'database';
+  if (resType.includes('persistent_volume_claim')) return 'storage';
+  if (resType.includes('service') && !resType.includes('account')) return 'service';
+  if (resType.includes('ingress')) return 'gateway';
+  if (resType.includes('daemon_set')) return 'server';
+  if (resType.includes('job')) return 'process';
+  if (resType.includes('config_map') || resType.includes('secret')) return 'storage';
+  return null;
+}
+
+function extractTfBlock(text, startIdx) {
+  var depth = 1;
+  var i = startIdx;
+  while (i < text.length && depth > 0) {
+    if (text[i] === '{') depth++;
+    if (text[i] === '}') depth--;
+    i++;
+  }
+  return text.substring(startIdx, i);
+}
+
+// ── Docker Compose 파서 ──
+function importDockerCompose() {
+  importFileWithAccept('.yml,.yaml', function(text) {
+    var nodes = [];
+    var parsed = parseYAMLBlock(text);
+    var services = parsed.services || parsed;
+    if (parsed.version && parsed.services) {
+      services = parsed.services;
+    }
+    Object.keys(services).forEach(function(svcName) {
+      if (svcName === 'version' || svcName === 'volumes' || svcName === 'networks') return;
+      var svc = services[svcName] || {};
+      var nodeType = guessDockerServiceType(svcName, svc);
+      var node = { type: nodeType, label: svcName, desc: svc.image || '' };
+      if (svc.deploy && svc.deploy.replicas) {
+        node.resReplicas = parseInt(svc.deploy.replicas) || 1;
+      }
+      if (svc.deploy && svc.deploy.resources && svc.deploy.resources.limits) {
+        var lim = svc.deploy.resources.limits;
+        if (lim.cpus) node.resMaxCpu = Math.round(parseFloat(lim.cpus) * 1000);
+        if (lim.memory) node.resMaxMem = parseMemMi(lim.memory);
+      }
+      nodes.push(node);
+    });
+    return nodes;
+  });
+}
+
+function guessDockerServiceType(name, svc) {
+  var image = ((svc.image || '') + ' ' + name).toLowerCase();
+  if (/postgres|mysql|mariadb|mongo|redis|memcached|cassandra|elastic|influx|cockroach/.test(image)) return 'database';
+  if (/rabbitmq|kafka|nats|activemq|pulsar|celery/.test(image)) return 'queue';
+  if (/minio|s3|storage|nfs|ceph/.test(image)) return 'storage';
+  if (/nginx|haproxy|traefik|envoy|gateway|ingress|caddy|kong/.test(image)) return 'gateway';
+  return 'server';
+}
+
+// ── Helm Values 파서 ──
+function importHelmValues() {
+  importFileWithAccept('.yaml,.yml,.json', function(text, filename) {
+    var nodes = [];
+    var parsed;
+    if (filename.endsWith('.json')) {
+      parsed = JSON.parse(text);
+    } else {
+      parsed = parseYAMLBlock(text);
+    }
+    Object.keys(parsed).forEach(function(key) {
+      var val = parsed[key];
+      if (typeof val !== 'object' || val === null || Array.isArray(val)) return;
+      if (val.image || val.replicaCount || val.replicas || val.resources) {
+        var nodeType = guessHelmServiceType(key, val);
+        var node = { type: nodeType, label: key };
+        if (val.image) {
+          node.desc = typeof val.image === 'object' ? (val.image.repository || '') : String(val.image);
+        }
+        if (val.replicaCount || val.replicas) {
+          node.resReplicas = parseInt(val.replicaCount || val.replicas) || 1;
+        }
+        if (val.resources) {
+          Object.assign(node, parseK8sResources({ resources: val.resources }));
+        }
+        nodes.push(node);
+      }
+    });
+    return nodes;
+  });
+}
+
+function guessHelmServiceType(name, val) {
+  var hint = (name + ' ' + (val.image && val.image.repository || '') + ' ' + (typeof val.image === 'string' ? val.image : '')).toLowerCase();
+  if (/postgres|mysql|mariadb|mongo|redis|memcached|cassandra/.test(hint)) return 'database';
+  if (/rabbitmq|kafka|nats|pulsar/.test(hint)) return 'queue';
+  if (/minio|s3|storage|nfs/.test(hint)) return 'storage';
+  if (/nginx|haproxy|traefik|envoy|gateway|ingress/.test(hint)) return 'gateway';
+  return 'server';
 }
 
 function showMigrationNotice(fromVer, toVer) {
@@ -7006,9 +7764,27 @@ function renderRecentIcons() {
     if(!info) return;
     const el = document.createElement('div');
     el.title = info.label;
-    el.style.cssText = 'cursor:pointer;width:28px;height:28px;padding:2px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;';
-    const svg = SVG_ICONS[id];
-    if(svg) el.innerHTML = svg.replace('viewBox', 'width="22" height="22" viewBox');
+    el.draggable = true;
+    el.style.cssText = 'cursor:grab;width:28px;height:28px;padding:2px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;';
+    // SVG icon rendering (from trusted internal SVG_ICONS catalog, not user input)
+    const svgData = SVG_ICONS[id];
+    if(svgData) {
+      const svgContainer = document.createElement('div');
+      svgContainer.style.cssText = 'width:22px;height:22px;display:flex;align-items:center;justify-content:center;pointer-events:none;';
+      // SVG_ICONS is a hardcoded trusted catalog, safe to use
+      const parser = new DOMParser();
+      const svgDoc = parser.parseFromString(svgData, 'image/svg+xml');
+      const svgEl = svgDoc.documentElement;
+      svgEl.setAttribute('width', '22');
+      svgEl.setAttribute('height', '22');
+      svgContainer.appendChild(svgEl);
+      el.appendChild(svgContainer);
+    }
+    el.addEventListener('dragstart', de => {
+      de.dataTransfer.setData('nodeType', '__icon__');
+      de.dataTransfer.setData('iconId', id);
+      de.dataTransfer.setData('iconLabel', info.label);
+    });
     el.onclick = () => addIconNodeAtCenter(id, info.label);
     row.appendChild(el);
   });
@@ -7074,6 +7850,16 @@ function renderIconGrid(tab, searchQuery) {
     lbl.textContent = label;
     card.appendChild(lbl);
 
+    // 드래그로 노드 추가
+    card.draggable = true;
+    card.addEventListener('dragstart', de => {
+      de.dataTransfer.setData('nodeType', '__icon__');
+      de.dataTransfer.setData('iconId', id);
+      de.dataTransfer.setData('iconLabel', label);
+      saveRecentIcon(id);
+      setTimeout(() => closeIconPicker(), 50);
+    });
+    // 클릭도 유지 (편의)
     card.onclick = () => {
       addIconNodeAtCenter(id, label);
       saveRecentIcon(id);
@@ -7093,46 +7879,50 @@ function filterIcons(q) {
 }
 
 // Add icon node at canvas center
-function addIconNodeAtCenter(iconId, label) {
-  saveHistory();
-  const cx = (canvas.width/2 - state.panX) / state.zoom;
-  const cy = (canvas.height/2 - state.panY) / state.zoom;
-  // Find type mapping
-  const typeMap = {
-    'aws-':'server','gcp-':'server','az-':'server','k8s':'service',
-    'docker':'service','helm':'service','istio':'service',
-    'postgresql':'database','mysql':'database','mariadb':'database','sqlite':'database',
-    'mongodb':'database','redis':'database','elasticsearch':'database',
-    'cassandra':'database','neo4j':'database','clickhouse':'database',
-    'influxdb':'database','weaviate':'database','pinecone':'database',
-    'kafka':'queue','rabbitmq':'queue','nats':'queue','pulsar':'queue','mqtt':'queue',
-    'minio':'storage','ceph':'storage','harbor':'storage','nexus':'storage',
-    'nginx':'gateway','haproxy':'gateway','traefik':'gateway','envoy':'gateway',
-    'cloudflare':'gateway','firewall':'gateway','dns':'gateway','cdn':'gateway',
-    'internet':'gateway','user':'start','browser':'start','mobile':'start',
-  };
-  let type = 'server';
-  for(const [prefix, t] of Object.entries(typeMap)) {
-    if(iconId.startsWith(prefix) || iconId === prefix) { type = t; break; }
+// Icon type mapping (shared by addIconNodeAtCenter and addIconNodeAtPosition)
+const ICON_TYPE_MAP = {
+  'aws-':'server','gcp-':'server','az-':'server','k8s':'service',
+  'docker':'service','helm':'service','istio':'service',
+  'postgresql':'database','mysql':'database','mariadb':'database','sqlite':'database',
+  'mongodb':'database','redis':'database','elasticsearch':'database',
+  'cassandra':'database','neo4j':'database','clickhouse':'database',
+  'influxdb':'database','weaviate':'database','pinecone':'database',
+  'kafka':'queue','rabbitmq':'queue','nats':'queue','pulsar':'queue','mqtt':'queue',
+  'minio':'storage','ceph':'storage','harbor':'storage','nexus':'storage',
+  'nginx':'gateway','haproxy':'gateway','traefik':'gateway','envoy':'gateway',
+  'cloudflare':'gateway','firewall':'gateway','dns':'gateway','cdn':'gateway',
+  'internet':'gateway','user':'start','browser':'start','mobile':'start',
+};
+
+function getIconNodeType(iconId) {
+  for(const [prefix, t] of Object.entries(ICON_TYPE_MAP)) {
+    if(iconId.startsWith(prefix) || iconId === prefix) return t;
   }
+  return 'server';
+}
+
+function addIconNodeAtPosition(iconId, label, wx, wy) {
+  saveHistory();
+  const type = getIconNodeType(iconId);
   const cfg = NODE_TYPES[type] || NODE_TYPES.server;
   const node = {
-    id: state.nextId++,
-    type,
-    label,
-    desc: '',
-    alert: '',
-    x: cx - cfg.w/2,
-    y: cy - cfg.h/2,
-    w: cfg.w,
-    h: cfg.h,
-    color: cfg.color,
-    svgIcon: iconId
+    id: state.nextId++, type, label, desc: '', alert: '',
+    x: wx - cfg.w/2, y: wy - cfg.h/2,
+    w: cfg.w, h: cfg.h,
+    color: cfg.color, svgIcon: iconId,
+    layer: state.activeLayer || 1
   };
   state.nodes.push(node);
   selectNode(node.id);
+  document.getElementById('hint').style.opacity = '0';
   renderRecentIcons();
   render();
+}
+
+function addIconNodeAtCenter(iconId, label) {
+  const cx = (canvas.width/2 - state.panX) / state.zoom;
+  const cy = (canvas.height/2 - state.panY) / state.zoom;
+  addIconNodeAtPosition(iconId, label, cx, cy);
 }
 
 // Initialize recent icons on load

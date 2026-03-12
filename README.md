@@ -52,10 +52,11 @@ Configure k8s cluster resources (CPU, Memory, Disk, GPU) per node and monitor th
 
 ### Key Features
 
-- **Canvas-based diagram editor** — Create nodes, connections, groups, and manage layers
+- **Canvas-based diagram editor** — Drag-and-drop node creation from palette, connections, groups, and manage layers
+- **Sub-infrastructure drill-down** — Nodes can contain sub-nodes; parent nodes auto-aggregate child resources with dedicated sub-view navigation
 - **Layer visibility toggle** — Show/hide layers with eye icon; hidden layers are excluded from canvas, selection, and resource calculations
-- **120+ cloud icons** — AWS, GCP, Azure, Kubernetes, and open-source icons built in
-- **k8s resource dashboard** — Cluster hardware config, per-node CPU/Memory/Disk/GPU management (visible layers only)
+- **120+ cloud icons** — AWS, GCP, Azure, Kubernetes, and open-source icons built in (draggable from icon picker)
+- **k8s resource dashboard** — Cluster hardware config, per-node CPU/Memory/Disk/GPU management (always shows root-level totals)
 - **Infrastructure completeness check** — Auto-detect missing components, network issues, resource overcommit
 - **AI diagram generation** — Generate architecture from text (Claude / OpenAI / Gemini / Ollama)
 - **Share via URL** — Generate a shareable link containing the full diagram (LZ-String compressed hash fragment)
@@ -175,7 +176,7 @@ In Loom's **✦ AI Generate** panel, select `Ollama` as the service to generate 
 
 | Action | How |
 |--------|-----|
-| **Create node** | Double-click empty canvas / Drag from left palette |
+| **Create node** | Drag from left palette (infrastructure, flowchart, or cloud icons) |
 | **Move node** | Drag the node |
 | **Resize node** | Select, then drag bottom-right handle |
 | **Create connection** | `C` key or connect tool → click source → click target |
@@ -327,6 +328,8 @@ Planned features for future updates. Contributions and suggestions are welcome!
 - [x] Helm Values / k8s YAML auto-generation
 - [x] Terraform code export
 - [x] Share diagram via URL link
+- [x] Sub-infrastructure drill-down with resource aggregation
+- [x] Unified drag-and-drop node creation
 
 ---
 
