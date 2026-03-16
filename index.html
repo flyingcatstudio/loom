@@ -1825,7 +1825,9 @@ const T = {
     filter_none_sel: '(selector 없음)',
     layer_delete_btn: '삭제',
     layer_duplicate_btn: '복제',
-    layer_confirm_del: '이 레이어를 삭제하시겠습니까? 노드는 Layer 1로 이동됩니다.',
+    layer_move_up: '위로 이동',
+    layer_move_down: '아래로 이동',
+    layer_confirm_del: '이 레이어를 삭제하시겠습니까? 노드는 남은 첫 번째 레이어로 이동됩니다.',
     layer_rename_prompt: '레이어 이름:',
     no_nodes: '노드가 없습니다',
     xlsx_loading: 'SheetJS 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.',
@@ -1974,7 +1976,9 @@ const T = {
     filter_none_sel: '(no selector)',
     layer_delete_btn: 'Delete',
     layer_duplicate_btn: 'Duplicate',
-    layer_confirm_del: 'Delete this layer? Nodes will be moved to Layer 1.',
+    layer_move_up: 'Move up',
+    layer_move_down: 'Move down',
+    layer_confirm_del: 'Delete this layer? Nodes will be moved to the first remaining layer.',
     layer_rename_prompt: 'Layer name:',
     no_nodes: 'No nodes found',
     xlsx_loading: 'SheetJS library is loading. Please try again shortly.',
@@ -6381,21 +6385,91 @@ function updateNodeResProps() {
   });
 });
 
+function moveLayerUp(id) {
+  var idx = state.layers.findIndex(l => l.id === id);
+  if(idx <= 0) return;
+  var tmp = state.layers[idx];
+  state.layers[idx] = state.layers[idx - 1];
+  state.layers[idx - 1] = tmp;
+  saveHistory();
+  render();
+}
+
+function moveLayerDown(id) {
+  var idx = state.layers.findIndex(l => l.id === id);
+  if(idx < 0 || idx >= state.layers.length - 1) return;
+  var tmp = state.layers[idx];
+  state.layers[idx] = state.layers[idx + 1];
+  state.layers[idx + 1] = tmp;
+  saveHistory();
+  render();
+}
+
+var _layerDragId = null;
+
 function updateLayerList() {
   const list = document.getElementById('layerList');
   const allBtn = document.getElementById('layerAllBtn');
   if(allBtn) allBtn.classList.toggle('active', state.activeLayer === null);
 
-  // Build layer list via DOM for safety
   list.textContent = '';
-  state.layers.forEach(l => {
+  state.layers.forEach((l, idx) => {
     const isActive = state.activeLayer === l.id;
     const count = state.nodes.filter(n => (n.layer || 1) === l.id).length;
 
     const row = document.createElement('div');
-    row.style.cssText = `padding:5px 8px;border-radius:5px;cursor:pointer;display:flex;align-items:center;gap:6px;background:${isActive?'rgba(88,166,255,.15)':'transparent'};border:1px solid ${isActive?'#58a6ff44':'transparent'}`;
+    row.style.cssText = `padding:5px 8px;border-radius:5px;cursor:pointer;display:flex;align-items:center;gap:4px;background:${isActive?'rgba(88,166,255,.15)':'transparent'};border:1px solid ${isActive?'#58a6ff44':'transparent'};transition:background .15s`;
+    row.setAttribute('data-layer-id', l.id);
     row.onclick = () => setActiveLayer(l.id);
     row.ondblclick = () => renameLayer(l.id);
+
+    // Drag-and-drop reordering
+    row.draggable = true;
+    row.ondragstart = (e) => {
+      _layerDragId = l.id;
+      e.dataTransfer.effectAllowed = 'move';
+      row.style.opacity = '0.4';
+    };
+    row.ondragend = () => { row.style.opacity = '1'; _layerDragId = null; };
+    row.ondragover = (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      row.style.borderTop = '2px solid var(--accent)';
+    };
+    row.ondragleave = () => { row.style.borderTop = ''; };
+    row.ondrop = (e) => {
+      e.preventDefault();
+      row.style.borderTop = '';
+      if(_layerDragId == null || _layerDragId === l.id) return;
+      var fromIdx = state.layers.findIndex(la => la.id === _layerDragId);
+      var toIdx = state.layers.findIndex(la => la.id === l.id);
+      if(fromIdx < 0 || toIdx < 0) return;
+      var moved = state.layers.splice(fromIdx, 1)[0];
+      state.layers.splice(toIdx, 0, moved);
+      _layerDragId = null;
+      saveHistory();
+      render();
+    };
+
+    // ▲▼ reorder buttons
+    var arrowGroup = document.createElement('span');
+    arrowGroup.style.cssText = 'display:flex;flex-direction:column;gap:0;line-height:1;flex-shrink:0';
+
+    var upBtn = document.createElement('span');
+    upBtn.style.cssText = 'font-size:8px;color:var(--text3);cursor:pointer;padding:0 1px;' + (idx === 0 ? 'opacity:0.2;pointer-events:none' : '');
+    upBtn.textContent = '▲';
+    upBtn.title = t('layer_move_up');
+    upBtn.onclick = (e) => { e.stopPropagation(); moveLayerUp(l.id); };
+    arrowGroup.appendChild(upBtn);
+
+    var downBtn = document.createElement('span');
+    downBtn.style.cssText = 'font-size:8px;color:var(--text3);cursor:pointer;padding:0 1px;' + (idx === state.layers.length - 1 ? 'opacity:0.2;pointer-events:none' : '');
+    downBtn.textContent = '▼';
+    downBtn.title = t('layer_move_down');
+    downBtn.onclick = (e) => { e.stopPropagation(); moveLayerDown(l.id); };
+    arrowGroup.appendChild(downBtn);
+
+    row.appendChild(arrowGroup);
 
     const isVisible = l.visible !== false;
 
@@ -6453,7 +6527,10 @@ function addLayer() {
 function removeLayer(id) {
   if(state.layers.length <= 1) return;
   if(!confirm(t('layer_confirm_del'))) return;
-  state.nodes.forEach(n => { if((n.layer || 1) === id) n.layer = 1; });
+  // Find the first remaining layer to move nodes into
+  var targetLayer = state.layers.find(l => l.id !== id);
+  var targetId = targetLayer ? targetLayer.id : 1;
+  state.nodes.forEach(n => { if((n.layer || 1) === id) n.layer = targetId; });
   state.layers = state.layers.filter(l => l.id !== id);
   if(state.activeLayer === id) state.activeLayer = null;
   saveHistory();
@@ -6695,8 +6772,9 @@ function updateMinimap() {
 // ════════════════════════════════════════════════════════
 // EXPORT
 // ════════════════════════════════════════════════════════
-function renderToCanvas(targetCanvas) {
+function renderToCanvas(targetCanvas, filterLayerId) {
   // Swap ctx and state to render full-fidelity diagram on any canvas
+  // If filterLayerId is provided, only render nodes/edges in that layer
   var origCtx = ctx;
   var origSel = state.selected, origSelEdge = state.selectedEdge;
   var origMulti = state.multiSelect, origHover = state.hovered;
@@ -6710,10 +6788,21 @@ function renderToCanvas(targetCanvas) {
   state.activeLayer = null;
   state.panX = 0; state.panY = 0; state.zoom = 1;
 
+  // Filter function for layer
+  var layerFilter = filterLayerId != null
+    ? function(n) { return (n.layer || 1) === filterLayerId; }
+    : function() { return true; };
+
   // Draw
-  state.nodes.filter(function(n){return n.type==='group' && !n._groupHidden;}).forEach(function(n){ drawNode(n); });
-  state.nodes.filter(function(n){return n.type!=='group' && !n._groupHidden;}).forEach(function(n){ drawNode(n); });
-  state.edges.filter(function(e){return !isEdgeHiddenByCollapse(e);}).forEach(function(e){ drawEdge(e); });
+  state.nodes.filter(function(n){return n.type==='group' && !n._groupHidden && layerFilter(n);}).forEach(function(n){ drawNode(n); });
+  state.nodes.filter(function(n){return n.type!=='group' && !n._groupHidden && layerFilter(n);}).forEach(function(n){ drawNode(n); });
+  state.edges.filter(function(e){
+    if(isEdgeHiddenByCollapse(e)) return false;
+    if(filterLayerId == null) return true;
+    var srcNode = state.nodes.find(function(n){return n.id===e.from;});
+    var dstNode = state.nodes.find(function(n){return n.id===e.to;});
+    return (srcNode && (srcNode.layer||1)===filterLayerId) || (dstNode && (dstNode.layer||1)===filterLayerId);
+  }).forEach(function(e){ drawEdge(e); });
 
   // Restore
   ctx = origCtx;
@@ -6723,11 +6812,14 @@ function renderToCanvas(targetCanvas) {
   state.panX = origPanX; state.panY = origPanY; state.zoom = origZoom;
 }
 
-function createExportCanvas() {
-  if(!state.nodes.length) return null;
+function createExportCanvas(filterLayerId) {
+  var nodes = filterLayerId != null
+    ? state.nodes.filter(function(n){ return (n.layer||1) === filterLayerId; })
+    : state.nodes;
+  if(!nodes.length) return null;
   var pad = 40;
-  var allX = state.nodes.flatMap(function(n){return [n.x,n.x+n.w];});
-  var allY = state.nodes.flatMap(function(n){return [n.y,n.y+n.h];});
+  var allX = nodes.flatMap(function(n){return [n.x,n.x+n.w];});
+  var allY = nodes.flatMap(function(n){return [n.y,n.y+n.h];});
   var minX = Math.min.apply(null, allX) - pad, maxX = Math.max.apply(null, allX) + pad;
   var minY = Math.min.apply(null, allY) - pad, maxY = Math.max.apply(null, allY) + pad;
   var tmpCanvas = document.createElement('canvas');
@@ -6735,7 +6827,7 @@ function createExportCanvas() {
   var tctx = tmpCanvas.getContext('2d');
   tctx.fillStyle = themeColor('bg'); tctx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
   tctx.translate(-minX, -minY);
-  renderToCanvas(tmpCanvas);
+  renderToCanvas(tmpCanvas, filterLayerId);
   return tmpCanvas;
 }
 
@@ -6744,7 +6836,7 @@ function exportPNG() {
   var tmpCanvas = createExportCanvas();
   if(!tmpCanvas) return;
   var link = document.createElement('a');
-  link.download = 'infraflow.png';
+  link.download = 'loom.png';
   link.href = tmpCanvas.toDataURL();
   link.click();
 }
@@ -6755,7 +6847,7 @@ function exportJSON() {
   var rootEdges = state.subInfraStack.length ? state.subInfraStack[0].edges : state.edges;
   var now = new Date();
   var ts = formatTimestamp();
-  var filename = 'infraflow-v' + CURRENT_VERSION + '_' + ts + '.json';
+  var filename = 'loom-v' + CURRENT_VERSION + '_' + ts + '.json';
 
   function cleanNodeForExport(n) {
     var copy = Object.assign({}, n);
@@ -7089,12 +7181,15 @@ function getLayerName(layerId) {
   return l ? l.name : 'Layer ' + layerId;
 }
 
-function getExportTableData() {
+function getExportTableData(filterLayerId) {
   var headers = ['Name', 'Type', 'Description', 'Namespace', 'Layer', 'Group', 'Alert',
                  'Min CPU(m)', 'Max CPU(m)', 'Min MEM(Mi)', 'Max MEM(Mi)',
                  'Min Disk(Gi)', 'Max Disk(Gi)', 'GPU', 'Replicas'];
   var rows = [];
-  state.nodes.forEach(function(n) {
+  var nodes = filterLayerId != null
+    ? state.nodes.filter(function(n){ return (n.layer||1) === filterLayerId; })
+    : state.nodes;
+  nodes.forEach(function(n) {
     var isInfra = !NON_INFRA_TYPES.includes(n.type);
     var r = isInfra ? getNodeResources(n) : null;
     rows.push([
@@ -7120,21 +7215,25 @@ function exportExcel() {
   if (!state.nodes.length) { alert(t('no_nodes')); return; }
 
   var wb = XLSX.utils.book_new();
-  var td = getExportTableData();
-
-  // Sheet 1: Nodes
-  var wsData = [td.headers].concat(td.rows);
-  var ws = XLSX.utils.aoa_to_sheet(wsData);
-  // Column widths
-  ws['!cols'] = [
+  var colWidths = [
     {wch:20},{wch:10},{wch:30},{wch:12},{wch:12},{wch:16},{wch:8},
     {wch:10},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:6},{wch:8}
   ];
-  // AutoFilter
-  ws['!autofilter'] = { ref: XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:wsData.length-1,c:td.headers.length-1}}) };
-  XLSX.utils.book_append_sheet(wb, ws, 'Nodes');
 
-  // Sheet 2: k8s Summary
+  // Sheet per layer
+  state.layers.forEach(function(layer) {
+    var td = getExportTableData(layer.id);
+    if(!td.rows.length) return;
+    var wsData = [td.headers].concat(td.rows);
+    var ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = colWidths.slice();
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:wsData.length-1,c:td.headers.length-1}}) };
+    // Sheet name max 31 chars, no special chars
+    var sheetName = layer.name.replace(/[\\\/\?\*\[\]:]/g, '').substring(0, 31) || 'Layer ' + layer.id;
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+
+  // k8s Summary sheet
   if (k8sConfig.enabled) {
     var avail = getAvailableResources();
     var totals = calcResourceTotals();
@@ -7162,7 +7261,7 @@ function exportExcel() {
   }
 
   var ts = formatTimestamp();
-  XLSX.writeFile(wb, 'infraflow-v' + CURRENT_VERSION + '_' + ts + '.xlsx');
+  XLSX.writeFile(wb, 'loom-v' + CURRENT_VERSION + '_' + ts + '.xlsx');
 }
 
 // ════════════════════════════════════════════════════════
@@ -7233,36 +7332,46 @@ function _buildPDF(fontBase64) {
   var groupCount = state.nodes.filter(function(n){return n.type==='group';}).length;
   doc.text('Nodes: ' + nodeCount + '  |  Edges: ' + edgeCount + '  |  Groups: ' + groupCount, 148.5, 100, { align: 'center' });
 
-  // --- Diagram Screenshot Page ---
-  doc.addPage();
-  doc.setFillColor(13, 17, 23);
-  doc.rect(0, 0, 297, 210, 'F');
-  var imgData = captureDiagramImage();
-  if (imgData) {
-    // Fit image within page (margin 10mm)
-    var imgW = 277, imgH = 190;
-    doc.addImage(imgData, 'PNG', 10, 10, imgW, imgH);
-  }
+  // --- Per-Layer Diagram + Table Pages ---
+  state.layers.forEach(function(layer) {
+    var layerNodes = state.nodes.filter(function(n){ return (n.layer||1) === layer.id; });
+    if(!layerNodes.length) return;
 
-  // --- Node Table ---
-  doc.addPage();
-  var td = getExportTableData();
-  doc.autoTable({
-    head: [td.headers],
-    body: td.rows,
-    startY: 15,
-    theme: 'grid',
-    styles: { fontSize: 7, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.3, textColor: [30, 30, 30], font: fontName },
-    headStyles: { fillColor: [50, 55, 65], textColor: [255, 255, 255], fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [245, 245, 245] },
-    bodyStyles: { fillColor: [255, 255, 255], textColor: [30, 30, 30] },
-    margin: { left: 10, right: 10 },
-    didDrawPage: function(data) {
-      doc.setFillColor(255, 255, 255);
-      doc.rect(0, 0, 297, 12, 'F');
-      doc.setFont(fontName); doc.setFontSize(8);
-      doc.setTextColor(80, 80, 80);
-      doc.text('Loom - Node Details', 10, 8);
+    // Diagram page for this layer
+    doc.addPage();
+    doc.setFillColor(13, 17, 23);
+    doc.rect(0, 0, 297, 210, 'F');
+    // Layer title
+    doc.setFont(fontName); doc.setFontSize(10);
+    doc.setTextColor(139, 148, 158);
+    doc.text(layer.name, 10, 8);
+    var layerImg = captureDiagramImage(layer.id);
+    if (layerImg) {
+      doc.addImage(layerImg, 'PNG', 10, 12, 277, 188);
+    }
+
+    // Node table for this layer
+    var td = getExportTableData(layer.id);
+    if(td.rows.length) {
+      doc.addPage();
+      doc.autoTable({
+        head: [td.headers],
+        body: td.rows,
+        startY: 15,
+        theme: 'grid',
+        styles: { fontSize: 7, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.3, textColor: [30, 30, 30], font: fontName },
+        headStyles: { fillColor: [50, 55, 65], textColor: [255, 255, 255], fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        bodyStyles: { fillColor: [255, 255, 255], textColor: [30, 30, 30] },
+        margin: { left: 10, right: 10 },
+        didDrawPage: function(data) {
+          doc.setFillColor(255, 255, 255);
+          doc.rect(0, 0, 297, 12, 'F');
+          doc.setFont(fontName); doc.setFontSize(8);
+          doc.setTextColor(80, 80, 80);
+          doc.text('Loom - ' + layer.name, 10, 8);
+        }
+      });
     }
   });
 
@@ -7297,11 +7406,11 @@ function _buildPDF(fontBase64) {
   }
 
   var ts = formatTimestamp();
-  doc.save('infraflow-v' + CURRENT_VERSION + '_' + ts + '.pdf');
+  doc.save('loom-v' + CURRENT_VERSION + '_' + ts + '.pdf');
 }
 
-function captureDiagramImage() {
-  var tmpCanvas = createExportCanvas();
+function captureDiagramImage(filterLayerId) {
+  var tmpCanvas = createExportCanvas(filterLayerId);
   return tmpCanvas ? tmpCanvas.toDataURL('image/png') : null;
 }
 
