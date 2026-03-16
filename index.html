@@ -212,6 +212,83 @@
   .sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; opacity: 0.5; }
   .spacer { flex: 1; }
 
+  /* ── TAB BAR ── */
+  #tabbar {
+    height: 32px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: stretch;
+    padding: 0;
+    flex-shrink: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    z-index: 99;
+  }
+  #tabbar::-webkit-scrollbar { height: 0; }
+  .tab-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    height: 100%;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text3);
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    min-width: 0;
+    max-width: 180px;
+    transition: background .15s, color .15s;
+    user-select: none;
+  }
+  .tab-item:hover { background: var(--surface); color: var(--text2); }
+  .tab-item.active { background: var(--surface); color: var(--text); border-bottom: 2px solid var(--accent); }
+  .tab-item .tab-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tab-item .tab-dirty { color: var(--yellow); font-size: 10px; }
+  .tab-item .tab-close {
+    font-size: 13px;
+    color: var(--text3);
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .tab-item .tab-close:hover { background: var(--red); color: #fff; }
+  .tab-item .tab-name-input {
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    color: var(--text);
+    font-size: 11px;
+    padding: 1px 4px;
+    width: 100px;
+    outline: none;
+    font-family: inherit;
+  }
+  #tabbar .tab-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    color: var(--text3);
+    font-size: 16px;
+    cursor: pointer;
+    transition: color .15s;
+  }
+  #tabbar .tab-add:hover { color: var(--accent); }
+
   /* ── MAIN LAYOUT ── */
   #main {
     display: flex;
@@ -809,6 +886,9 @@
   <button class="tbtn" id="btnTheme" onclick="toggleTheme()">☀</button>
   <button class="tbtn" id="btnGrid" onclick="toggleGrid()" title="Grid">▦</button>
 </div>
+
+<!-- TAB BAR -->
+<div id="tabbar"></div>
 
 <!-- MAIN -->
 <div id="main">
@@ -1715,6 +1795,9 @@ const T = {
     // Dynamic JS strings
     ctx_expand: '▼ 그룹 펼치기',
     confirm_new: '변경사항이 있습니다. 새로 시작할까요?',
+    confirm_close_tab: '저장하지 않은 변경사항이 있습니다. 탭을 닫으시겠습니까?',
+    tab_untitled: '새 다이어그램',
+    tab_shared: '공유 다이어그램',
     copy_suffix: ' (복사)',
     conn_pick_end: '연결: 끝점 선택...',
     conn_isolated: '고립 — 엣지 연결 없음',
@@ -1741,6 +1824,7 @@ const T = {
     filter_none_tol: '(toleration 없음)',
     filter_none_sel: '(selector 없음)',
     layer_delete_btn: '삭제',
+    layer_duplicate_btn: '복제',
     layer_confirm_del: '이 레이어를 삭제하시겠습니까? 노드는 Layer 1로 이동됩니다.',
     layer_rename_prompt: '레이어 이름:',
     no_nodes: '노드가 없습니다',
@@ -1860,6 +1944,9 @@ const T = {
     rd_no_infra: 'No infra nodes',
     ctx_expand: '▼ Expand Group',
     confirm_new: 'You have unsaved changes. Start new?',
+    confirm_close_tab: 'You have unsaved changes. Close this tab?',
+    tab_untitled: 'New Diagram',
+    tab_shared: 'Shared Diagram',
     copy_suffix: ' (copy)',
     conn_pick_end: 'Connect: pick endpoint...',
     conn_isolated: 'Isolated — no edge connections',
@@ -1886,6 +1973,7 @@ const T = {
     filter_none_tol: '(no toleration)',
     filter_none_sel: '(no selector)',
     layer_delete_btn: 'Delete',
+    layer_duplicate_btn: 'Duplicate',
     layer_confirm_del: 'Delete this layer? Nodes will be moved to Layer 1.',
     layer_rename_prompt: 'Layer name:',
     no_nodes: 'No nodes found',
@@ -2033,6 +2121,250 @@ const NODE_TYPES = {
   group:    { icon:'▭',  color:'rgba(40,50,70,0.3)', border:'#484f58', w:240, h:160 },
   note:     { icon:'📝',  color:'#3d3200', border:'#d29922', w:150, h:70 },
 };
+
+// ════════════════════════════════════════════════════════
+// TAB MANAGEMENT
+// ════════════════════════════════════════════════════════
+var tabs = [];
+var activeTabId = null;
+var tabCounter = 0;
+
+function generateTabId() {
+  return 'tab_' + Date.now() + '_' + (++tabCounter);
+}
+
+function getDefaultK8sConfig() {
+  return {
+    nodeCount: 3, nodeCpu: 4000, nodeMem: 8192, nodeDisk: 100, nodeGpu: 0,
+    reservedCpu: 500, reservedMem: 512, gpuNodes: 0, gpuPerNode: 0, gpuModel: '',
+    namespaces: ['default'], taints: [], nodeLabels: [], enabled: false
+  };
+}
+
+function snapshotTabState() {
+  return {
+    nodes: JSON.parse(JSON.stringify(state.nodes)),
+    edges: JSON.parse(JSON.stringify(state.edges)),
+    nextId: state.nextId,
+    layers: JSON.parse(JSON.stringify(state.layers)),
+    activeLayer: state.activeLayer,
+    filters: JSON.parse(JSON.stringify(state.filters)),
+    panX: state.panX, panY: state.panY, zoom: state.zoom,
+    history: state.history.slice(),
+    future: state.future.slice(),
+    subInfraStack: JSON.parse(JSON.stringify(state.subInfraStack)),
+    fontSize: state.fontSize,
+    panelFontSize: state.panelFontSize,
+    k8sConfig: JSON.parse(JSON.stringify(k8sConfig))
+  };
+}
+
+function restoreTabState(snap) {
+  state.nodes = snap.nodes;
+  state.edges = snap.edges;
+  state.nextId = snap.nextId;
+  state.layers = snap.layers;
+  state.activeLayer = snap.activeLayer;
+  state.filters = snap.filters;
+  state.panX = snap.panX; state.panY = snap.panY; state.zoom = snap.zoom;
+  state.history = snap.history;
+  state.future = snap.future;
+  state.subInfraStack = snap.subInfraStack;
+  state.fontSize = snap.fontSize || 12;
+  state.panelFontSize = snap.panelFontSize || 12;
+  Object.assign(k8sConfig, snap.k8sConfig);
+  clearSelection();
+}
+
+function createTab(name, snapshot) {
+  var tab = {
+    id: generateTabId(),
+    name: name || t('tab_untitled'),
+    dirty: false,
+    savedToFile: false,
+    state: snapshot || null
+  };
+  tabs.push(tab);
+  return tab;
+}
+
+function saveCurrentTabState() {
+  var tab = tabs.find(function(tb) { return tb.id === activeTabId; });
+  if(!tab) return;
+  tab.state = snapshotTabState();
+  tab.dirty = state.dirty;
+}
+
+function switchTab(tabId) {
+  if(tabId === activeTabId) return;
+  saveCurrentTabState();
+  var tab = tabs.find(function(tb) { return tb.id === tabId; });
+  if(!tab) return;
+  activeTabId = tabId;
+  restoreTabState(tab.state);
+  state.dirty = tab.dirty;
+  document.getElementById('hint').style.opacity = state.nodes.length ? '0' : '1';
+  document.getElementById('fontSizeDisplay').textContent = state.panelFontSize + 'px';
+  applyPanelFontSize();
+  render();
+  renderTabs();
+  autosaveActiveTab();
+}
+
+function closeTab(tabId) {
+  var tab = tabs.find(function(tb) { return tb.id === tabId; });
+  if(!tab) return;
+  if(tab.dirty && !confirm(t('confirm_close_tab'))) return;
+  var idx = tabs.indexOf(tab);
+  tabs.splice(idx, 1);
+  localStorage.removeItem('loom_tab_data_' + tabId);
+  if(tabs.length === 0) {
+    var newTab = createTab();
+    activeTabId = newTab.id;
+    resetStateForNewTab();
+    newTab.state = snapshotTabState();
+  } else if(activeTabId === tabId) {
+    var newIdx = Math.min(idx, tabs.length - 1);
+    activeTabId = tabs[newIdx].id;
+    restoreTabState(tabs[newIdx].state);
+    state.dirty = tabs[newIdx].dirty;
+  }
+  document.getElementById('hint').style.opacity = state.nodes.length ? '0' : '1';
+  render();
+  renderTabs();
+  saveTabIndex();
+  autosaveActiveTab();
+}
+
+function resetStateForNewTab() {
+  state.nodes = [];
+  state.edges = [];
+  state.nextId = 1;
+  clearSelection();
+  state.history = [];
+  state.future = [];
+  state.dirty = false;
+  state.layers = [{id:1, name:'Layer 1', visible:true}];
+  state.activeLayer = null;
+  state.filters = { namespace: null, toleration: null, nodeSelector: null };
+  state.panX = 0; state.panY = 0; state.zoom = 1;
+  state.subInfraStack = [];
+  Object.assign(k8sConfig, getDefaultK8sConfig());
+}
+
+function renderTabs() {
+  var bar = document.getElementById('tabbar');
+  if(!bar) return;
+  // Build DOM safely without innerHTML
+  while(bar.firstChild) bar.removeChild(bar.firstChild);
+  tabs.forEach(function(tab) {
+    var isActive = tab.id === activeTabId;
+    var div = document.createElement('div');
+    div.className = 'tab-item' + (isActive ? ' active' : '');
+    div.setAttribute('data-tab-id', tab.id);
+    div.onclick = function() { switchTab(tab.id); };
+    div.ondblclick = function(e) { renameTab(tab.id, e); };
+
+    var nameSpan = document.createElement('span');
+    nameSpan.className = 'tab-name';
+    nameSpan.textContent = tab.name;
+    div.appendChild(nameSpan);
+
+    if(tab.dirty) {
+      var dot = document.createElement('span');
+      dot.className = 'tab-dirty';
+      dot.textContent = '●';
+      div.appendChild(dot);
+    }
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'tab-close';
+    closeBtn.textContent = '×';
+    closeBtn.title = 'Close';
+    closeBtn.onclick = function(e) { e.stopPropagation(); closeTab(tab.id); };
+    div.appendChild(closeBtn);
+
+    bar.appendChild(div);
+  });
+  var addBtn = document.createElement('button');
+  addBtn.className = 'tab-add';
+  addBtn.textContent = '+';
+  addBtn.title = t('tb_new');
+  addBtn.onclick = function() { newDiagram(); };
+  bar.appendChild(addBtn);
+}
+
+function renameTab(tabId, event) {
+  event.stopPropagation();
+  var tabEl = document.querySelector('[data-tab-id="' + tabId + '"] .tab-name');
+  if(!tabEl) return;
+  var tab = tabs.find(function(tb) { return tb.id === tabId; });
+  if(!tab) return;
+  var input = document.createElement('input');
+  input.className = 'tab-name-input';
+  input.value = tab.name;
+  input.onblur = function() { finishRename(tab, input); };
+  input.onkeydown = function(e) {
+    if(e.key === 'Enter') { input.blur(); }
+    if(e.key === 'Escape') { input.value = tab.name; input.blur(); }
+  };
+  tabEl.replaceWith(input);
+  input.focus();
+  input.select();
+}
+
+function finishRename(tab, input) {
+  var newName = input.value.trim() || t('tab_untitled');
+  tab.name = newName;
+  renderTabs();
+  saveTabIndex();
+}
+
+function saveTabIndex() {
+  try {
+    var index = tabs.map(function(tab) {
+      return { id: tab.id, name: tab.name, dirty: tab.dirty, savedToFile: tab.savedToFile };
+    });
+    localStorage.setItem('loom_tabs_index', JSON.stringify({ activeTabId: activeTabId, tabs: index }));
+  } catch(e) {}
+}
+
+function autosaveActiveTab() {
+  try {
+    var rootNodes = state.subInfraStack.length ? state.subInfraStack[0].nodes : state.nodes;
+    var rootEdges = state.subInfraStack.length ? state.subInfraStack[0].edges : state.edges;
+    localStorage.setItem('infraflow_autosave', JSON.stringify({
+      version: CURRENT_VERSION,
+      tabId: activeTabId,
+      nodes: rootNodes,
+      edges: rootEdges,
+      k8sConfig: k8sConfig,
+      layers: state.layers,
+      activeLayer: state.activeLayer,
+      fontSize: state.fontSize,
+      panelFontSize: state.panelFontSize,
+      panX: state.panX, panY: state.panY, zoom: state.zoom
+    }));
+  } catch(e) {}
+}
+
+function saveTabData(tabId) {
+  var tab = tabs.find(function(tb) { return tb.id === tabId; });
+  if(!tab || !tab.state) return;
+  try {
+    localStorage.setItem('loom_tab_data_' + tabId, JSON.stringify(tab.state));
+    tab.savedToFile = true;
+    saveTabIndex();
+  } catch(e) { console.warn('Tab save failed (quota?):', e); }
+}
+
+function markActiveTabDirty() {
+  var tab = tabs.find(function(tb) { return tb.id === activeTabId; });
+  if(tab && !tab.dirty) {
+    tab.dirty = true;
+    renderTabs();
+  }
+}
 
 const PALETTE_COLORS = [
   '#1f3a5f','#1a3d2b','#3d2e0e','#0e3030',
@@ -4314,35 +4646,18 @@ document.getElementById('modal-overlay').addEventListener('click', e => {
 // NEW DIAGRAM
 // ════════════════════════════════════════════════════════
 function newDiagram() {
-  if(state.dirty && !confirm(t('confirm_new'))) return;
-  state.nodes = [];
-  state.edges = [];
-  state.nextId = 1;
-  clearSelection();
-  state.history = [];
-  state.future = [];
-  state.dirty = false;
-  state.layers = [{id:1, name:'Layer 1', visible:true}];
-  state.activeLayer = null;
-  state.filters = { namespace: null, toleration: null, nodeSelector: null };
-  state.panX = 0; state.panY = 0; state.zoom = 1;
-  k8sConfig.enabled = false;
-  k8sConfig.nodeCount = 3;
-  k8sConfig.nodeCpu = 4000;
-  k8sConfig.nodeMem = 8192;
-  k8sConfig.nodeDisk = 100;
-  k8sConfig.nodeGpu = 0;
-  k8sConfig.reservedCpu = 500;
-  k8sConfig.reservedMem = 512;
-  k8sConfig.gpuNodes = 0;
-  k8sConfig.gpuPerNode = 0;
-  k8sConfig.gpuModel = '';
-  k8sConfig.namespaces = ['default'];
-  k8sConfig.taints = [];
-  k8sConfig.nodeLabels = [];
-  localStorage.removeItem('infraflow_autosave');
+  // Save current tab state before creating new one
+  saveCurrentTabState();
+  // Create new tab
+  var newTab = createTab();
+  activeTabId = newTab.id;
+  resetStateForNewTab();
+  newTab.state = snapshotTabState();
   document.getElementById('hint').style.opacity = '1';
   render();
+  renderTabs();
+  saveTabIndex();
+  autosaveActiveTab();
 }
 
 // ════════════════════════════════════════════════════════
@@ -4356,28 +4671,21 @@ function saveHistory() {
   if(state.history.length > 50) state.history.shift();
   state.future = [];
   state.dirty = true;
+  markActiveTabDirty();
   // Autosave to localStorage (always save root-level state)
-  try {
-    const rootNodes = state.subInfraStack.length ? state.subInfraStack[0].nodes : state.nodes;
-    const rootEdges = state.subInfraStack.length ? state.subInfraStack[0].edges : state.edges;
-    localStorage.setItem('infraflow_autosave', JSON.stringify({
-      version: CURRENT_VERSION,
-      nodes: rootNodes,
-      edges: rootEdges,
-      k8sConfig: k8sConfig,
-      layers: state.layers,
-      activeLayer: state.activeLayer,
-      fontSize: state.fontSize,
-      panelFontSize: state.panelFontSize,
-      panX: state.panX,
-      panY: state.panY,
-      zoom: state.zoom
-    }));
-  } catch(e) { /* quota exceeded — ignore */ }
+  autosaveActiveTab();
 }
 
 window.addEventListener('beforeunload', function(e) {
-  if(state.dirty) { e.preventDefault(); }
+  // Save current tab state before leaving
+  saveCurrentTabState();
+  saveTabIndex();
+  // Save tabs that were explicitly saved
+  tabs.forEach(function(tab) {
+    if(tab.savedToFile) saveTabData(tab.id);
+  });
+  var anyDirty = tabs.some(function(tab) { return tab.dirty; });
+  if(anyDirty) { e.preventDefault(); }
 });
 
 function undo() {
@@ -6108,6 +6416,13 @@ function updateLayerList() {
     countSpan.textContent = count;
     row.appendChild(countSpan);
 
+    const dupBtn = document.createElement('span');
+    dupBtn.style.cssText = 'font-size:10px;color:var(--text3);cursor:pointer;padding:0 2px';
+    dupBtn.title = t('layer_duplicate_btn');
+    dupBtn.textContent = '⧉';
+    dupBtn.onclick = (e) => { e.stopPropagation(); duplicateLayer(l.id); };
+    row.appendChild(dupBtn);
+
     if(state.layers.length > 1) {
       const delBtn = document.createElement('span');
       delBtn.style.cssText = 'font-size:10px;color:var(--text3);cursor:pointer;padding:0 2px';
@@ -6153,6 +6468,47 @@ function renameLayer(id) {
     layer.name = name.trim();
     render();
   }
+}
+
+function duplicateLayer(id) {
+  const srcLayer = state.layers.find(l => l.id === id);
+  if(!srcLayer) return;
+  const maxId = state.layers.reduce((m, l) => Math.max(m, l.id), 0);
+  const newId = maxId + 1;
+  // Find next index: count existing layers with same base name
+  var baseName = srcLayer.name.replace(/\s*\(\d+\)$/, '');
+  var idx = 1;
+  state.layers.forEach(function(l) {
+    var match = l.name.match(new RegExp('^' + baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\((\\d+)\\)$'));
+    if(match) { var n = parseInt(match[1]); if(n >= idx) idx = n + 1; }
+    if(l.name === baseName && idx === 1) idx = 2;
+  });
+  var newName = baseName + ' (' + idx + ')';
+  state.layers.push({id: newId, name: newName, visible: true});
+  // Duplicate all nodes in the source layer
+  var nodeMap = {};
+  var srcNodes = state.nodes.filter(n => (n.layer || 1) === id);
+  srcNodes.forEach(function(n) {
+    var clone = JSON.parse(JSON.stringify(n));
+    var oldId = clone.id;
+    clone.id = state.nextId++;
+    clone.layer = newId;
+    nodeMap[oldId] = clone.id;
+    state.nodes.push(clone);
+  });
+  // Duplicate edges between duplicated nodes
+  state.edges.forEach(function(e) {
+    if(nodeMap[e.from] != null && nodeMap[e.to] != null) {
+      var clone = JSON.parse(JSON.stringify(e));
+      clone.id = state.nextId++;
+      clone.from = nodeMap[e.from];
+      clone.to = nodeMap[e.to];
+      state.edges.push(clone);
+    }
+  });
+  state.activeLayer = newId;
+  saveHistory();
+  render();
 }
 
 function toggleLayerVisibility(id) {
@@ -6651,8 +7007,12 @@ function loadFromUrlParam() {
     var json = LZString.decompressFromEncodedURIComponent(compressed);
     if(!json) return false;
     var raw = JSON.parse(json);
-    // Support both compact format (has 'n' key) and legacy full format (has 'nodes' key)
     var d = raw.n ? expandShareData(raw) : migrateData(raw).data;
+    // Open shared diagram in a new tab
+    saveCurrentTabState();
+    var sharedTab = createTab(t('tab_shared'));
+    activeTabId = sharedTab.id;
+    resetStateForNewTab();
     state.nodes = d.nodes || [];
     state.edges = d.edges || [];
     if(d.k8sConfig) Object.assign(k8sConfig, d.k8sConfig);
@@ -6661,9 +7021,13 @@ function loadFromUrlParam() {
     state.nodes.forEach(function(n) { if(n.layer == null) n.layer = 1; });
     state.nextId = Math.max.apply(null, [].concat(state.nodes, state.edges).map(function(x) { return x.id || 0; }).concat([0])) + 1;
     state.dirty = false;
+    sharedTab.state = snapshotTabState();
     document.getElementById('hint').style.opacity = '0';
     window.history.replaceState({}, '', window.location.pathname + window.location.search);
     render();
+    renderTabs();
+    saveTabIndex();
+    autosaveActiveTab();
     var toast = document.getElementById('iacToast');
     toast.textContent = t('share_loaded');
     toast.classList.add('show');
@@ -7003,7 +7367,12 @@ function importLoomJSON() {
         var d=JSON.parse(ev.target.result);
         var result = migrateData(d);
         d = result.data;
-        saveHistory();
+        // Save current tab, then open import in a new tab
+        saveCurrentTabState();
+        var fileName = file.name.replace(/\.json$/i, '');
+        var newTab = createTab(fileName);
+        activeTabId = newTab.id;
+        resetStateForNewTab();
         state.nodes=d.nodes||[];
         state.edges=d.edges||[];
         if(d.k8sConfig) { Object.assign(k8sConfig, d.k8sConfig); }
@@ -7012,12 +7381,17 @@ function importLoomJSON() {
         state.filters = { namespace: null, toleration: null, nodeSelector: null };
         state.nodes.forEach(function(n) { if(n.layer == null) n.layer = 1; });
         state.nextId=Math.max(...[...state.nodes,...state.edges].map(x=>x.id||0),0)+1;
-        clearSelection(); render();
+        clearSelection();
+        state.dirty = false;
+        newTab.state = snapshotTabState();
         document.getElementById('hint').style.opacity='0';
+        render();
+        renderTabs();
+        saveTabIndex();
+        autosaveActiveTab();
         if (result.migrated) {
           showMigrationNotice(result.fromVersion, CURRENT_VERSION);
         }
-        state.dirty = false;
       } catch(err) { console.error('Import error:', err); alert(t('import_error') + err.message); }
     };
     reader.readAsText(file);
@@ -8454,45 +8828,90 @@ function fitView() {
 state.panX = 40; state.panY = 40;
 render();
 
-// Auto-load: check URL params first, then localStorage, else empty
+// Auto-load: restore tabs, then check URL params, then localStorage
 (function autoLoad() {
-  // URL 공유 링크에서 로드 시도
-  if(loadFromUrlParam()) return;
+  // 1. Restore tab index from localStorage
+  var tabsRestored = false;
   try {
-    const saved = localStorage.getItem('infraflow_autosave');
-    if(saved) {
-      let d = JSON.parse(saved);
-      const result = migrateData(d);
-      d = result.data;
-      state.nodes = d.nodes || [];
-      state.edges = d.edges || [];
-      if(d.k8sConfig) Object.assign(k8sConfig, d.k8sConfig);
-      if(d.layers && d.layers.length) { state.layers = d.layers; } else { state.layers = [{id:1, name:'Layer 1'}]; }
-      state.activeLayer = d.activeLayer != null ? d.activeLayer : null;
-      if(d.fontSize) { state.fontSize = d.fontSize; }
-      if(d.panelFontSize) { state.panelFontSize = d.panelFontSize; document.getElementById('fontSizeDisplay').textContent = state.panelFontSize + 'px'; applyPanelFontSize(); }
-      // Ensure all nodes have layer field; restore collapse state
-      state.nodes.forEach(n => {
-        if(n.layer == null) n.layer = 1;
+    var tabIndexRaw = localStorage.getItem('loom_tabs_index');
+    if(tabIndexRaw) {
+      var tabIndex = JSON.parse(tabIndexRaw);
+      var restoredTabs = [];
+      (tabIndex.tabs || []).forEach(function(meta) {
+        // Try to load saved tab data
+        var savedData = localStorage.getItem('loom_tab_data_' + meta.id);
+        if(savedData && meta.savedToFile) {
+          var snap = JSON.parse(savedData);
+          var tab = { id: meta.id, name: meta.name, dirty: false, savedToFile: true, state: snap };
+          restoredTabs.push(tab);
+        }
+        // Unsaved tabs are dropped (hybrid model)
       });
-      // 접힌 그룹의 자식 _groupHidden 복원
-      state.nodes.filter(g => g.type === 'group' && g.collapsed).forEach(g => {
-        (g._hiddenChildren || []).forEach(saved => {
-          const n = state.nodes.find(nd => nd.id === saved.id);
-          if(n) n._groupHidden = true;
-        });
-      });
-      state.nextId = Math.max(...[...state.nodes,...state.edges].map(x=>x.id||0), 0) + 1;
-      if(d.panX != null) state.panX = d.panX;
-      if(d.panY != null) state.panY = d.panY;
-      if(d.zoom != null) state.zoom = d.zoom;
-      state.dirty = false;
-      document.getElementById('hint').style.opacity = '0';
-      render();
-      return;
+      if(restoredTabs.length) {
+        tabs = restoredTabs;
+        // Restore active tab or default to first
+        var targetId = tabIndex.activeTabId;
+        var targetTab = tabs.find(function(tb) { return tb.id === targetId; });
+        if(!targetTab) targetTab = tabs[0];
+        activeTabId = targetTab.id;
+        restoreTabState(targetTab.state);
+        state.dirty = false;
+        document.getElementById('hint').style.opacity = state.nodes.length ? '0' : '1';
+        if(state.panelFontSize) {
+          document.getElementById('fontSizeDisplay').textContent = state.panelFontSize + 'px';
+          applyPanelFontSize();
+        }
+        render();
+        renderTabs();
+        tabsRestored = true;
+      }
     }
-  } catch(e) { console.warn('Autosave load failed:', e); }
-  // No autosave — show empty canvas
+  } catch(e) { console.warn('Tab restore failed:', e); }
+
+  // 2. URL 공유 링크에서 로드 시도 (새 탭으로 열림)
+  if(loadFromUrlParam()) {
+    if(!tabsRestored) renderTabs();
+    return;
+  }
+
+  // 3. If no tabs were restored, try autosave
+  if(!tabsRestored) {
+    try {
+      const saved = localStorage.getItem('infraflow_autosave');
+      if(saved) {
+        let d = JSON.parse(saved);
+        const result = migrateData(d);
+        d = result.data;
+        state.nodes = d.nodes || [];
+        state.edges = d.edges || [];
+        if(d.k8sConfig) Object.assign(k8sConfig, d.k8sConfig);
+        if(d.layers && d.layers.length) { state.layers = d.layers; } else { state.layers = [{id:1, name:'Layer 1'}]; }
+        state.activeLayer = d.activeLayer != null ? d.activeLayer : null;
+        if(d.fontSize) { state.fontSize = d.fontSize; }
+        if(d.panelFontSize) { state.panelFontSize = d.panelFontSize; document.getElementById('fontSizeDisplay').textContent = state.panelFontSize + 'px'; applyPanelFontSize(); }
+        state.nodes.forEach(n => { if(n.layer == null) n.layer = 1; });
+        state.nodes.filter(g => g.type === 'group' && g.collapsed).forEach(g => {
+          (g._hiddenChildren || []).forEach(saved => {
+            const n = state.nodes.find(nd => nd.id === saved.id);
+            if(n) n._groupHidden = true;
+          });
+        });
+        state.nextId = Math.max(...[...state.nodes,...state.edges].map(x=>x.id||0), 0) + 1;
+        if(d.panX != null) state.panX = d.panX;
+        if(d.panY != null) state.panY = d.panY;
+        if(d.zoom != null) state.zoom = d.zoom;
+        state.dirty = false;
+        document.getElementById('hint').style.opacity = '0';
+        render();
+      }
+    } catch(e) { console.warn('Autosave load failed:', e); }
+
+    // Create initial tab for current state
+    var initTab = createTab(state.nodes.length ? t('tab_untitled') : t('tab_untitled'));
+    activeTabId = initTab.id;
+    initTab.state = snapshotTabState();
+    renderTabs();
+  }
 })();
 
 // Apply theme & lang & grid on init
