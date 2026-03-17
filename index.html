@@ -769,6 +769,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/gitbrent/PptxGenJS@3.12.0/dist/pptxgen.bundle.js"></script>
 </head>
 <body>
 
@@ -841,6 +842,9 @@
       </button>
       <button class="export-dropdown-item" onclick="exportPDF();closeExportMenu();">
         <span class="exp-icon">📄</span> PDF
+      </button>
+      <button class="export-dropdown-item" onclick="exportPPTX();closeExportMenu();">
+        <span class="exp-icon">📽</span> PowerPoint (.pptx)
       </button>
       <div class="export-dropdown-sep"></div>
       <button class="export-dropdown-item" onclick="exportPNG();closeExportMenu();">
@@ -7220,14 +7224,37 @@ function exportExcel() {
     {wch:10},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:6},{wch:8}
   ];
 
-  // Sheet per layer
+  // Sheet per layer (table + diagram image)
   state.layers.forEach(function(layer) {
     var td = getExportTableData(layer.id);
     if(!td.rows.length) return;
     var wsData = [td.headers].concat(td.rows);
+    // Add empty rows as spacer before diagram image
+    wsData.push([]);
+    wsData.push(['[ Diagram ]']);
     var ws = XLSX.utils.aoa_to_sheet(wsData);
     ws['!cols'] = colWidths.slice();
-    ws['!autofilter'] = { ref: XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:wsData.length-1,c:td.headers.length-1}}) };
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:td.rows.length,c:td.headers.length-1}}) };
+
+    // Embed layer diagram image
+    var layerCanvas = createExportCanvas(layer.id);
+    if(layerCanvas) {
+      var dataUrl = layerCanvas.toDataURL('image/png');
+      var base64 = dataUrl.split(',')[1];
+      var binary = atob(base64);
+      var bytes = new Uint8Array(binary.length);
+      for(var bi = 0; bi < binary.length; bi++) bytes[bi] = binary.charCodeAt(bi);
+      // Calculate image dimensions (max 800px wide, keep aspect ratio)
+      var imgW = Math.min(layerCanvas.width, 800);
+      var imgH = Math.round(layerCanvas.height * (imgW / layerCanvas.width));
+      if(!ws['!images']) ws['!images'] = [];
+      ws['!images'].push({
+        '!pos': { r: wsData.length - 1, c: 0, x: 0, y: 0, w: imgW, h: imgH },
+        '!data': bytes,
+        '!type': 'png'
+      });
+    }
+
     // Sheet name max 31 chars, no special chars
     var sheetName = layer.name.replace(/[\\\/\?\*\[\]:]/g, '').substring(0, 31) || 'Layer ' + layer.id;
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
@@ -7418,6 +7445,284 @@ function formatTimestamp() {
   var now = new Date();
   return now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') +
          '_' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0');
+}
+
+// ════════════════════════════════════════════════════════
+// PPTX EXPORT (다이어그램 → PowerPoint 객체)
+// ════════════════════════════════════════════════════════
+function exportPPTX() {
+  if(typeof PptxGenJS === 'undefined') { alert('PptxGenJS loading...'); return; }
+  if(!state.nodes.length) { alert(t('no_nodes')); return; }
+
+  var pptx = new PptxGenJS();
+  pptx.author = 'Loom';
+  pptx.subject = 'Architecture Diagram';
+  pptx.layout = 'LAYOUT_WIDE'; // 13.33 x 7.5 inches
+
+  var SLIDE_W = 13.33;
+  var SLIDE_H = 7.5;
+
+  // --- Helper: hex color string to PptxGenJS format (6-digit hex without #) ---
+  function pptColor(c) {
+    if(!c) return '333333';
+    c = c.replace(/^#/, '');
+    // Handle rgba/rgb
+    if(c.startsWith('rgba') || c.startsWith('rgb')) {
+      var m = c.match(/[\d.]+/g);
+      if(m && m.length >= 3) {
+        return ('0'+parseInt(m[0]).toString(16)).slice(-2)
+             + ('0'+parseInt(m[1]).toString(16)).slice(-2)
+             + ('0'+parseInt(m[2]).toString(16)).slice(-2);
+      }
+      return '333333';
+    }
+    if(c.length === 3) return c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+    if(c.length >= 6) return c.substring(0, 6);
+    return '333333';
+  }
+
+  // --- Helper: parse rgba alpha ---
+  function pptAlpha(c) {
+    if(!c) return 100;
+    if(typeof c === 'string' && c.startsWith('rgba')) {
+      var m = c.match(/[\d.]+/g);
+      if(m && m.length >= 4) return Math.round(parseFloat(m[3]) * 100);
+    }
+    return 100;
+  }
+
+  // --- Per-layer slides ---
+  state.layers.forEach(function(layer) {
+    var layerNodes = state.nodes.filter(function(n) {
+      return (n.layer || 1) === layer.id && !n._groupHidden;
+    });
+    if(!layerNodes.length) return;
+
+    // Calculate bounding box for coordinate mapping
+    var allX = [], allY = [];
+    layerNodes.forEach(function(n) { allX.push(n.x, n.x+n.w); allY.push(n.y, n.y+n.h); });
+    var minX = Math.min.apply(null, allX);
+    var minY = Math.min.apply(null, allY);
+    var maxX = Math.max.apply(null, allX);
+    var maxY = Math.max.apply(null, allY);
+    var diagW = maxX - minX || 1;
+    var diagH = maxY - minY || 1;
+
+    // Scale to fit slide with padding
+    var padIn = 0.5; // inches padding
+    var availW = SLIDE_W - padIn * 2;
+    var availH = SLIDE_H - padIn * 2 - 0.4; // extra space for title
+    var scale = Math.min(availW / diagW, availH / diagH, 0.02); // max ~0.02 inch per pixel
+    var offX = padIn + (availW - diagW * scale) / 2;
+    var offY = padIn + 0.4 + (availH - diagH * scale) / 2;
+
+    function toIn(px) { return px * scale; }
+    function mapX(px) { return offX + (px - minX) * scale; }
+    function mapY(px) { return offY + (px - minY) * scale; }
+
+    var slide = pptx.addSlide();
+    slide.background = { color: '0B0E14' };
+
+    // Layer title
+    slide.addText(layer.name, {
+      x: 0.3, y: 0.15, w: SLIDE_W - 0.6, h: 0.35,
+      fontSize: 14, color: '8490A5', fontFace: 'Arial',
+      bold: true
+    });
+
+    // --- Draw groups first (bottom layer) ---
+    layerNodes.filter(function(n) { return n.type === 'group'; }).forEach(function(n) {
+      var cfg = NODE_TYPES.group;
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: mapX(n.x), y: mapY(n.y), w: toIn(n.w), h: toIn(n.h),
+        rectRadius: 0.1,
+        fill: { color: pptColor(n.color || cfg.color), transparency: 100 - pptAlpha(n.color || cfg.color) },
+        line: { color: pptColor(cfg.border), width: 1.5, dashType: 'dash' }
+      });
+      // Group label
+      slide.addText('[ ' + (n.label || '') + ' ]', {
+        x: mapX(n.x) + 0.05, y: mapY(n.y) + 0.02, w: toIn(n.w) - 0.1, h: 0.25,
+        fontSize: 9, color: pptColor(n.fontColor || cfg.border), fontFace: 'Arial',
+        bold: true, valign: 'top'
+      });
+    });
+
+    // --- Draw edges ---
+    var layerEdges = state.edges.filter(function(e) {
+      if(isEdgeHiddenByCollapse(e)) return false;
+      var srcNode = state.nodes.find(function(nd) { return nd.id === e.from; });
+      var dstNode = state.nodes.find(function(nd) { return nd.id === e.to; });
+      return (srcNode && (srcNode.layer||1) === layer.id) || (dstNode && (dstNode.layer||1) === layer.id);
+    });
+
+    layerEdges.forEach(function(e) {
+      var src = state.nodes.find(function(nd) { return nd.id === e.from; });
+      var dst = state.nodes.find(function(nd) { return nd.id === e.to; });
+      if(!src || !dst) return;
+
+      var sx = mapX(src.x + src.w / 2);
+      var sy = mapY(src.y + src.h / 2);
+      var ex = mapX(dst.x + dst.w / 2);
+      var ey = mapY(dst.y + dst.h / 2);
+
+      // Use line shape for edges
+      var lineOpts = {
+        x: Math.min(sx, ex), y: Math.min(sy, ey),
+        w: Math.abs(ex - sx) || 0.01, h: Math.abs(ey - sy) || 0.01,
+        line: { color: pptColor(e.color || '5BA0F5'), width: 1.5 },
+        flipH: ex < sx, flipV: ey < sy
+      };
+      if(e.style === 'dashed') lineOpts.line.dashType = 'dash';
+
+      slide.addShape(pptx.ShapeType.line, lineOpts);
+
+      // Arrowhead triangle at destination
+      var angle = Math.atan2(ey - sy, ex - sx);
+      var arrSize = 0.08;
+      slide.addShape(pptx.ShapeType.triangle, {
+        x: ex - arrSize / 2, y: ey - arrSize / 2,
+        w: arrSize, h: arrSize,
+        rotate: (angle * 180 / Math.PI) + 90,
+        fill: { color: pptColor(e.color || '5BA0F5') },
+        line: { type: 'none' }
+      });
+
+      // Edge label
+      if(e.label) {
+        var lx = (sx + ex) / 2;
+        var ly = (sy + ey) / 2;
+        slide.addText(e.label, {
+          x: lx - 0.5, y: ly - 0.15, w: 1, h: 0.25,
+          fontSize: 7, color: '8490A5', fontFace: 'Arial',
+          align: 'center', valign: 'middle',
+          fill: { color: '12161E' }
+        });
+      }
+    });
+
+    // --- Draw non-group nodes ---
+    layerNodes.filter(function(n) { return n.type !== 'group'; }).forEach(function(n) {
+      var cfg = NODE_TYPES[n.type] || NODE_TYPES.server;
+      var bgColor = n.color || cfg.color;
+      var textColor = n.fontColor || 'E2E8F0';
+      var nx = mapX(n.x), ny = mapY(n.y);
+      var nw = toIn(n.w), nh = toIn(n.h);
+
+      if(n.type === 'decision') {
+        // Diamond shape
+        slide.addShape(pptx.ShapeType.diamond, {
+          x: nx, y: ny, w: nw, h: nh,
+          fill: { color: pptColor(bgColor) },
+          line: { color: pptColor(cfg.border), width: 1.5 }
+        });
+        slide.addText(n.label || '', {
+          x: nx, y: ny, w: nw, h: nh,
+          fontSize: 8, color: pptColor(textColor), fontFace: 'Arial',
+          bold: true, align: 'center', valign: 'middle'
+        });
+        return;
+      }
+
+      if(n.type === 'start' || n.type === 'end') {
+        // Rounded pill
+        slide.addShape(pptx.ShapeType.roundRect, {
+          x: nx, y: ny, w: nw, h: nh,
+          rectRadius: nh / 2,
+          fill: { color: pptColor(bgColor) },
+          line: { color: pptColor(cfg.border), width: 1.5 }
+        });
+        slide.addText(n.label || '', {
+          x: nx, y: ny, w: nw, h: nh,
+          fontSize: 9, color: pptColor(n.fontColor || cfg.border), fontFace: 'Arial',
+          bold: true, align: 'center', valign: 'middle'
+        });
+        return;
+      }
+
+      if(n.type === 'note') {
+        // Note shape (PptxGenJS has a built-in folded corner shape)
+        slide.addShape(pptx.ShapeType.wedgeRoundRectCallout || pptx.ShapeType.roundRect, {
+          x: nx, y: ny, w: nw, h: nh,
+          fill: { color: pptColor(bgColor) },
+          line: { color: pptColor(cfg.border), width: 1.5 }
+        });
+        slide.addText(n.label || '', {
+          x: nx + 0.03, y: ny + 0.02, w: nw - 0.06, h: nh - 0.04,
+          fontSize: 8, color: pptColor(textColor), fontFace: 'Arial',
+          valign: 'top', wrap: true
+        });
+        return;
+      }
+
+      // Standard node: rounded rect with left accent bar
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: nx, y: ny, w: nw, h: nh,
+        rectRadius: 0.06,
+        fill: { color: pptColor(bgColor) },
+        line: { color: pptColor(cfg.border), width: 1.5 },
+        shadow: { type: 'outer', blur: 4, offset: 2, color: pptColor(cfg.border), opacity: 0.3 }
+      });
+
+      // Left accent bar
+      slide.addShape(pptx.ShapeType.rect, {
+        x: nx, y: ny, w: 0.03, h: nh,
+        fill: { color: pptColor(cfg.border) },
+        line: { type: 'none' }
+      });
+
+      // Icon (emoji as text)
+      var iconText = cfg.icon;
+      if(n.svgIcon) iconText = ''; // skip SVG icons in PPTX
+      if(iconText) {
+        slide.addText(iconText, {
+          x: nx + 0.05, y: ny, w: 0.25, h: nh,
+          fontSize: 12, fontFace: 'Segoe UI Emoji',
+          valign: 'middle', align: 'center'
+        });
+      }
+
+      // Label
+      var labelX = nx + (iconText ? 0.28 : 0.08);
+      var labelW = nw - (iconText ? 0.33 : 0.13);
+      var labelParts = [{ text: n.label || '', options: { fontSize: 9, bold: true, color: pptColor(textColor), fontFace: 'Arial', breakType: 'none' } }];
+      if(n.desc) {
+        labelParts.push({ text: '\n' + n.desc, options: { fontSize: 7, color: '8490A5', fontFace: 'Arial', breakType: 'none' } });
+      }
+      slide.addText(labelParts, {
+        x: labelX, y: ny, w: labelW, h: nh,
+        valign: 'middle', wrap: true, shrinkText: true
+      });
+
+      // Namespace badge
+      if(n.namespace && n.namespace !== 'default' && !NON_INFRA_TYPES.includes(n.type)) {
+        slide.addText(n.namespace, {
+          x: nx + nw - 0.5, y: ny + 0.02, w: 0.48, h: 0.16,
+          fontSize: 5, color: '5BA0F5', fontFace: 'Arial',
+          align: 'right', valign: 'middle',
+          fill: { color: '1A2744' }
+        });
+      }
+
+      // Alert badge
+      if(n.alert) {
+        var alertColors = { warn: 'D29922', error: 'F85149', ok: '3FB950' };
+        var alertIcons = { warn: '!', error: '!!', ok: '✓' };
+        slide.addShape(pptx.ShapeType.ellipse, {
+          x: nx + nw - 0.12, y: ny + 0.02, w: 0.1, h: 0.1,
+          fill: { color: alertColors[n.alert] || '666666' },
+          line: { type: 'none' }
+        });
+        slide.addText(alertIcons[n.alert] || '', {
+          x: nx + nw - 0.12, y: ny + 0.02, w: 0.1, h: 0.1,
+          fontSize: 5, color: 'FFFFFF', fontFace: 'Arial',
+          bold: true, align: 'center', valign: 'middle'
+        });
+      }
+    });
+  });
+
+  var ts = formatTimestamp();
+  pptx.writeFile({ fileName: 'loom-v' + CURRENT_VERSION + '_' + ts + '.pptx' });
 }
 
 // v1 → v2: k8sConfig 추가, 노드에 리소스 필드 기본값 부여
