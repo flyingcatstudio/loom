@@ -805,6 +805,9 @@
   <button class="tbtn" onclick="zoomReset()">100%</button>
   <button class="tbtn" onclick="zoomOut()">－</button>
 
+  <div class="sep"></div>
+  <button class="tbtn" id="btnPlay" onclick="startPresentation()" title="프레젠테이션 모드" style="color:var(--orange);" data-i18n="tb_play">▶ Play</button>
+
   <div class="spacer"></div>
 
   <button class="tbtn" onclick="openK8sConfig()" title="k8s 클러스터 하드웨어 리소스 설정" style="color:var(--accent);" data-i18n="tb_k8s">☸ k8s 리소스</button>
@@ -1082,6 +1085,10 @@
           <select id="propLayer"></select>
         </div>
         <div class="prop-row">
+          <label data-i18n="rp_anim_index">애니메이션 순서</label>
+          <input id="propAnimIndex" type="number" min="0" placeholder="미설정" data-i18n-ph="anim_index_ph">
+        </div>
+        <div class="prop-row">
           <label data-i18n="rp_alert">경고 표시</label>
           <select id="propAlert">
             <option value="" data-i18n="rp_alert_none">없음</option>
@@ -1168,6 +1175,10 @@
         <label data-i18n="rp_edge_color">색상</label>
         <div class="color-grid" id="edgeColorGrid"></div>
       </div>
+      <div class="prop-row">
+        <label data-i18n="rp_anim_index">애니메이션 순서</label>
+        <input id="edgeAnimIndex" type="number" min="0" placeholder="미설정" data-i18n-ph="anim_index_ph">
+      </div>
     </div>
 
     <div class="panel-section">
@@ -1228,6 +1239,22 @@
       </div>
     </div>
     </div><!-- /panelContent -->
+  </div>
+</div>
+
+<!-- PRESENTATION MODE OVERLAY -->
+<div id="presentOverlay" style="display:none;position:fixed;inset:0;z-index:9000;pointer-events:none;">
+  <div id="presentStepLabel" style="position:absolute;top:16px;left:16px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);pointer-events:none;text-shadow:0 1px 4px rgba(0,0,0,0.6);"></div>
+  <div id="presentControlBar" style="position:absolute;bottom:0;left:0;right:0;height:48px;background:rgba(11,14,20,0.92);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;pointer-events:auto;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button onclick="presentPrev()" class="tbtn" style="font-size:14px;padding:0 8px;height:32px;">◀</button>
+      <button onclick="presentNext()" class="tbtn" style="font-size:14px;padding:0 8px;height:32px;">▶</button>
+      <span style="font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;" data-i18n="present_keys">← → Space: 이동 · ESC: 종료</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="presentDots" style="display:flex;gap:4px;"></div>
+      <button onclick="stopPresentation()" class="tbtn" style="font-size:12px;padding:0 8px;height:32px;">✕</button>
+    </div>
   </div>
 </div>
 
@@ -1705,6 +1732,8 @@ const T = {
     // Topbar
     tb_new: '📄 새로 만들기', tb_select: '선택', tb_connect: '연결', tb_pan: '이동',
     tb_k8s: '☸ k8s 리소스', tb_infra: '✅ 인프라 체크', tb_ai: '✦ AI 생성',
+    tb_play: '▶ Play', present_keys: '← → Space: 이동 · ESC: 종료',
+    rp_anim_index: '애니메이션 순서', anim_index_ph: '미설정',
     tb_png: 'PNG (이미지)',
     // Left panel
     lp_cloud: '☁ 클라우드 / 솔루션',
@@ -1868,6 +1897,8 @@ const T = {
   en: {
     tb_new: '📄 New', tb_select: 'Select', tb_connect: 'Connect', tb_pan: 'Pan',
     tb_k8s: '☸ k8s Resources', tb_infra: '✅ Infra Check', tb_ai: '✦ AI Generate',
+    tb_play: '▶ Play', present_keys: '← → Space: Navigate · ESC: Exit',
+    rp_anim_index: 'Anim Order', anim_index_ph: 'Not set',
     tb_png: 'PNG (Image)',
     lp_cloud: '☁ Cloud / Solutions',
     lp_icon_btn: 'Icon Picker (AWS / GCP / Azure / OSS)',
@@ -2110,6 +2141,12 @@ let state = {
   panelFontSize: 12,  // 우측 패널 폰트 크기 (px, 조절 가능)
   filters: { namespace: null, toleration: null, nodeSelector: null },  // null = 전체
   subInfraStack: [],  // stack for sub-infra drill-down navigation
+  // Animation / Presentation
+  presenting: false,
+  presentStep: 0,
+  presentMaxStep: 0,
+  presentAnimating: false,
+  presentAnimProgress: 0,
 };
 
 // ════════════════════════════════════════════════════════
@@ -2584,6 +2621,21 @@ function refreshThemeColors() {
 }
 refreshThemeColors();
 
+function getAnimIndex(obj) {
+  return (obj && obj.animIndex != null) ? obj.animIndex : 1;
+}
+
+function isPresentVisible(animIndex) {
+  if(!state.presenting) return true;
+  var idx = (animIndex != null) ? animIndex : 1;
+  return idx <= state.presentStep;
+}
+
+function isPresentAnimatingNow(animIndex) {
+  var idx = (animIndex != null) ? animIndex : 1;
+  return state.presenting && state.presentAnimating && idx === state.presentStep;
+}
+
 function render() {
   refreshThemeColors();
   const w = canvas.width, h = canvas.height;
@@ -2606,6 +2658,16 @@ function render() {
   state.nodes.filter(n=>n.type==='group' && !n._groupHidden && isLayerVisible(n.layer||1)).forEach(n => drawNode(n));
   // Draw other nodes (접힌 그룹 안 노드 및 비표시 레이어 제외)
   state.nodes.filter(n=>n.type!=='group' && !n._groupHidden && isLayerVisible(n.layer||1)).forEach(n => drawNode(n));
+  // Node animations for current presentation step
+  if(state.presenting && state.presentAnimating) {
+    state.nodes.filter(function(n) {
+      if(!isPresentAnimatingNow(n.animIndex)) return false;
+      if(n._groupHidden) return false;
+      if(!isLayerVisible(n.layer||1)) return false;
+      if(state.activeLayer !== null && (n.layer||1) !== state.activeLayer) return false;
+      return true;
+    }).forEach(function(n) { drawNodeAnimation(n, state.presentAnimProgress); });
+  }
   // Draw edges (접힌 그룹 안 완전 내부 연결은 제외, 리다이렉트 엣지는 중복 방지)
   const drawnEdgePairs = new Set();
   state.edges.filter(e => !isEdgeHiddenByCollapse(e)).forEach(e => {
@@ -2617,6 +2679,7 @@ function render() {
     const dstNode = state.nodes.find(n=>n.id===e.to);
     if(srcNode && !isLayerVisible(srcNode.layer||1)) return;
     if(dstNode && !isLayerVisible(dstNode.layer||1)) return;
+    // (presentation mode: all edges always visible, animation overlay only)
     // 리다이렉트된 엣지 중복 방지
     const srcId = rSrc.id, dstId = rDst.id;
     if(srcId !== e.from || dstId !== e.to) {
@@ -2626,6 +2689,22 @@ function render() {
     }
     drawEdge(e);
   });
+  // Edge animations for current presentation step
+  if(state.presenting && state.presentAnimating) {
+    state.edges.forEach(function(e) {
+      if(!isPresentAnimatingNow(e.animIndex)) return;
+      // 비활성 레이어 엣지 제외
+      var srcNode = state.nodes.find(function(n){return n.id===e.from;});
+      var dstNode = state.nodes.find(function(n){return n.id===e.to;});
+      if(srcNode && !isLayerVisible(srcNode.layer||1)) return;
+      if(dstNode && !isLayerVisible(dstNode.layer||1)) return;
+      if(state.activeLayer !== null) {
+        if(srcNode && (srcNode.layer||1) !== state.activeLayer) return;
+        if(dstNode && (dstNode.layer||1) !== state.activeLayer) return;
+      }
+      drawEdgeAnimation(e, state.presentAnimProgress);
+    });
+  }
   // Draw connection preview
   if(state.connectFrom && state.mouseWorld) {
     const src = state.nodes.find(n=>n.id===state.connectFrom);
@@ -2805,6 +2884,7 @@ function render() {
   updateStats();
   updateLayerList();
   updateFilterUI();
+  if(state.presenting) updatePresentUI();
 }
 
 function fs(base) { return Math.round(base * state.fontSize / 12); }
@@ -3360,7 +3440,8 @@ function createNode(type, wx, wy) {
     w: cfg.w, h: cfg.h,
     color: cfg.color, desc:'', alert:'',
     layer: state.activeLayer || 1,
-    namespace: 'default', tolerations: [], nodeSelector: {}
+    namespace: 'default', tolerations: [], nodeSelector: {},
+    animIndex: 1
   };
   saveHistory();
   state.nodes.push(n);
@@ -3683,6 +3764,7 @@ function pointToSegDist(px,py,x1,y1,x2,y2) {
 // MOUSE EVENTS
 // ════════════════════════════════════════════════════════
 canvas.addEventListener('mousedown', e => {
+  if(state.presenting) return;
   const pos = getPos(e);
   const w = toWorld(pos.x, pos.y);
 
@@ -3722,7 +3804,8 @@ canvas.addEventListener('mousedown', e => {
           label: '',
           style: state.arrowStyle,
           color: '#58a6ff',
-          waypoints: []
+          waypoints: [],
+          animIndex: 1
         });
         state.connectFrom = null;
         document.getElementById('statusTool').textContent = (loomLang==='en'?'Tool: Connect':'도구: 연결');
@@ -3824,8 +3907,9 @@ canvas.addEventListener('mousedown', e => {
         (c.kind === 'node' && c.obj.id === state.selected) ||
         (c.kind === 'edge' && c.obj.id === state.selectedEdge)
       );
-      // 다음 후보 선택 (순환)
-      const nextIdx = (curIdx + 1) % candidates.length;
+      // 이미 선택된 객체가 후보에 있으면 그대로 유지 (순환하지 않음)
+      // 순환 선택은 더블클릭으로만 가능
+      const nextIdx = (curIdx >= 0) ? curIdx : 0;
       const next = candidates[nextIdx];
       if(next.kind === 'node') {
         const nodeObj = next.obj;
@@ -3932,6 +4016,7 @@ canvas.addEventListener('mousedown', e => {
 });
 
 canvas.addEventListener('mousemove', e => {
+  if(state.presenting) return;
   const pos = getPos(e);
   const w = toWorld(pos.x, pos.y);
   state.mouseWorld = w;
@@ -4054,6 +4139,7 @@ canvas.addEventListener('mousemove', e => {
 });
 
 canvas.addEventListener('mouseup', e => {
+  if(state.presenting) return;
   // Waypoint drag 완료
   if(state.wpDragging) {
     state.wpDragging = null;
@@ -4230,16 +4316,428 @@ canvas.addEventListener('dblclick', e => {
     render();
     return;
   }
-  const node = hitNode(w.x, w.y);
-  if(node) {
-    openRenameModal(node);
-  }
+  // (rename modal 삭제 — 우측 패널에서 이름 편집 가능)
   // 더 이상 빈 캔버스 더블클릭으로 노드 생성하지 않음 (드래그 전용)
 });
+
+// === Presentation Mode Functions ===
+function startPresentation() {
+  var scope = state.nodes.filter(function(n) {
+    if(n._groupHidden) return false;
+    if(!isLayerVisible(n.layer||1)) return false;
+    if(state.activeLayer !== null && (n.layer||1) !== state.activeLayer) return false;
+    return true; // all nodes participate (default animIndex=1)
+  });
+  if(scope.length === 0) return;
+
+  var maxIdx = 0;
+  scope.forEach(function(n) { var ai = getAnimIndex(n); if(ai > maxIdx) maxIdx = ai; });
+  state.edges.forEach(function(e) { var ai = getAnimIndex(e); if(ai > maxIdx) maxIdx = ai; });
+
+  state.presenting = true;
+  state.presentStep = 0;
+  state.presentMaxStep = maxIdx;
+  state.presentAnimating = false;
+  state.presentAnimProgress = 0;
+
+  document.getElementById('leftpanel').style.display = 'none';
+  document.getElementById('rightpanel').style.display = 'none';
+  document.getElementById('rightResizeHandle').style.display = 'none';
+  document.getElementById('topbar').style.display = 'none';
+  document.getElementById('statusbar').style.display = 'none';
+  document.getElementById('presentOverlay').style.display = 'block';
+
+  updatePresentUI();
+  resizeCanvas();
+  drawGrid();
+  render();
+}
+
+function stopPresentation() {
+  state.presenting = false;
+  state.presentAnimating = false;
+
+  document.getElementById('leftpanel').style.display = '';
+  document.getElementById('rightpanel').style.display = '';
+  document.getElementById('rightResizeHandle').style.display = '';
+  document.getElementById('topbar').style.display = '';
+  document.getElementById('statusbar').style.display = '';
+  document.getElementById('presentOverlay').style.display = 'none';
+
+  resizeCanvas();
+  drawGrid();
+  render();
+}
+
+function presentNext() {
+  if(state.presentAnimating) return;
+  if(state.presentStep >= state.presentMaxStep) return;
+  state.presentStep++;
+  animateStep(state.presentStep);
+}
+
+function presentPrev() {
+  if(state.presentAnimating) return;
+  if(state.presentStep <= 0) return;
+  state.presentStep--;
+  updatePresentUI();
+  render();
+}
+
+function updatePresentUI() {
+  document.getElementById('presentStepLabel').textContent = 'Step ' + state.presentStep + ' / ' + state.presentMaxStep;
+  var dotsEl = document.getElementById('presentDots');
+  dotsEl.textContent = '';
+  for(var i = 0; i <= state.presentMaxStep; i++) {
+    var dot = document.createElement('div');
+    dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:' + (i <= state.presentStep ? 'var(--accent)' : 'rgba(255,255,255,0.15)');
+    dotsEl.appendChild(dot);
+  }
+}
+
+function drawNodeAnimation(n, progress) {
+  var type = n.type;
+  var x = n.x, y = n.y, w = n.w, h = n.h;
+  var cfg = NODE_TYPES[type] || NODE_TYPES.server;
+
+  ctx.save();
+
+  // Group: border trace animation (like edge flow, traces the rectangle perimeter)
+  // Accelerated: completes in ~40% of the total animation duration (~0.5s)
+  if(type === 'group') {
+    var fp = Math.min(1, progress / 0.4); // completes in ~0.5s
+    var perimeter = 2 * (w + h);
+    // Same stretch/shrink easing as edge: head leads, tail catches up
+    var headPos = Math.min(1, fp * 1.25);
+    headPos = 1 - Math.pow(1 - headPos, 2); // easeOut
+    var tailPos;
+    if(fp < 0.2) { tailPos = 0; }
+    else { var tp = (fp - 0.2) / 0.8; tailPos = tp * tp; } // easeIn
+
+    // Build perimeter points (clockwise from top-left)
+    var perimPts = [
+      {x:x, y:y}, {x:x+w, y:y}, {x:x+w, y:y+h}, {x:x, y:y+h}, {x:x, y:y}
+    ];
+    var perimLens = [0];
+    var totalP = 0;
+    for(var i=1; i<perimPts.length; i++) {
+      totalP += Math.hypot(perimPts[i].x-perimPts[i-1].x, perimPts[i].y-perimPts[i-1].y);
+      perimLens.push(totalP);
+    }
+
+    ctx.lineCap = 'round';
+    for(var i=1; i<perimPts.length; i++) {
+      var fracPrev = perimLens[i-1] / totalP;
+      var fracCurr = perimLens[i] / totalP;
+      if(fracCurr < tailPos || fracPrev > headPos) continue;
+
+      var segStart = Math.max(fracPrev, tailPos);
+      var segEnd = Math.min(fracCurr, headPos);
+      var segFracLen = fracCurr - fracPrev;
+      var startT = segFracLen > 0 ? (segStart - fracPrev) / segFracLen : 0;
+      var endT = segFracLen > 0 ? (segEnd - fracPrev) / segFracLen : 1;
+
+      var x1 = perimPts[i-1].x + (perimPts[i].x - perimPts[i-1].x) * startT;
+      var y1 = perimPts[i-1].y + (perimPts[i].y - perimPts[i-1].y) * startT;
+      var x2 = perimPts[i-1].x + (perimPts[i].x - perimPts[i-1].x) * endT;
+      var y2 = perimPts[i-1].y + (perimPts[i].y - perimPts[i-1].y) * endT;
+
+      var midFrac = (segStart + segEnd) / 2;
+      var range = headPos - tailPos;
+      var alpha = range > 0 ? (midFrac - tailPos) / range : 1;
+      alpha = Math.max(0.05, Math.min(1, alpha));
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = cfg.border;
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = alpha * 0.9;
+      ctx.shadowColor = cfg.border;
+      ctx.shadowBlur = alpha * 12;
+      ctx.stroke();
+    }
+
+    ctx.restore();
+    return;
+  }
+
+  // Icon position: same as drawNode (x+12, y+h/2+6 for emoji; x+8 centered for SVG)
+  var iconFontSize = parseInt(fs(16)) || 16;
+  var iconX = x + 12;
+  var iconY = y + h/2 + 6;
+
+  if(n.svgIcon && typeof SVG_ICONS !== 'undefined' && SVG_ICONS[n.svgIcon]) {
+    // SVG icon: pulse scale at original position
+    var img = getSVGImage(n.svgIcon);
+    var baseSize = Math.min(h - 12, 28);
+    var scale = 1 + 0.25 * Math.sin(progress * Math.PI * 4);
+    var sz = baseSize * scale;
+    var ix = x + 8 + (baseSize - sz)/2;
+    var iy = y + (h - sz)/2;
+    if(img && img.complete) {
+      ctx.globalAlpha = 0.7 + 0.3 * Math.sin(progress * Math.PI * 4);
+      ctx.drawImage(img, ix, iy, sz, sz);
+    }
+  } else {
+    // Emoji icon at its original position with type-specific effect
+    var scale = 1 + 0.3 * Math.sin(progress * Math.PI * 4);
+    var fontSize = iconFontSize * scale;
+
+    if(type === 'database') {
+      // Pulsing scale + vertical shake (data stacking feel)
+      var shake = Math.sin(progress * Math.PI * 6) * 2;
+      ctx.font = fontSize + 'px serif';
+      ctx.fillText(cfg.icon, iconX, iconY + shake);
+    } else if(type === 'queue') {
+      // Horizontal shake (messages arriving)
+      var shake = Math.sin(progress * Math.PI * 8) * 3;
+      ctx.font = fontSize + 'px serif';
+      ctx.fillText(cfg.icon, iconX + shake, iconY);
+    } else if(type === 'gateway') {
+      // Pulsing + ripple ring around icon
+      ctx.font = fontSize + 'px serif';
+      ctx.fillText(cfg.icon, iconX, iconY);
+      var ringCx = iconX + iconFontSize/2, ringCy = iconY - iconFontSize/3;
+      var maxR = iconFontSize * 1.2;
+      ctx.strokeStyle = cfg.border;
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 1 - progress;
+      ctx.beginPath(); ctx.arc(ringCx, ringCy, maxR * progress, 0, Math.PI*2); ctx.stroke();
+      if(progress > 0.3) {
+        ctx.globalAlpha = 1 - (progress-0.3)/0.7;
+        ctx.beginPath(); ctx.arc(ringCx, ringCy, maxR*(progress-0.3)/0.7, 0, Math.PI*2); ctx.stroke();
+      }
+    } else if(type === 'service') {
+      // Rotate in place
+      var pivotX = iconX + iconFontSize/2, pivotY = iconY - iconFontSize/3;
+      ctx.translate(pivotX, pivotY);
+      ctx.rotate(progress * Math.PI * 4);
+      ctx.font = fontSize + 'px serif';
+      ctx.fillText(cfg.icon, -iconFontSize/2, iconFontSize/3);
+      // ctx.restore handles the transform
+    } else if(type === 'storage') {
+      // Pulse + small progress bar inside node
+      ctx.font = fontSize + 'px serif';
+      ctx.fillText(cfg.icon, iconX, iconY);
+      ctx.fillStyle = cfg.border + '40';
+      ctx.fillRect(x+8, y+h-8, (w-16) * progress, 3);
+    } else {
+      // Default: pulsing glow on icon
+      ctx.shadowColor = cfg.border;
+      ctx.shadowBlur = 8 + 10 * Math.sin(progress * Math.PI * 3);
+      ctx.font = fontSize + 'px serif';
+      ctx.fillText(cfg.icon, iconX, iconY);
+    }
+  }
+
+  ctx.restore();
+}
+
+function drawEdgeAnimation(e, progress) {
+  var src = resolveEdgeNode(e.from);
+  var dst = resolveEdgeNode(e.to);
+  if(!src || !dst || src.id === dst.id) return;
+
+  var sx = src.x+src.w/2, sy = src.y+src.h/2;
+  var ex = dst.x+dst.w/2, ey = dst.y+dst.h/2;
+  var rawSrc = state.nodes.find(function(n){return n.id===e.from;});
+  var rawDst = state.nodes.find(function(n){return n.id===e.to;});
+  var srcRedirected = rawSrc && rawSrc.id !== src.id;
+  var dstRedirected = rawDst && rawDst.id !== dst.id;
+  var p1 = nodeEdgePoint(src, ex, ey, srcRedirected ? null : e.fromOffset);
+  var p2 = nodeEdgePoint(dst, sx, sy, dstRedirected ? null : e.toOffset);
+
+  var wps = e.waypoints || [];
+  var pts;
+  if(wps.length > 0) {
+    pts = [{x:p1[0],y:p1[1]}].concat(wps).concat([{x:p2[0],y:p2[1]}]);
+  } else {
+    var sx2=p1[0], sy2=p1[1], ex2=p2[0], ey2=p2[1];
+    var dx=ex2-sx2, dy=ey2-sy2;
+    var cx1=sx2+dx*0.3, cy1=sy2+dy*0.3, cx2=ex2-dx*0.3, cy2=ey2-dy*0.3;
+    pts = [];
+    for(var t=0; t<=1; t+=0.015) {
+      var u=1-t;
+      var px = u*u*u*sx2 + 3*u*u*t*cx1 + 3*u*t*t*cx2 + t*t*t*ex2;
+      var py = u*u*u*sy2 + 3*u*u*t*cy1 + 3*u*t*t*cy2 + t*t*t*ey2;
+      pts.push({x:px, y:py});
+    }
+  }
+
+  // Precompute cumulative lengths
+  var segLens = [0];
+  var totalLen = 0;
+  for(var i=1; i<pts.length; i++) {
+    var sl = Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y);
+    totalLen += sl;
+    segLens.push(totalLen);
+  }
+  if(totalLen === 0) return;
+
+  var color = e.color || tc.accent;
+  // Head leads fast, tail starts at 0 then catches up at the end
+  // Head: easeOut (fast start, slows near end, arrives at ~80% progress)
+  // Tail: stays at 0, then easeIn to catch up and arrive at 1.0 at 100% progress
+  var headPos = Math.min(1, progress * 1.25);  // arrives at 1.0 when progress=0.8
+  headPos = 1 - Math.pow(1 - headPos, 2);     // easeOut
+  var tailPos;
+  if(progress < 0.2) {
+    tailPos = 0;  // tail stays at start while head stretches out
+  } else {
+    var tailProgress = (progress - 0.2) / 0.8;  // 0->1 over remaining 80%
+    tailPos = tailProgress * tailProgress;       // easeIn (slow start, fast end)
+  }
+
+  ctx.save();
+  ctx.lineCap = 'round';
+
+  // Draw the flowing segment: bright line from tail to head with gradient opacity
+  // Split into small sub-segments for smooth alpha gradient
+  for(var i=1; i<pts.length; i++) {
+    var fracPrev = segLens[i-1] / totalLen;
+    var fracCurr = segLens[i] / totalLen;
+
+    // Skip segments outside the flow range
+    if(fracCurr < tailPos || fracPrev > headPos) continue;
+
+    // Clamp to flow range
+    var segStart = Math.max(fracPrev, tailPos);
+    var segEnd = Math.min(fracCurr, headPos);
+
+    // Interpolate points for clamped positions
+    var segFracLen = fracCurr - fracPrev;
+    var startT = segFracLen > 0 ? (segStart - fracPrev) / segFracLen : 0;
+    var endT = segFracLen > 0 ? (segEnd - fracPrev) / segFracLen : 1;
+
+    var x1 = pts[i-1].x + (pts[i].x - pts[i-1].x) * startT;
+    var y1 = pts[i-1].y + (pts[i].y - pts[i-1].y) * startT;
+    var x2 = pts[i-1].x + (pts[i].x - pts[i-1].x) * endT;
+    var y2 = pts[i-1].y + (pts[i].y - pts[i-1].y) * endT;
+
+    // Alpha: 0 at tail, 1 at head (dynamic range)
+    var midFrac = (segStart + segEnd) / 2;
+    var range = headPos - tailPos;
+    var alpha = range > 0 ? (midFrac - tailPos) / range : 1;
+    alpha = Math.max(0.05, Math.min(1, alpha));
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3.5;
+    ctx.globalAlpha = alpha * 0.9;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = alpha * 14;
+    ctx.stroke();
+  }
+
+  // Bright head glow
+  if(headPos > 0 && headPos <= 1) {
+    var headIdx = 0;
+    for(var i=1; i<pts.length; i++) {
+      if(segLens[i] / totalLen >= headPos) { headIdx = i; break; }
+    }
+    var fracPrev = segLens[headIdx-1] / totalLen;
+    var fracCurr = segLens[headIdx] / totalLen;
+    var t = fracCurr > fracPrev ? (headPos - fracPrev) / (fracCurr - fracPrev) : 0;
+    var hx = pts[headIdx-1].x + (pts[headIdx].x - pts[headIdx-1].x) * t;
+    var hy = pts[headIdx-1].y + (pts[headIdx].y - pts[headIdx-1].y) * t;
+
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.arc(hx, hy, 3, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+
+  // Bidirectional: reverse flow (same stretch/shrink easing, reversed direction)
+  if(e.style === 'both') {
+    var revHeadRaw = Math.min(1, progress * 1.25);
+    revHeadRaw = 1 - Math.pow(1 - revHeadRaw, 2);
+    var revHead = 1 - revHeadRaw;  // goes from 1 -> 0
+    var revTailRaw;
+    if(progress < 0.2) { revTailRaw = 0; }
+    else { var rtp = (progress-0.2)/0.8; revTailRaw = rtp*rtp; }
+    var revTail = 1 - revTailRaw;  // goes from 1 -> 0
+
+    ctx.save();
+    ctx.lineCap = 'round';
+
+    for(var i=1; i<pts.length; i++) {
+      var fracPrev = segLens[i-1] / totalLen;
+      var fracCurr = segLens[i] / totalLen;
+      if(fracCurr < revHead || fracPrev > revTail) continue;
+
+      var segStart = Math.max(fracPrev, revHead);
+      var segEnd = Math.min(fracCurr, revTail);
+      var segFracLen = fracCurr - fracPrev;
+      var startT = segFracLen > 0 ? (segStart - fracPrev) / segFracLen : 0;
+      var endT = segFracLen > 0 ? (segEnd - fracPrev) / segFracLen : 1;
+
+      var x1 = pts[i-1].x + (pts[i].x - pts[i-1].x) * startT;
+      var y1 = pts[i-1].y + (pts[i].y - pts[i-1].y) * startT;
+      var x2 = pts[i-1].x + (pts[i].x - pts[i-1].x) * endT;
+      var y2 = pts[i-1].y + (pts[i].y - pts[i-1].y) * endT;
+
+      var midFrac = (segStart + segEnd) / 2;
+      // Reverse: head is at revHead (lower), tail is at revTail (higher)
+      var range = revTail - revHead;
+      var alpha = range > 0 ? (revTail - midFrac) / range : 1;
+      alpha = Math.max(0.05, Math.min(1, alpha));
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3.5;
+      ctx.globalAlpha = alpha * 0.9;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = alpha * 14;
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+}
+
+function animateStep(step) {
+  state.presentAnimating = true;
+  state.presentAnimProgress = 0;
+  var startTime = null;
+  var duration = 1200;
+
+  function tick(ts) {
+    if(!startTime) startTime = ts;
+    var elapsed = ts - startTime;
+    state.presentAnimProgress = Math.min(elapsed / duration, 1);
+    render();
+    updatePresentUI();
+    if(state.presentAnimProgress < 1 && state.presenting) {
+      requestAnimationFrame(tick);
+    } else {
+      state.presentAnimating = false;
+      state.presentAnimProgress = 1;
+      render();
+      // Auto-advance: 0.5초 후 다음 스텝
+    }
+  }
+  requestAnimationFrame(tick);
+}
 
 // Ctrl 키 누름/뗌에 따라 커서 즉시 반영
 document.addEventListener('keydown', ev => {
   if(ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA' || ev.target.tagName === 'SELECT') return;
+  if(state.presenting) {
+    if(ev.key === 'Escape') { stopPresentation(); ev.preventDefault(); return; }
+    if(ev.key === 'ArrowRight' || ev.key === ' ') { ev.preventDefault(); presentNext(); return; }
+    if(ev.key === 'ArrowLeft') { ev.preventDefault(); presentPrev(); return; }
+    return;
+  }
   if((ev.ctrlKey || ev.metaKey) && ev.key==='z') undo();
   if((ev.ctrlKey || ev.metaKey) && (ev.key==='y' || (ev.shiftKey && ev.key==='z'))) redo();
   if((ev.ctrlKey || ev.metaKey) && ev.key==='d') { ev.preventDefault(); ctxDuplicate(); }
@@ -4297,6 +4795,29 @@ canvas.addEventListener('wheel', e => {
   drawGrid();
   render();
 }, { passive:false });
+
+canvas.addEventListener('dblclick', e => {
+  if(state.presenting) { presentNext(); return; }
+  // 편집 모드: 겹친 객체 순환 선택
+  if(state.tool === 'select') {
+    var pos = getPos(e);
+    var w = toWorld(pos.x, pos.y);
+    var nodeHits = hitNodeAll(w.x, w.y);
+    var edgeHit = hitEdge(w.x, w.y);
+    var candidates = [];
+    if(edgeHit) candidates.push({ kind: 'edge', obj: edgeHit });
+    nodeHits.forEach(function(n) { candidates.push({ kind: 'node', obj: n }); });
+    if(candidates.length <= 1) return;
+    var curIdx = candidates.findIndex(function(c) {
+      return (c.kind === 'node' && c.obj.id === state.selected) ||
+             (c.kind === 'edge' && c.obj.id === state.selectedEdge);
+    });
+    var nextIdx = (curIdx + 1) % candidates.length;
+    var next = candidates[nextIdx];
+    if(next.kind === 'node') selectNode(next.obj.id);
+    else selectEdge(next.obj.id);
+  }
+});
 
 canvas.addEventListener('contextmenu', e => {
   e.preventDefault();
@@ -4361,6 +4882,7 @@ wrap.addEventListener('drop', e => {
 // ════════════════════════════════════════════════════════
 document.addEventListener('keydown', e => {
   if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if(state.presenting) return;
 
   // 도구 전환 단축키 (중복 없는 고유 바인딩만)
   if((e.key === 'v' || e.key === 'V') && !e.ctrlKey && !e.metaKey) setTool('select');
@@ -4431,6 +4953,7 @@ function updatePropPanel() {
     layerSel.appendChild(opt);
   });
   layerSel.value = n.layer || 1;
+  document.getElementById('propAnimIndex').value = n.animIndex != null ? n.animIndex : 1;
   document.getElementById('statusSel').textContent = `${loomLang==='en'?'Selected':'선택'}: ${n.label}`;
   // Sub-infra button: show for all non-flowchart types
   const btnSub = document.getElementById('btnSubInfra');
@@ -4451,10 +4974,11 @@ function updateEdgePropPanel() {
   document.getElementById('edgePropSection').style.display = 'block';
   document.getElementById('edgeLabel').value = e.label||'';
   document.getElementById('edgeStyle').value = e.style||'solid';
+  document.getElementById('edgeAnimIndex').value = e.animIndex != null ? e.animIndex : 1;
 }
 
 // Live property updates
-['propName','propDesc','propType','propAlert','propW','propH','propLayer'].forEach(id => {
+['propName','propDesc','propType','propAlert','propW','propH','propLayer','propAnimIndex'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => {
     const n = state.nodes.find(n=>n.id===state.selected);
     if(!n) return;
@@ -4465,6 +4989,7 @@ function updateEdgePropPanel() {
     if(id==='propW') n.w = parseInt(document.getElementById(id).value)||n.w;
     if(id==='propH') n.h = parseInt(document.getElementById(id).value)||n.h;
     if(id==='propLayer') n.layer = parseInt(document.getElementById(id).value)||1;
+    if(id==='propAnimIndex') { var v = document.getElementById(id).value; n.animIndex = v === '' ? undefined : parseInt(v); }
     render();
   });
 });
@@ -4474,12 +4999,13 @@ document.getElementById('propFontColor').addEventListener('input', function() {
   if(n) { n.fontColor = this.value; render(); }
 });
 
-['edgeLabel','edgeStyle'].forEach(id => {
+['edgeLabel','edgeStyle','edgeAnimIndex'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => {
     const e = state.edges.find(e=>e.id===state.selectedEdge);
     if(!e) return;
     if(id==='edgeLabel') e.label = document.getElementById(id).value;
     if(id==='edgeStyle') e.style = document.getElementById(id).value;
+    if(id==='edgeAnimIndex') { var v = document.getElementById(id).value; e.animIndex = v === '' ? undefined : parseInt(v); }
     render();
   });
 });
@@ -6900,12 +7426,12 @@ var SHARE_NODE_KEYS = {
   resMinCpu:'rc', resMaxCpu:'rC', resMinMem:'rm', resMaxMem:'rM',
   resMinDisk:'rd', resMaxDisk:'rD', resGpu:'rg', resReplicas:'rp',
   fontColor:'fc', icon:'ic', waypoints:'wp', customIcon:'ci',
-  subNodes:'sn', subEdges:'se'
+  subNodes:'sn', subEdges:'se', animIndex:'ai'
 };
 var SHARE_NODE_KEYS_REV = {};
 Object.keys(SHARE_NODE_KEYS).forEach(function(k) { SHARE_NODE_KEYS_REV[SHARE_NODE_KEYS[k]] = k; });
 
-var SHARE_EDGE_KEYS = { id:'i', from:'f', to:'t', style:'s', color:'c', label:'l', waypoints:'w', bidir:'b' };
+var SHARE_EDGE_KEYS = { id:'i', from:'f', to:'t', style:'s', color:'c', label:'l', waypoints:'w', bidir:'b', animIndex:'ai' };
 var SHARE_EDGE_KEYS_REV = {};
 Object.keys(SHARE_EDGE_KEYS).forEach(function(k) { SHARE_EDGE_KEYS_REV[SHARE_EDGE_KEYS[k]] = k; });
 
