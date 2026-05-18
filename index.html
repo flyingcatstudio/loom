@@ -837,30 +837,30 @@
   <div class="export-dropdown" id="exportDropdown">
     <button class="tbtn" onclick="toggleExportMenu(event)">📤 Export ▾</button>
     <div class="export-dropdown-menu">
-      <button class="export-dropdown-item" onclick="exportJSON();closeExportMenu();">
+      <button class="export-dropdown-item" onclick="closeExportMenu();openExportLayerPicker(function(l){exportJSON(l)})">
         <span class="exp-icon">💾</span> JSON
       </button>
-      <button class="export-dropdown-item" onclick="exportExcel();closeExportMenu();">
+      <button class="export-dropdown-item" onclick="closeExportMenu();openExportLayerPicker(function(l){exportExcel(l)})">
         <span class="exp-icon">📊</span> Excel (.xlsx)
       </button>
-      <button class="export-dropdown-item" onclick="exportPDF();closeExportMenu();">
+      <button class="export-dropdown-item" onclick="closeExportMenu();openExportLayerPicker(function(l){exportPDF(l)})">
         <span class="exp-icon">📄</span> PDF
       </button>
-      <button class="export-dropdown-item" onclick="exportPPTX();closeExportMenu();">
+      <button class="export-dropdown-item" onclick="closeExportMenu();openExportLayerPicker(function(l){exportPPTX(l)})">
         <span class="exp-icon">📽</span> PowerPoint (.pptx)
       </button>
       <div class="export-dropdown-sep"></div>
-      <button class="export-dropdown-item" onclick="exportPNG();closeExportMenu();">
+      <button class="export-dropdown-item" onclick="closeExportMenu();openExportLayerPicker(function(l){exportPNG(l)})">
         <span class="exp-icon">📷</span> <span data-i18n="tb_png">PNG (이미지)</span>
       </button>
       <div class="export-dropdown-sep"></div>
-      <button class="export-dropdown-item" onclick="generateK8sYAMLAll();closeExportMenu();">
+      <button class="export-dropdown-item" onclick="closeExportMenu();openExportLayerPicker(function(l){generateK8sYAMLAll(l)})">
         <span class="exp-icon">☸</span> <span data-i18n="iac_yaml">k8s YAML</span>
       </button>
-      <button class="export-dropdown-item" onclick="generateTerraformAll();closeExportMenu();">
+      <button class="export-dropdown-item" onclick="closeExportMenu();openExportLayerPicker(function(l){generateTerraformAll(l)})">
         <span class="exp-icon">⛅</span> <span data-i18n="iac_terraform">Terraform</span>
       </button>
-      <button class="export-dropdown-item" onclick="generateHelmValues();closeExportMenu();">
+      <button class="export-dropdown-item" onclick="closeExportMenu();openExportLayerPicker(function(l){generateHelmValues(l)})">
         <span class="exp-icon">⎈</span> <span data-i18n="iac_helm">Helm Values</span>
       </button>
       <div class="export-dropdown-sep"></div>
@@ -1659,6 +1659,37 @@
 }
 .iac-toast.show { opacity:1; }
 
+/* ── Export Layer Picker ── */
+.elp-overlay {
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.5); z-index:9998; justify-content:center; align-items:center;
+}
+.elp-overlay.active { display:flex; }
+.elp-box {
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:18px 22px; min-width:280px; max-width:360px; box-shadow:0 16px 48px rgba(0,0,0,0.45);
+}
+.elp-title { font-size:13px; font-weight:700; color:var(--text); margin-bottom:12px; }
+.elp-layers { display:flex; flex-direction:column; gap:4px; max-height:260px; overflow-y:auto; margin-bottom:14px; }
+.elp-layer {
+  display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:6px;
+  cursor:pointer; font-size:12px; color:var(--text2); transition:background 0.15s; user-select:none;
+}
+.elp-layer:hover { background:var(--surface2); }
+.elp-layer input[type="checkbox"] { accent-color:var(--accent); cursor:pointer; width:14px; height:14px; }
+.elp-layer .elp-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.elp-layer .elp-cnt { font-size:9px; color:var(--text3); min-width:18px; text-align:right; }
+.elp-actions { display:flex; gap:8px; justify-content:flex-end; align-items:center; }
+.elp-actions button {
+  height:30px; padding:0 14px; border-radius:6px; font-size:11.5px; font-weight:600;
+  cursor:pointer; border:1px solid var(--border); background:var(--surface2); color:var(--text2);
+}
+.elp-actions button:hover { background:var(--surface3); color:var(--text); }
+.elp-actions .elp-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.elp-actions .elp-primary:hover { filter:brightness(1.1); }
+.elp-toggle { font-size:11px; color:var(--accent); cursor:pointer; margin-right:auto; background:none; border:none !important; padding:0; }
+.elp-toggle:hover { text-decoration:underline; }
+
 /* Share Modal */
 .share-modal {
   display:none; position:fixed; top:0; left:0; width:100%; height:100%;
@@ -1863,6 +1894,11 @@ const T = {
     layer_confirm_del: '이 레이어를 삭제하시겠습니까? 노드는 남은 첫 번째 레이어로 이동됩니다.',
     layer_rename_prompt: '레이어 이름:',
     no_nodes: '노드가 없습니다',
+    elp_title: 'Export 레이어 선택',
+    elp_toggle: '전체 선택 / 해제',
+    elp_cancel: '취소',
+    elp_export: 'Export',
+    elp_no_layer: '레이어를 하나 이상 선택해 주세요.',
     xlsx_loading: 'SheetJS 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.',
     pdf_loading: 'jsPDF 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.',
     pdf_font_fail: '폰트 로딩 실패. 기본 폰트로 생성합니다.',
@@ -2016,6 +2052,11 @@ const T = {
     layer_confirm_del: 'Delete this layer? Nodes will be moved to the first remaining layer.',
     layer_rename_prompt: 'Layer name:',
     no_nodes: 'No nodes found',
+    elp_title: 'Select Export Layers',
+    elp_toggle: 'Select / Deselect All',
+    elp_cancel: 'Cancel',
+    elp_export: 'Export',
+    elp_no_layer: 'Please select at least one layer.',
     xlsx_loading: 'SheetJS library is loading. Please try again shortly.',
     pdf_loading: 'jsPDF library is loading. Please try again shortly.',
     pdf_font_fail: 'Font loading failed. Using default font.',
@@ -5372,8 +5413,9 @@ function getServiceType(nodeType) {
   return null;
 }
 
-function getIaCNodes() {
-  return state.nodes.filter(function(n) {
+function getIaCNodes(layerIds) {
+  var src = layerIds ? getExportNodesFiltered(layerIds) : state.nodes;
+  return src.filter(function(n) {
     return !NON_INFRA_TYPES.includes(n.type) && getWorkloadType(n.type) !== null;
   });
 }
@@ -5460,8 +5502,8 @@ function generateK8sYAML(node) {
   return parts.join('\n---\n');
 }
 
-function generateK8sYAMLAll() {
-  var nodes = getIaCNodes();
+function generateK8sYAMLAll(layerIds) {
+  var nodes = getIaCNodes(layerIds);
   if (!nodes.length) { alert(t('iac_no_workload')); return; }
   var parts = [];
 
@@ -5542,8 +5584,8 @@ function generateTerraform(node) {
   return parts.join('\n\n');
 }
 
-function generateTerraformAll() {
-  var nodes = getIaCNodes();
+function generateTerraformAll(layerIds) {
+  var nodes = getIaCNodes(layerIds);
   if (!nodes.length) { alert(t('iac_no_workload')); return; }
   var parts = ['provider "kubernetes" {\n  config_path = "~/.kube/config"\n}'];
 
@@ -5623,8 +5665,8 @@ function generateHelmSingle(node) {
   return lines.join('\n');
 }
 
-function generateHelmValues() {
-  var nodes = getIaCNodes();
+function generateHelmValues(layerIds) {
+  var nodes = getIaCNodes(layerIds);
   if (!nodes.length) { alert(t('iac_no_workload')); return; }
   var lines = ['# Helm Values — Generated from Loom Architecture', ''];
   lines.push('global:');
@@ -7361,20 +7403,40 @@ function createExportCanvas(filterLayerId) {
   return tmpCanvas;
 }
 
-function exportPNG() {
+function exportPNG(layerIds) {
   if(!state.nodes.length) { alert(t('no_nodes')); return; }
-  var tmpCanvas = createExportCanvas();
-  if(!tmpCanvas) return;
-  var link = document.createElement('a');
-  link.download = 'loom.png';
-  link.href = tmpCanvas.toDataURL();
-  link.click();
+  // layerIds 배열이면 각 레이어 ID로 필터, null이면 전체
+  if(layerIds) {
+    // 임시로 선택된 레이어만 visible
+    var origVis = state.layers.map(function(l){ return {id:l.id, vis:l.visible}; });
+    state.layers.forEach(function(l){ l.visible = layerIds.indexOf(l.id) >= 0; });
+    var tmpCanvas = createExportCanvas();
+    origVis.forEach(function(o){ var l = state.layers.find(function(ll){return ll.id===o.id;}); if(l) l.visible = o.vis; });
+    if(!tmpCanvas) return;
+    var link = document.createElement('a');
+    link.download = 'loom.png';
+    link.href = tmpCanvas.toDataURL();
+    link.click();
+  } else {
+    var tmpCanvas = createExportCanvas();
+    if(!tmpCanvas) return;
+    var link = document.createElement('a');
+    link.download = 'loom.png';
+    link.href = tmpCanvas.toDataURL();
+    link.click();
+  }
 }
 
-function exportJSON() {
+function exportJSON(layerIds) {
   // 서브인프라 모드에서는 루트 레벨 데이터를 내보내기
   var rootNodes = state.subInfraStack.length ? state.subInfraStack[0].nodes : state.nodes;
   var rootEdges = state.subInfraStack.length ? state.subInfraStack[0].edges : state.edges;
+  // 레이어 필터링
+  var filteredNodes = layerIds ? rootNodes.filter(function(n){ return layerIds.indexOf(n.layer||1) >= 0; }) : rootNodes;
+  var filteredNodeIds = {};
+  filteredNodes.forEach(function(n){ filteredNodeIds[n.id] = true; });
+  var filteredEdges = layerIds ? rootEdges.filter(function(e){ return filteredNodeIds[e.from] && filteredNodeIds[e.to]; }) : rootEdges;
+
   var now = new Date();
   var ts = formatTimestamp();
   var filename = 'loom-v' + CURRENT_VERSION + '_' + ts + '.json';
@@ -7395,7 +7457,8 @@ function exportJSON() {
     return copy;
   }
 
-  var exportNodes = rootNodes.map(cleanNodeForExport);
+  var exportNodes = filteredNodes.map(cleanNodeForExport);
+  var exportLayers = layerIds ? state.layers.filter(function(l){ return layerIds.indexOf(l.id) >= 0; }) : state.layers;
   var exportData = {
     version: CURRENT_VERSION,
     meta: {
@@ -7404,9 +7467,9 @@ function exportJSON() {
       tool: 'Loom'
     },
     nodes: exportNodes,
-    edges: rootEdges,
+    edges: filteredEdges,
     k8sConfig: k8sConfig,
-    layers: state.layers
+    layers: exportLayers
   };
   const data = JSON.stringify(exportData, null, 2);
   const blob = new Blob([data], {type:'application/json'});
@@ -7691,6 +7754,82 @@ function closeHelpMenu() {
 document.addEventListener('click', function() { closeImportMenu(); closeExportMenu(); closeHelpMenu(); });
 
 // ════════════════════════════════════════════════════════
+// EXPORT LAYER PICKER
+// ════════════════════════════════════════════════════════
+var _elpCallback = null;
+
+function openExportLayerPicker(callback) {
+  // 레이어가 1개면 선택 없이 바로 export (전체)
+  if (state.layers.length <= 1) { callback(null); return; }
+  _elpCallback = callback;
+  var overlay = document.getElementById('elpOverlay');
+  var container = document.getElementById('elpLayers');
+  document.getElementById('elpTitle').textContent = t('elp_title');
+  document.getElementById('elpToggleBtn').textContent = t('elp_toggle');
+  document.getElementById('elpCancelBtn').textContent = t('elp_cancel');
+  document.getElementById('elpExportBtn').textContent = t('elp_export');
+  container.innerHTML = '';
+
+  state.layers.forEach(function(l) {
+    var count = state.nodes.filter(function(n) { return (n.layer || 1) === l.id; }).length;
+    var row = document.createElement('label');
+    row.className = 'elp-layer';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = true;
+    cb.dataset.layerId = l.id;
+    row.appendChild(cb);
+    var nameSpan = document.createElement('span');
+    nameSpan.className = 'elp-name';
+    nameSpan.textContent = l.name;
+    row.appendChild(nameSpan);
+    var cntSpan = document.createElement('span');
+    cntSpan.className = 'elp-cnt';
+    cntSpan.textContent = count;
+    row.appendChild(cntSpan);
+    container.appendChild(row);
+  });
+
+  overlay.classList.add('active');
+}
+
+function closeExportLayerPicker() {
+  document.getElementById('elpOverlay').classList.remove('active');
+  _elpCallback = null;
+}
+
+function confirmExportLayerPicker() {
+  var checks = document.querySelectorAll('#elpLayers input[type="checkbox"]');
+  var ids = [];
+  checks.forEach(function(cb) { if (cb.checked) ids.push(parseInt(cb.dataset.layerId)); });
+  if (ids.length === 0) { alert(t('elp_no_layer')); return; }
+  var fn = _elpCallback;
+  closeExportLayerPicker();
+  // 전체 선택 시 null (필터 없음)
+  if (fn) fn(ids.length === state.layers.length ? null : ids);
+}
+
+function elpToggleAll() {
+  var checks = document.querySelectorAll('#elpLayers input[type="checkbox"]');
+  var allChecked = true;
+  checks.forEach(function(cb) { if (!cb.checked) allChecked = false; });
+  checks.forEach(function(cb) { cb.checked = !allChecked; });
+}
+
+// ── Shared layer-filtered export helpers ──
+function getExportNodesFiltered(layerIds) {
+  if (!layerIds) return state.nodes.slice();
+  return state.nodes.filter(function(n) { return layerIds.indexOf(n.layer || 1) >= 0; });
+}
+
+function getExportEdgesFiltered(layerIds, nodes) {
+  if (!layerIds) return state.edges.slice();
+  var idSet = {};
+  nodes.forEach(function(n) { idSet[n.id] = true; });
+  return state.edges.filter(function(e) { return idSet[e.from] && idSet[e.to]; });
+}
+
+// ════════════════════════════════════════════════════════
 // COMMON EXPORT DATA
 // ════════════════════════════════════════════════════════
 function findNodeGroup(node) {
@@ -7711,14 +7850,20 @@ function getLayerName(layerId) {
   return l ? l.name : 'Layer ' + layerId;
 }
 
-function getExportTableData(filterLayerId) {
+function getExportTableData(filterLayer) {
+  // filterLayer: null=전체, number=단일레이어, array=복수레이어
   var headers = ['Name', 'Type', 'Description', 'Namespace', 'Layer', 'Group', 'Alert',
                  'Min CPU(m)', 'Max CPU(m)', 'Min MEM(Mi)', 'Max MEM(Mi)',
                  'Min Disk(Gi)', 'Max Disk(Gi)', 'GPU', 'Replicas'];
   var rows = [];
-  var nodes = filterLayerId != null
-    ? state.nodes.filter(function(n){ return (n.layer||1) === filterLayerId; })
-    : state.nodes;
+  var nodes;
+  if (filterLayer == null) {
+    nodes = state.nodes;
+  } else if (Array.isArray(filterLayer)) {
+    nodes = state.nodes.filter(function(n){ return filterLayer.indexOf(n.layer||1) >= 0; });
+  } else {
+    nodes = state.nodes.filter(function(n){ return (n.layer||1) === filterLayer; });
+  }
   nodes.forEach(function(n) {
     var isInfra = !NON_INFRA_TYPES.includes(n.type);
     var r = isInfra ? getNodeResources(n) : null;
@@ -7740,7 +7885,7 @@ function getExportTableData(filterLayerId) {
 // ════════════════════════════════════════════════════════
 // EXCEL EXPORT
 // ════════════════════════════════════════════════════════
-function exportExcel() {
+function exportExcel(layerIds) {
   if (typeof XLSX === 'undefined') { alert(t('xlsx_loading')); return; }
   if (!state.nodes.length) { alert(t('no_nodes')); return; }
 
@@ -7751,7 +7896,8 @@ function exportExcel() {
   ];
 
   // Sheet per layer (table + diagram image)
-  state.layers.forEach(function(layer) {
+  var exportLayers = layerIds ? state.layers.filter(function(l){ return layerIds.indexOf(l.id) >= 0; }) : state.layers;
+  exportLayers.forEach(function(layer) {
     var td = getExportTableData(layer.id);
     if(!td.rows.length) return;
     var wsData = [td.headers].concat(td.rows);
@@ -7838,7 +7984,7 @@ function loadKoreanFont() {
     });
 }
 
-function exportPDF() {
+function exportPDF(layerIds) {
   if (!window.jspdf || !window.jspdf.jsPDF) {
     alert(t('pdf_loading')); return;
   }
@@ -7846,15 +7992,15 @@ function exportPDF() {
 
   // 폰트 로드 후 PDF 생성
   loadKoreanFont().then(function(fontBase64) {
-    _buildPDF(fontBase64);
+    _buildPDF(fontBase64, layerIds);
   }).catch(function(err) {
     console.error('Font load error:', err);
     alert(t('pdf_font_fail'));
-    _buildPDF(null);
+    _buildPDF(null, layerIds);
   });
 }
 
-function _buildPDF(fontBase64) {
+function _buildPDF(fontBase64, layerIds) {
   var jsPDF = window.jspdf.jsPDF;
   var doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
@@ -7880,13 +8026,16 @@ function _buildPDF(fontBase64) {
   doc.setTextColor(139, 148, 158);
   doc.text(dateStr + ' ' + timeStr, 148.5, 85, { align: 'center' });
   doc.setFontSize(11);
-  var nodeCount = state.nodes.filter(function(n){return n.type!=='group';}).length;
-  var edgeCount = state.edges.length;
-  var groupCount = state.nodes.filter(function(n){return n.type==='group';}).length;
+  var _pdfNodes = layerIds ? getExportNodesFiltered(layerIds) : state.nodes;
+  var _pdfEdges = layerIds ? getExportEdgesFiltered(layerIds, _pdfNodes) : state.edges;
+  var nodeCount = _pdfNodes.filter(function(n){return n.type!=='group';}).length;
+  var edgeCount = _pdfEdges.length;
+  var groupCount = _pdfNodes.filter(function(n){return n.type==='group';}).length;
   doc.text('Nodes: ' + nodeCount + '  |  Edges: ' + edgeCount + '  |  Groups: ' + groupCount, 148.5, 100, { align: 'center' });
 
   // --- Per-Layer Diagram + Table Pages ---
-  state.layers.forEach(function(layer) {
+  var _pdfLayers = layerIds ? state.layers.filter(function(l){ return layerIds.indexOf(l.id) >= 0; }) : state.layers;
+  _pdfLayers.forEach(function(layer) {
     var layerNodes = state.nodes.filter(function(n){ return (n.layer||1) === layer.id; });
     if(!layerNodes.length) return;
 
@@ -7976,7 +8125,7 @@ function formatTimestamp() {
 // ════════════════════════════════════════════════════════
 // PPTX EXPORT (다이어그램 → PowerPoint 객체)
 // ════════════════════════════════════════════════════════
-function exportPPTX() {
+function exportPPTX(layerIds) {
   if(typeof PptxGenJS === 'undefined') { alert('PptxGenJS loading...'); return; }
   if(!state.nodes.length) { alert(t('no_nodes')); return; }
 
@@ -8018,7 +8167,8 @@ function exportPPTX() {
   }
 
   // --- Per-layer slides ---
-  state.layers.forEach(function(layer) {
+  var _pptxLayers = layerIds ? state.layers.filter(function(l){ return layerIds.indexOf(l.id) >= 0; }) : state.layers;
+  _pptxLayers.forEach(function(layer) {
     var layerNodes = state.nodes.filter(function(n) {
       return (n.layer || 1) === layer.id && !n._groupHidden;
     });
@@ -8059,17 +8209,16 @@ function exportPPTX() {
     // --- Draw groups first (bottom layer) ---
     layerNodes.filter(function(n) { return n.type === 'group'; }).forEach(function(n) {
       var cfg = NODE_TYPES.group;
-      slide.addShape(pptx.ShapeType.roundRect, {
+      var grpFontPt = Math.max(7, Math.min(14, Math.round(toIn(n.w) * 4)));
+      slide.addText('[ ' + (n.label || '') + ' ]', {
+        shape: pptx.ShapeType.roundRect,
         x: mapX(n.x), y: mapY(n.y), w: toIn(n.w), h: toIn(n.h),
         rectRadius: 0.1,
         fill: { color: pptColor(n.color || cfg.color), transparency: 100 - pptAlpha(n.color || cfg.color) },
-        line: { color: pptColor(cfg.border), width: 1.5, dashType: 'dash' }
-      });
-      // Group label
-      slide.addText('[ ' + (n.label || '') + ' ]', {
-        x: mapX(n.x) + 0.05, y: mapY(n.y) + 0.02, w: toIn(n.w) - 0.1, h: 0.25,
-        fontSize: 9, color: pptColor(n.fontColor || cfg.border), fontFace: 'Arial',
-        bold: true, valign: 'top'
+        line: { color: pptColor(cfg.border), width: 1.5, dashType: 'dash' },
+        fontSize: grpFontPt, color: pptColor(n.fontColor || cfg.border), fontFace: 'Arial',
+        bold: true, valign: 'top', align: 'left', shrinkText: true,
+        margin: [2, 6, 0, 6]
       });
     });
 
@@ -8091,37 +8240,37 @@ function exportPPTX() {
       var ex = mapX(dst.x + dst.w / 2);
       var ey = mapY(dst.y + dst.h / 2);
 
-      // Use line shape for edges
+      var edgeColor = pptColor(e.color || '5BA0F5');
       var lineOpts = {
         x: Math.min(sx, ex), y: Math.min(sy, ey),
         w: Math.abs(ex - sx) || 0.01, h: Math.abs(ey - sy) || 0.01,
-        line: { color: pptColor(e.color || '5BA0F5'), width: 1.5 },
+        line: {
+          color: edgeColor, width: 1.5,
+          endArrowType: 'triangle'
+        },
         flipH: ex < sx, flipV: ey < sy
       };
       if(e.style === 'dashed') lineOpts.line.dashType = 'dash';
+      if(e.style === 'both') lineOpts.line.beginArrowType = 'triangle';
 
       slide.addShape(pptx.ShapeType.line, lineOpts);
 
-      // Arrowhead triangle at destination
-      var angle = Math.atan2(ey - sy, ex - sx);
-      var arrSize = 0.08;
-      slide.addShape(pptx.ShapeType.triangle, {
-        x: ex - arrSize / 2, y: ey - arrSize / 2,
-        w: arrSize, h: arrSize,
-        rotate: (angle * 180 / Math.PI) + 90,
-        fill: { color: pptColor(e.color || '5BA0F5') },
-        line: { type: 'none' }
-      });
-
-      // Edge label
+      // Edge label — inline on the line midpoint
       if(e.label) {
         var lx = (sx + ex) / 2;
         var ly = (sy + ey) / 2;
+        var edgeLen = Math.sqrt(Math.pow(ex - sx, 2) + Math.pow(ey - sy, 2));
+        var edgeFontPt = Math.max(5, Math.min(11, Math.round(edgeLen * 6)));
+        var lblW = Math.max(0.4, e.label.length * edgeFontPt * 0.01 + 0.15);
+        var lblH = edgeFontPt * 0.022 + 0.06;
         slide.addText(e.label, {
-          x: lx - 0.5, y: ly - 0.15, w: 1, h: 0.25,
-          fontSize: 7, color: '8490A5', fontFace: 'Arial',
+          shape: pptx.ShapeType.roundRect,
+          x: lx - lblW / 2, y: ly - lblH / 2, w: lblW, h: lblH,
+          rectRadius: 0.02,
+          fontSize: edgeFontPt, color: '8490A5', fontFace: 'Arial',
           align: 'center', valign: 'middle',
-          fill: { color: '12161E' }
+          fill: { color: '12161E' }, line: { type: 'none' },
+          shrinkText: true
         });
       }
     });
@@ -8134,59 +8283,61 @@ function exportPPTX() {
       var nx = mapX(n.x), ny = mapY(n.y);
       var nw = toIn(n.w), nh = toIn(n.h);
 
+      // Font size proportional to shape height (inches)
+      var nodeFontPt = Math.max(6, Math.min(14, Math.round(nh * 11)));
+      var iconText = (n.svgIcon ? '' : cfg.icon) || '';
+      var displayLabel = iconText ? (iconText + ' ' + (n.label || '')) : (n.label || '');
+
       if(n.type === 'decision') {
-        // Diamond shape
-        slide.addShape(pptx.ShapeType.diamond, {
+        slide.addText(displayLabel, {
+          shape: pptx.ShapeType.diamond,
           x: nx, y: ny, w: nw, h: nh,
           fill: { color: pptColor(bgColor) },
-          line: { color: pptColor(cfg.border), width: 1.5 }
-        });
-        slide.addText(n.label || '', {
-          x: nx, y: ny, w: nw, h: nh,
-          fontSize: 8, color: pptColor(textColor), fontFace: 'Arial',
-          bold: true, align: 'center', valign: 'middle'
+          line: { color: pptColor(cfg.border), width: 1.5 },
+          fontSize: nodeFontPt, color: pptColor(textColor), fontFace: 'Arial',
+          bold: true, align: 'center', valign: 'middle', shrinkText: true
         });
         return;
       }
 
       if(n.type === 'start' || n.type === 'end') {
-        // Rounded pill
-        slide.addShape(pptx.ShapeType.roundRect, {
+        slide.addText(displayLabel, {
+          shape: pptx.ShapeType.roundRect,
           x: nx, y: ny, w: nw, h: nh,
           rectRadius: nh / 2,
           fill: { color: pptColor(bgColor) },
-          line: { color: pptColor(cfg.border), width: 1.5 }
-        });
-        slide.addText(n.label || '', {
-          x: nx, y: ny, w: nw, h: nh,
-          fontSize: 9, color: pptColor(n.fontColor || cfg.border), fontFace: 'Arial',
-          bold: true, align: 'center', valign: 'middle'
+          line: { color: pptColor(cfg.border), width: 1.5 },
+          fontSize: nodeFontPt, color: pptColor(n.fontColor || cfg.border), fontFace: 'Arial',
+          bold: true, align: 'center', valign: 'middle', shrinkText: true
         });
         return;
       }
 
       if(n.type === 'note') {
-        // Note shape (PptxGenJS has a built-in folded corner shape)
-        slide.addShape(pptx.ShapeType.wedgeRoundRectCallout || pptx.ShapeType.roundRect, {
+        slide.addText(displayLabel, {
+          shape: pptx.ShapeType.roundRect,
           x: nx, y: ny, w: nw, h: nh,
+          rectRadius: 0.03,
           fill: { color: pptColor(bgColor) },
-          line: { color: pptColor(cfg.border), width: 1.5 }
-        });
-        slide.addText(n.label || '', {
-          x: nx + 0.03, y: ny + 0.02, w: nw - 0.06, h: nh - 0.04,
-          fontSize: 8, color: pptColor(textColor), fontFace: 'Arial',
-          valign: 'top', wrap: true
+          line: { color: pptColor(cfg.border), width: 1.5 },
+          fontSize: nodeFontPt, color: pptColor(textColor), fontFace: 'Arial',
+          valign: 'top', align: 'left', wrap: true, shrinkText: true,
+          margin: [3, 4, 3, 4]
         });
         return;
       }
 
-      // Standard node: rounded rect with left accent bar
-      slide.addShape(pptx.ShapeType.roundRect, {
+      // Standard node: rounded rect (icon + label inline)
+      slide.addText(displayLabel, {
+        shape: pptx.ShapeType.roundRect,
         x: nx, y: ny, w: nw, h: nh,
         rectRadius: 0.06,
         fill: { color: pptColor(bgColor) },
         line: { color: pptColor(cfg.border), width: 1.5 },
-        shadow: { type: 'outer', blur: 4, offset: 2, color: pptColor(cfg.border), opacity: 0.3 }
+        shadow: { type: 'outer', blur: 4, offset: 2, color: pptColor(cfg.border), opacity: 0.3 },
+        fontSize: nodeFontPt, bold: true, color: pptColor(textColor), fontFace: 'Arial',
+        valign: 'middle', align: 'left', wrap: true, shrinkText: true,
+        margin: [0, 6, 0, 8]
       });
 
       // Left accent bar
@@ -8195,55 +8346,6 @@ function exportPPTX() {
         fill: { color: pptColor(cfg.border) },
         line: { type: 'none' }
       });
-
-      // Icon (emoji as text)
-      var iconText = cfg.icon;
-      if(n.svgIcon) iconText = ''; // skip SVG icons in PPTX
-      if(iconText) {
-        slide.addText(iconText, {
-          x: nx + 0.05, y: ny, w: 0.25, h: nh,
-          fontSize: 12, fontFace: 'Segoe UI Emoji',
-          valign: 'middle', align: 'center'
-        });
-      }
-
-      // Label
-      var labelX = nx + (iconText ? 0.28 : 0.08);
-      var labelW = nw - (iconText ? 0.33 : 0.13);
-      var labelParts = [{ text: n.label || '', options: { fontSize: 9, bold: true, color: pptColor(textColor), fontFace: 'Arial', breakType: 'none' } }];
-      if(n.desc) {
-        labelParts.push({ text: '\n' + n.desc, options: { fontSize: 7, color: '8490A5', fontFace: 'Arial', breakType: 'none' } });
-      }
-      slide.addText(labelParts, {
-        x: labelX, y: ny, w: labelW, h: nh,
-        valign: 'middle', wrap: true, shrinkText: true
-      });
-
-      // Namespace badge
-      if(n.namespace && n.namespace !== 'default' && !NON_INFRA_TYPES.includes(n.type)) {
-        slide.addText(n.namespace, {
-          x: nx + nw - 0.5, y: ny + 0.02, w: 0.48, h: 0.16,
-          fontSize: 5, color: '5BA0F5', fontFace: 'Arial',
-          align: 'right', valign: 'middle',
-          fill: { color: '1A2744' }
-        });
-      }
-
-      // Alert badge
-      if(n.alert) {
-        var alertColors = { warn: 'D29922', error: 'F85149', ok: '3FB950' };
-        var alertIcons = { warn: '!', error: '!!', ok: '✓' };
-        slide.addShape(pptx.ShapeType.ellipse, {
-          x: nx + nw - 0.12, y: ny + 0.02, w: 0.1, h: 0.1,
-          fill: { color: alertColors[n.alert] || '666666' },
-          line: { type: 'none' }
-        });
-        slide.addText(alertIcons[n.alert] || '', {
-          x: nx + nw - 0.12, y: ny + 0.02, w: 0.1, h: 0.1,
-          fontSize: 5, color: 'FFFFFF', fontFace: 'Arial',
-          bold: true, align: 'center', valign: 'middle'
-        });
-      }
     });
   });
 
@@ -9893,6 +9995,19 @@ if(loomGrid === '0') { state.gridVisible = false; var gb = document.getElementBy
   </div>
 </div>
 <div id="iacToast" class="iac-toast"></div>
+
+<!-- Export Layer Picker -->
+<div id="elpOverlay" class="elp-overlay" onclick="if(event.target===this)closeExportLayerPicker()">
+  <div class="elp-box">
+    <div class="elp-title" id="elpTitle">Export Layers</div>
+    <div class="elp-layers" id="elpLayers"></div>
+    <div class="elp-actions">
+      <button class="elp-toggle" onclick="elpToggleAll()" id="elpToggleBtn">toggle</button>
+      <button onclick="closeExportLayerPicker()" id="elpCancelBtn">Cancel</button>
+      <button class="elp-primary" onclick="confirmExportLayerPicker()" id="elpExportBtn">Export</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
