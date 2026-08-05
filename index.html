@@ -3085,10 +3085,22 @@ function drawNode(n) {
     ctx.lineTo(x, y+h/2);
     ctx.closePath();
     ctx.fill(); ctx.stroke();
+    // SVG icon (라벨 위 중앙)
+    var diaLabelY = y + h/2 + 4;
+    if(n.svgIcon && SVG_ICONS[n.svgIcon]) {
+      const img = getSVGImage(n.svgIcon);
+      const diaIcon = Math.min(h/2 - 6, 22);
+      if(img && img.complete) {
+        ctx.drawImage(img, x + w/2 - diaIcon/2, y + h/2 - diaIcon - 4, diaIcon, diaIcon);
+      } else if(img) {
+        img.onload = () => render();
+      }
+      diaLabelY = y + h/2 + 14;
+    }
     ctx.fillStyle = textColor;
     ctx.font = font('600', 11);
     ctx.textAlign = 'center';
-    ctx.fillText(label, x+w/2, y+h/2+4);
+    ctx.fillText(label, x+w/2, diaLabelY);
     ctx.textAlign = 'left';
     ctx.restore();
     return;
@@ -3102,10 +3114,24 @@ function drawNode(n) {
     ctx.beginPath();
     ctx.roundRect(x, y, w, h, h/2);
     ctx.fill(); ctx.stroke();
+    // SVG icon (좌측) — 있으면 라벨은 남은 영역에 배치
+    var pillL = x, pillR = x + w, pillLabel = label;
+    if(n.svgIcon && SVG_ICONS[n.svgIcon]) {
+      const img = getSVGImage(n.svgIcon);
+      const pillIcon = Math.min(h - 14, 24);
+      if(img && img.complete) {
+        ctx.drawImage(img, x + 10, y + (h - pillIcon)/2, pillIcon, pillIcon);
+      } else if(img) {
+        img.onload = () => render();
+      }
+      pillL = x + 14 + pillIcon;
+      pillR = x + w - 8;
+      pillLabel = truncate(label, Math.max(1, Math.floor((pillR - pillL)/7)));
+    }
     ctx.fillStyle = n.fontColor || cfg.border;
     ctx.font = font('700', 12);
     ctx.textAlign = 'center';
-    ctx.fillText(label, x+w/2, y+h/2+4);
+    ctx.fillText(pillLabel, (pillL + pillR)/2, y+h/2+4);
     ctx.textAlign = 'left';
     ctx.restore();
     return;
@@ -4511,11 +4537,25 @@ function drawNodeAnimation(n, progress) {
   if(n.svgIcon && typeof SVG_ICONS !== 'undefined' && SVG_ICONS[n.svgIcon]) {
     // SVG icon: pulse scale at original position
     var img = getSVGImage(n.svgIcon);
-    var baseSize = Math.min(h - 12, 28);
+    // 아이콘 기준 위치/크기는 drawNode의 타입별 배치와 동일하게
+    var baseSize, baseX, baseY;
+    if(type === 'start' || type === 'end') {
+      baseSize = Math.min(h - 14, 24);
+      baseX = x + 10;
+      baseY = y + (h - baseSize)/2;
+    } else if(type === 'decision') {
+      baseSize = Math.min(h/2 - 6, 22);
+      baseX = x + w/2 - baseSize/2;
+      baseY = y + h/2 - baseSize - 4;
+    } else {
+      baseSize = Math.min(h - 12, 28);
+      baseX = x + 8;
+      baseY = y + (h - baseSize)/2;
+    }
     var scale = 1 + 0.25 * Math.sin(progress * Math.PI * 4);
     var sz = baseSize * scale;
-    var ix = x + 8 + (baseSize - sz)/2;
-    var iy = y + (h - sz)/2;
+    var ix = baseX + (baseSize - sz)/2;
+    var iy = baseY + (baseSize - sz)/2;
     if(img && img.complete) {
       ctx.globalAlpha = 0.7 + 0.3 * Math.sin(progress * Math.PI * 4);
       ctx.drawImage(img, ix, iy, sz, sz);
@@ -8854,6 +8894,7 @@ regSVG('aws-eventbridge', `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/200
 regSVG('aws-redshift', `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="3" fill="#205B99"/><path d="M12 3L5 7v10l7 4 7-4V7z" fill="none" stroke="white" stroke-width="1.5" stroke-linejoin="round"/><path d="M5 7l7 4 7-4" stroke="white" stroke-width="1.3"/><line x1="12" y1="11" x2="12" y2="21" stroke="white" stroke-width="1.3"/></svg>`);
 regSVG('aws-opensearch', `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="3" fill="#005EB8"/><circle cx="10.5" cy="10.5" r="5.5" fill="none" stroke="white" stroke-width="2"/><line x1="14.5" y1="14.5" x2="19.5" y2="19.5" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>`);
 regSVG('aws-athena', `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="3" fill="#8C4FFF"/><path d="M4 20L12 4l8 16" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round"/><line x1="7" y1="14" x2="17" y2="14" stroke="white" stroke-width="1.5"/></svg>`);
+regSVG('aws-codecommit', `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="3" fill="#C7131F"/><circle cx="7.5" cy="5.5" r="2.2" fill="white"/><circle cx="7.5" cy="18.5" r="2.2" fill="white"/><circle cx="16.5" cy="10" r="2.2" fill="white"/><line x1="7.5" y1="7.7" x2="7.5" y2="16.3" stroke="white" stroke-width="1.5"/><path d="M7.5 14v-2a2 2 0 0 1 2-2h4.8" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>`);
 regSVG('aws-codepipeline', `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="3" fill="#C7131F"/><circle cx="4.5" cy="12" r="2" fill="white"/><circle cx="12" cy="12" r="2" fill="white"/><circle cx="19.5" cy="12" r="2" fill="white"/><line x1="6.5" y1="12" x2="10" y2="12" stroke="white" stroke-width="1.5"/><line x1="14" y1="12" x2="17.5" y2="12" stroke="white" stroke-width="1.5"/></svg>`);
 
 // ── GCP ─────────────────────────────────────────────────
@@ -9321,10 +9362,12 @@ function addIconNodeAtPosition(iconId, label, wx, wy) {
   saveHistory();
   const type = getIconNodeType(iconId);
   const cfg = NODE_TYPES[type] || NODE_TYPES.server;
+  // start/end(알약)는 기본 폭이 좁아 아이콘 + 라벨이 함께 들어가도록 넓혀준다
+  const nw = (type === 'start' || type === 'end') ? cfg.w + 40 : cfg.w;
   const node = {
     id: state.nextId++, type, label, desc: '', alert: '',
-    x: wx - cfg.w/2, y: wy - cfg.h/2,
-    w: cfg.w, h: cfg.h,
+    x: wx - nw/2, y: wy - cfg.h/2,
+    w: nw, h: cfg.h,
     color: cfg.color, svgIcon: iconId,
     layer: state.activeLayer || 1
   };
@@ -9352,22 +9395,22 @@ const AI_SERVICES = {
   claude: {
     name: 'Claude',
     endpoint: 'https://api.anthropic.com/v1/messages',
-    models: ['claude-sonnet-4-6', 'claude-opus-4-6', 'claude-haiku-4-5-20251001'],
-    defaultModel: 'claude-sonnet-4-6',
+    models: ['claude-opus-5', 'claude-sonnet-5', 'claude-fable-5', 'claude-haiku-4-5'],
+    defaultModel: 'claude-opus-5',
     keyPlaceholder: 'sk-ant-...'
   },
   openai: {
     name: 'OpenAI',
     endpoint: 'https://api.openai.com/v1/chat/completions',
-    models: ['gpt-5.2', 'gpt-5.1', 'gpt-5-mini', 'gpt-5-nano', 'o4-mini', 'o3'],
-    defaultModel: 'gpt-5.2',
+    models: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.5-pro'],
+    defaultModel: 'gpt-5.6-sol',
     keyPlaceholder: 'sk-...'
   },
   gemini: {
     name: 'Gemini',
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/',
-    models: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.5-flash-lite', 'gemini-3-flash-preview', 'gemini-3.1-pro-preview'],
-    defaultModel: 'gemini-2.5-flash',
+    models: ['gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview'],
+    defaultModel: 'gemini-3.5-flash',
     keyPlaceholder: 'AIza...'
   },
   ollama: {
@@ -9398,6 +9441,18 @@ function loadAIConfig() {
     if (saved) {
       const parsed = JSON.parse(saved);
       aiConfig = { ...aiConfig, ...parsed };
+      // 저장된 모델이 더 이상 등록돼 있지 않으면(구버전/폐기 모델) 기본값으로 되돌린다.
+      // 그대로 두면 select에는 안 보이는데 요청에는 실려 404가 난다. ollama는 사용자 로컬 목록이라 제외.
+      let pruned = false;
+      Object.keys(aiConfig.models || {}).forEach(svc => {
+        const def = AI_SERVICES[svc];
+        if (!def || svc === 'ollama') return;
+        if (def.models.indexOf(aiConfig.models[svc]) === -1) {
+          delete aiConfig.models[svc];
+          pruned = true;
+        }
+      });
+      if (pruned) saveAIConfig();
     } else {
       const oldKey = localStorage.getItem('infraflow_api_key');
       if (oldKey) {
@@ -9550,8 +9605,10 @@ async function callAIService(systemPrompt, messages) {
         'anthropic-dangerous-direct-browser-calls': 'true'
       },
       body: JSON.stringify({
+        // Opus 5 등 최신 모델은 thinking이 기본 ON이고 max_tokens가 thinking+응답 합계를
+        // 제한하므로, 다이어그램 JSON이 중간에 잘리지 않도록 여유를 둔다
         model: model,
-        max_tokens: 8192,
+        max_tokens: 16000,
         system: systemPrompt,
         messages: messages.map(m => ({ role: m.role, content: m.content }))
       })
@@ -9564,7 +9621,8 @@ async function callAIService(systemPrompt, messages) {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + key
       },
-      body: JSON.stringify({ model: model, messages: oaiMsgs, max_tokens: 8192 })
+      // GPT-5 계열은 chat/completions에서 max_tokens를 거부하고 max_completion_tokens를 요구한다
+      body: JSON.stringify({ model: model, messages: oaiMsgs, max_completion_tokens: 16000 })
     });
   } else if (svc === 'gemini') {
     const url = def.endpoint + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key);
@@ -9578,7 +9636,7 @@ async function callAIService(systemPrompt, messages) {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents: contents,
-        generationConfig: { maxOutputTokens: 8192 }
+        generationConfig: { maxOutputTokens: 16000 }
       })
     });
   } else if (svc === 'ollama') {
