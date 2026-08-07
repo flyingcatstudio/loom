@@ -1072,6 +1072,21 @@
             <input id="propFontColor" type="color" value="#e6edf3" style="width:24px;height:24px;padding:0;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;" title="직접 선택" data-i18n-title="font_color_title">
           </div>
         </div>
+        <div id="mermaidPanelSection" style="display:none">
+          <div class="prop-row">
+            <label data-i18n="rp_mermaid_render">그래프로 보기</label>
+            <input id="propMermaidRender" type="checkbox">
+          </div>
+          <div class="prop-row" style="flex-direction:column;align-items:stretch;gap:4px">
+            <label data-i18n="rp_mermaid_src">Mermaid 원문</label>
+            <textarea id="propMermaid" rows="8" spellcheck="false"
+              style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;resize:vertical"></textarea>
+          </div>
+          <div class="prop-row">
+            <button class="tbtn" onclick="convertMermaidPanel()" style="flex:1;justify-content:center"
+                    data-i18n="rp_mermaid_convert">📊 도형으로 변환</button>
+          </div>
+        </div>
         <div class="prop-row">
           <label data-i18n="rp_width">너비</label>
           <input id="propW" type="number" min="80" max="400">
@@ -1087,6 +1102,13 @@
         <div class="prop-row">
           <label data-i18n="rp_anim_index">애니메이션 순서</label>
           <input id="propAnimIndex" type="number" min="0" placeholder="미설정" data-i18n-ph="anim_index_ph">
+        </div>
+        <div class="prop-row">
+          <label data-i18n="rp_node_label_dir">텍스트 방향</label>
+          <select id="propLabelDir">
+            <option value="h" data-i18n="rp_dir_h">가로</option>
+            <option value="v" data-i18n="rp_dir_v">세로</option>
+          </select>
         </div>
         <div class="prop-row">
           <label data-i18n="rp_alert">경고 표시</label>
@@ -1164,11 +1186,61 @@
         <input id="edgeLabel" type="text" placeholder="연결선 이름" data-i18n-ph="edge_label_ph">
       </div>
       <div class="prop-row">
+        <label data-i18n="rp_edge_route">선 타입</label>
+        <select id="edgeRouteType">
+          <option value="ortho" data-i18n="rp_route_ortho">직각</option>
+          <option value="straight" data-i18n="rp_route_straight">직선</option>
+          <option value="curve" data-i18n="rp_route_curve">곡선형</option>
+        </select>
+      </div>
+      <div class="prop-row">
         <label data-i18n="rp_edge_style">스타일</label>
         <select id="edgeStyle">
           <option value="solid" data-i18n="rp_solid">실선</option>
           <option value="dashed" data-i18n="rp_dashed">점선</option>
           <option value="both" data-i18n="rp_bidir">양방향</option>
+        </select>
+      </div>
+      <div class="prop-row">
+        <label data-i18n="rp_edge_label_dir">텍스트 방향</label>
+        <select id="edgeLabelDir">
+          <option value="h" data-i18n="rp_dir_h">가로</option>
+          <option value="v" data-i18n="rp_dir_v">세로</option>
+          <option value="along" data-i18n="rp_dir_along">선 따라</option>
+        </select>
+      </div>
+      <div class="prop-row">
+        <label data-i18n="rp_edge_label_pos">라벨 위치</label>
+        <div style="display:flex;gap:4px;flex:1;align-items:center">
+          <span style="font-size:10px;opacity:.6">X</span>
+          <input id="edgeLabelOffX" type="number" step="5" style="width:100%;min-width:0">
+          <span style="font-size:10px;opacity:.6">Y</span>
+          <input id="edgeLabelOffY" type="number" step="5" style="width:100%;min-width:0">
+        </div>
+      </div>
+      <div class="prop-row">
+        <label></label>
+        <button class="tbtn" id="edgeLabelReset" onclick="resetEdgeLabelOffset()"
+                style="flex:1;justify-content:center" data-i18n="rp_edge_label_reset">기본 위치로</button>
+      </div>
+      <div class="prop-row">
+        <label data-i18n="rp_edge_from_side">시작 면</label>
+        <select id="edgeFromSide">
+          <option value="" data-i18n="rp_side_auto">자동</option>
+          <option value="top" data-i18n="rp_side_top">위</option>
+          <option value="right" data-i18n="rp_side_right">오른쪽</option>
+          <option value="bottom" data-i18n="rp_side_bottom">아래</option>
+          <option value="left" data-i18n="rp_side_left">왼쪽</option>
+        </select>
+      </div>
+      <div class="prop-row">
+        <label data-i18n="rp_edge_to_side">끝 면</label>
+        <select id="edgeToSide">
+          <option value="" data-i18n="rp_side_auto">자동</option>
+          <option value="top" data-i18n="rp_side_top">위</option>
+          <option value="right" data-i18n="rp_side_right">오른쪽</option>
+          <option value="bottom" data-i18n="rp_side_bottom">아래</option>
+          <option value="left" data-i18n="rp_side_left">왼쪽</option>
         </select>
       </div>
       <div class="prop-row">
@@ -1469,6 +1541,21 @@
 </div>
 
 <!-- RENAME MODAL -->
+<div id="mermaid-choice-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);
+     z-index:2000;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;
+       padding:20px;min-width:340px;max-width:420px;box-shadow:0 12px 40px rgba(0,0,0,0.5)">
+    <h2 style="margin:0 0 6px;font-size:15px;color:var(--text)" data-i18n="mmd_title">Mermaid 텍스트 감지됨</h2>
+    <p style="margin:0 0 16px;font-size:12px;color:var(--text2);line-height:1.5" data-i18n="mmd_desc">
+      어떻게 추가할까요?</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="mbtn primary" onclick="resolveMermaidChoice('shapes')" data-i18n="mmd_as_shapes">📊 도표로 그리기</button>
+      <button class="mbtn" onclick="resolveMermaidChoice('panel')" data-i18n="mmd_as_panel">📄 Mermaid 패널로 추가</button>
+      <button class="mbtn" onclick="resolveMermaidChoice(null)" data-i18n="md_cancel">취소</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-overlay">
   <div id="modal">
     <h2 data-i18n="md_rename">✏ 이름 변경</h2>
@@ -1794,6 +1881,16 @@ const T = {
     rp_delete: '🗑 삭제',
     rp_edge_props: '↗ 연결선 속성',
     rp_edge_label: '라벨', rp_edge_style: '스타일', rp_edge_color: '색상',
+    rp_edge_from_side: '시작 면', rp_edge_to_side: '끝 면', rp_edge_label_vertical: '세로쓰기',
+    rp_edge_label_pos: '라벨 위치', rp_edge_label_reset: '기본 위치로',
+    rp_edge_label_dir: '텍스트 방향', rp_dir_h: '가로', rp_dir_v: '세로', rp_dir_along: '선 따라',
+    rp_node_label_dir: '텍스트 방향',
+    rp_mermaid_src: 'Mermaid 원문', rp_mermaid_convert: '📊 도형으로 변환', rp_mermaid_render: '그래프로 보기',
+    mmd_title: 'Mermaid 텍스트 감지됨', mmd_desc: '어떻게 추가할까요?',
+    mmd_as_shapes: '📊 도표로 그리기', mmd_as_panel: '📄 Mermaid 패널로 추가',
+    rp_edge_route: '선 타입', rp_route_ortho: '직각', rp_route_straight: '직선', rp_route_curve: '곡선형',
+    rp_side_auto: '자동', rp_side_top: '위', rp_side_right: '오른쪽',
+    rp_side_bottom: '아래', rp_side_left: '왼쪽',
     rp_solid: '실선', rp_dashed: '점선', rp_bidir: '양방향',
     rp_stats: '📊 통계',
     rp_nodes: '노드', rp_edges: '연결선', rp_groups: '그룹',
@@ -1891,7 +1988,8 @@ const T = {
     layer_duplicate_btn: '복제',
     layer_move_up: '위로 이동',
     layer_move_down: '아래로 이동',
-    layer_confirm_del: '이 레이어를 삭제하시겠습니까? 노드는 남은 첫 번째 레이어로 이동됩니다.',
+    layer_confirm_del: '이 레이어를 삭제하시겠습니까?',
+    layer_confirm_del_count: '개의 노드와 연결선도 함께 삭제됩니다. (Ctrl+Z로 되돌릴 수 있습니다)',
     layer_rename_prompt: '레이어 이름:',
     no_nodes: '노드가 없습니다',
     elp_title: 'Export 레이어 선택',
@@ -1961,6 +2059,16 @@ const T = {
     rp_delete: '🗑 Delete',
     rp_edge_props: '↗ Edge Properties',
     rp_edge_label: 'Label', rp_edge_style: 'Style', rp_edge_color: 'Color',
+    rp_edge_from_side: 'Start side', rp_edge_to_side: 'End side', rp_edge_label_vertical: 'Vertical text',
+    rp_edge_label_pos: 'Label position', rp_edge_label_reset: 'Reset to default',
+    rp_edge_label_dir: 'Text direction', rp_dir_h: 'Horizontal', rp_dir_v: 'Vertical', rp_dir_along: 'Along line',
+    rp_node_label_dir: 'Text direction',
+    rp_mermaid_src: 'Mermaid source', rp_mermaid_convert: '📊 Convert to shapes', rp_mermaid_render: 'Show as graph',
+    mmd_title: 'Mermaid text detected', mmd_desc: 'How would you like to add it?',
+    mmd_as_shapes: '📊 Draw as diagram', mmd_as_panel: '📄 Add as Mermaid panel',
+    rp_edge_route: 'Line type', rp_route_ortho: 'Orthogonal', rp_route_straight: 'Straight', rp_route_curve: 'Curved',
+    rp_side_auto: 'Auto', rp_side_top: 'Top', rp_side_right: 'Right',
+    rp_side_bottom: 'Bottom', rp_side_left: 'Left',
     rp_solid: 'Solid', rp_dashed: 'Dashed', rp_bidir: 'Bidirectional',
     rp_stats: '📊 Stats',
     rp_nodes: 'Nodes', rp_edges: 'Edges', rp_groups: 'Groups',
@@ -2049,7 +2157,8 @@ const T = {
     layer_duplicate_btn: 'Duplicate',
     layer_move_up: 'Move up',
     layer_move_down: 'Move down',
-    layer_confirm_del: 'Delete this layer? Nodes will be moved to the first remaining layer.',
+    layer_confirm_del: 'Delete this layer?',
+    layer_confirm_del_count: ' node(s) and their connections will be deleted too. (Ctrl+Z to undo)',
     layer_rename_prompt: 'Layer name:',
     no_nodes: 'No nodes found',
     elp_title: 'Select Export Layers',
@@ -2148,6 +2257,7 @@ let state = {
   zoom: 1,
   panX: 0, panY: 0,
   connectFrom: null,
+  connectFromSide: null,   // 연결 모드에서 클릭 지점으로 고정한 시작 면
   arrowStyle: 'solid',
   dragging: false,
   dragNode: null,
@@ -2173,6 +2283,7 @@ let state = {
   edgeDragPos: null,  // current world pos while dragging
   edgePinDragging: false, // Alt+drag: 끝점 위치만 조정
   wpDragging: null,       // { edgeId, index } — waypoint 드래그 중
+  labelDragging: null,    // { edgeId, grabX, grabY, startX, startY } — 라벨 위치 조정 중
   dirty: false,
   layers: [{id:1, name:'Layer 1', visible:true}],
   activeLayer: null,  // null = 전체 레이어
@@ -2206,6 +2317,7 @@ const NODE_TYPES = {
   end:      { icon:'⏹',  color:'#3a1a1a', border:'#f85149', w:100, h:50 },
   group:    { icon:'▭',  color:'rgba(40,50,70,0.3)', border:'#484f58', w:240, h:160 },
   note:     { icon:'📝',  color:'#3d3200', border:'#d29922', w:150, h:70 },
+  mermaid:  { icon:'📄',  color:'#12212e', border:'#58a6ff', w:340, h:200 },
 };
 
 // ════════════════════════════════════════════════════════
@@ -2247,6 +2359,7 @@ function snapshotTabState() {
 
 function restoreTabState(snap) {
   state.nodes = snap.nodes;
+  normalizeNodeCenters(state.nodes);   // 저장본/이전 버전도 중심 정렬
   state.edges = snap.edges;
   state.nextId = snap.nextId;
   state.layers = snap.layers;
@@ -2537,6 +2650,26 @@ const DEFAULT_RESOURCES = {
 let tc = {};
 
 // ════════════════════════════════════════════════════════
+// EDGE ANCHOR 설정 (아래 resizeCanvas()가 로드 시점에 render()를 호출하므로
+// 그보다 먼저 선언되어야 한다 — TDZ 주의)
+// ════════════════════════════════════════════════════════
+const ANCHOR_SLOT_GAP = 14;   // 같은 면에 겹칠 때 슬롯 간격(px, world)
+const ANCHOR_SIDE_PAD = 6;    // 면 양 끝 여백
+const ANCHOR_SIDES = ['top','right','bottom','left'];
+const SIDE_DIR = { top:[0,-1], bottom:[0,1], left:[-1,0], right:[1,0] };
+const ANCHOR_BACK_PENALTY = 160;  // 반대편 면을 고르면 우회가 생기므로 가산
+const ROUTE_STUB = 18;            // 면에서 수직으로 빠져나오는 길이
+const ROUTE_MARGIN = 14;          // 노드를 우회할 때 여유
+const ROUTE_OVERLAP_TOL = 11;     // 같은 직선으로 간주할 좌표 오차
+const ROUTE_LANE = 16;            // 트렁크가 겹칠 때 옆으로 비켜설 간격
+const ROUTE_BUDGET = 6000;        // 엣지×장애물 이 값을 넘으면 후보를 줄여 프레임 유지
+// 노드 중심이 놓일 수 있는 간격. 중심 좌표는 항상 이 값의 배수가 된다(… -10, 0, 10, 20 …).
+// 중심이 2에 있으면 0으로 당겨진다. 크기가 달라도 중심만 같은 배수면 연결선이 1자가 된다.
+const CENTER_STEP = 10;
+let _anchorCache = null;      // 모듈 레벨 캐시 (state에 넣으면 직렬화/스냅샷에 섞임)
+let _anchorSig = null;        // 지오메트리 서명 — 바뀌지 않았으면 재계산 생략
+
+// ════════════════════════════════════════════════════════
 // CANVAS RESIZE
 // ════════════════════════════════════════════════════════
 function resizeCanvas() {
@@ -2699,6 +2832,8 @@ function render() {
   state.nodes.filter(n=>n.type==='group' && !n._groupHidden && isLayerVisible(n.layer||1)).forEach(n => drawNode(n));
   // Draw other nodes (접힌 그룹 안 노드 및 비표시 레이어 제외)
   state.nodes.filter(n=>n.type!=='group' && !n._groupHidden && isLayerVisible(n.layer||1)).forEach(n => drawNode(n));
+  // 그룹 라벨은 마지막에 (고정 크기라 자식 노드에 가려지면 안 됨)
+  drawGroupLabels(state.nodes.filter(n=>isLayerVisible(n.layer||1)));
   // Node animations for current presentation step
   if(state.presenting && state.presentAnimating) {
     state.nodes.filter(function(n) {
@@ -2710,26 +2845,9 @@ function render() {
     }).forEach(function(n) { drawNodeAnimation(n, state.presentAnimProgress); });
   }
   // Draw edges (접힌 그룹 안 완전 내부 연결은 제외, 리다이렉트 엣지는 중복 방지)
-  const drawnEdgePairs = new Set();
-  state.edges.filter(e => !isEdgeHiddenByCollapse(e)).forEach(e => {
-    const rSrc = resolveEdgeNode(e.from);
-    const rDst = resolveEdgeNode(e.to);
-    if(!rSrc || !rDst || rSrc.id === rDst.id) return;
-    // 숨겨진 레이어의 엣지 제외
-    const srcNode = state.nodes.find(n=>n.id===e.from);
-    const dstNode = state.nodes.find(n=>n.id===e.to);
-    if(srcNode && !isLayerVisible(srcNode.layer||1)) return;
-    if(dstNode && !isLayerVisible(dstNode.layer||1)) return;
-    // (presentation mode: all edges always visible, animation overlay only)
-    // 리다이렉트된 엣지 중복 방지
-    const srcId = rSrc.id, dstId = rDst.id;
-    if(srcId !== e.from || dstId !== e.to) {
-      const key = Math.min(srcId,dstId) + ':' + Math.max(srcId,dstId);
-      if(drawnEdgePairs.has(key)) return;
-      drawnEdgePairs.add(key);
-    }
-    drawEdge(e);
-  });
+  const drawableEdges = getDrawableEdges();
+  rebuildAnchorMap(drawableEdges);   // 실제로 그려지는 엣지 기준으로 앵커 슬롯 계산
+  drawableEdges.forEach(e => drawEdge(e));
   // Edge animations for current presentation step
   if(state.presenting && state.presentAnimating) {
     state.edges.forEach(function(e) {
@@ -2755,8 +2873,14 @@ function render() {
       ctx.lineWidth = 2;
       ctx.setLineDash([6,3]);
       ctx.beginPath();
-      ctx.moveTo(src.x+src.w/2, src.y+src.h/2);
-      ctx.lineTo(state.mouseWorld.x, state.mouseWorld.y);
+      // 클릭 때 고정한 시작 면에서 직각으로 — 놓았을 때의 실제 경로와 같은 모양
+      const cp = (state.connectFromSide && SIDE_DIR[state.connectFromSide])
+        ? sideAnchorPoint(src, state.connectFromSide)
+        : (function(){ const a = nearestSideAnchor(src, state.mouseWorld.x, state.mouseWorld.y); return {x:a[0], y:a[1]}; })();
+      const cfx = cp.x, cfy = cp.y;
+      const cpts = orthogonalizeThrough([{x:cfx,y:cfy}, state.mouseWorld]);
+      ctx.moveTo(cpts[0].x, cpts[0].y);
+      for(let i=1;i<cpts.length;i++) ctx.lineTo(cpts[i].x, cpts[i].y);
       ctx.stroke();
       ctx.restore();
     }
@@ -2768,9 +2892,9 @@ function render() {
     if(se) {
       const src = state.nodes.find(n=>n.id===se.from);
       const dst = state.nodes.find(n=>n.id===se.to);
-      if(src && dst) {
-        const [sx,sy] = nodeEdgePoint(src, dst.x+dst.w/2, dst.y+dst.h/2, se.fromOffset);
-        const [ex,ey] = nodeEdgePoint(dst, src.x+src.w/2, src.y+src.h/2, se.toOffset);
+      const seAnchors = (src && dst) ? edgeAnchors(se) : null;
+      if(seAnchors) {
+        const [sx,sy,ex,ey] = seAnchors;
         const drawHandle = (hx, hy, isEnd) => {
           const endKey = isEnd ? 'to' : 'from';
           const isDragging = state.edgeDragging && state.edgeDragEnd === endKey;
@@ -2856,7 +2980,10 @@ function render() {
     const movingNode = state.nodes.find(n=>n.id===movingNodeId);
     if(fixedNode) {
       const fixedOffset = state.edgeDragEnd === 'to' ? se.fromOffset : se.toOffset;
-      const [fx,fy] = nodeEdgePoint(fixedNode, state.edgeDragPos.x, state.edgeDragPos.y, fixedOffset);
+      // 고정된 쪽도 면 중심 앵커로 그려야 놓는 순간 튀지 않는다
+      const [fx,fy] = fixedOffset
+        ? [fixedOffset.x, fixedOffset.y]
+        : nearestSideAnchor(fixedNode, state.edgeDragPos.x, state.edgeDragPos.y);
       ctx.save();
       if(isPinMode) {
         // 핀 모드: 녹색, 이동 중인 노드 테두리 위에 snap 표시
@@ -2865,8 +2992,9 @@ function render() {
         ctx.lineWidth = 2;
         ctx.setLineDash([6,3]);
         ctx.beginPath();
-        ctx.moveTo(fx, fy);
-        ctx.lineTo(pinned.x, pinned.y);
+        const ppts = orthogonalizeThrough([{x:fx,y:fy}, pinned]);
+        ctx.moveTo(ppts[0].x, ppts[0].y);
+        for(let i=1;i<ppts.length;i++) ctx.lineTo(ppts[i].x, ppts[i].y);
         ctx.stroke();
         ctx.setLineDash([]);
         // snap point 표시
@@ -2887,8 +3015,9 @@ function render() {
         ctx.lineWidth = 2;
         ctx.setLineDash([6,3]);
         ctx.beginPath();
-        ctx.moveTo(fx, fy);
-        ctx.lineTo(state.edgeDragPos.x, state.edgeDragPos.y);
+        const dpts = orthogonalizeThrough([{x:fx,y:fy}, state.edgeDragPos]);
+        ctx.moveTo(dpts[0].x, dpts[0].y);
+        for(let i=1;i<dpts.length;i++) ctx.lineTo(dpts[i].x, dpts[i].y);
         ctx.stroke();
         // Highlight hovered node (다른 노드만)
         const hoverNode = hitNode(state.edgeDragPos.x, state.edgeDragPos.y);
@@ -2931,7 +3060,261 @@ function render() {
 function fs(base) { return Math.round(base * state.fontSize / 12); }
 function font(weight, base, family) { return weight + ' ' + fs(base) + "px '" + (family || 'Pretendard') + "'"; }
 
+// 줌 배율과 무관하게 항상 같은 화면 크기로 그리는 텍스트.
+// (wx,wy)는 기준이 되는 월드 좌표(보통 박스 모서리)이고, dx/dy는 거기서부터의
+// "화면 픽셀" 오프셋이다. 월드 오프셋을 쓰면 축소 시 글자가 테두리에 붙어버린다.
+// maxWorldWidth를 주면 박스 밖으로 넘치지 않게 화면 폭으로 환산해 제한한다.
+// (export 캔버스는 translate만 걸려 있어 동일하게 동작한다)
+function drawFixedText(text, wx, wy, opts) {
+  const o = opts || {};
+  const m = ctx.getTransform();
+  const sx = m.a*wx + m.c*wy + m.e + (o.dx || 0);
+  const sy = m.b*wx + m.d*wy + m.f + (o.dy || 0);
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.font = font(o.weight || '600', o.size || 11);
+  ctx.textAlign = o.align || 'left';
+  const maxPx = (o.maxWorldWidth != null) ? o.maxWorldWidth * Math.abs(m.a) : null;
+  if(maxPx != null && maxPx <= 1) { ctx.restore(); return; }   // 박스가 너무 작으면 생략
+  // 배경 칩 — 뒤에 무엇이 있든 읽히도록 (엣지 라벨과 같은 방식)
+  if(o.bg) {
+    const tw = Math.min(ctx.measureText(text).width, maxPx != null ? maxPx : Infinity);
+    const th = fs(o.size || 11);
+    ctx.fillStyle = o.bg;
+    ctx.fillRect(sx - 3, sy - th, tw + 6, th + 4);
+  }
+  ctx.fillStyle = o.color || '#fff';
+  if(maxPx != null) ctx.fillText(text, sx, sy, maxPx);
+  else ctx.fillText(text, sx, sy);
+  ctx.restore();
+}
+
+// 그룹 라벨은 노드보다 뒤에 그려야 자식 노드에 가려지지 않는다.
+// 크기는 줌과 무관하게 고정이라 축소 시 상대적으로 커져 겹치기 쉽기 때문.
+function drawGroupLabel(n) {
+  const cfg = NODE_TYPES[n.type] || NODE_TYPES.group;
+  if(n.collapsed) {
+    const childCount = (n._hiddenChildren || []).length;
+    drawFixedText('[ ' + n.label + ' ] (' + childCount + ')', n.x, n.y, {
+      dx: 10, dy: 22, weight: '600', size: 11,
+      color: n.fontColor || tc.text, maxWorldWidth: n.w - 36
+    });
+  } else {
+    drawFixedText('[ ' + n.label + ' ]', n.x, n.y, {
+      dx: 12, dy: 16, weight: '600', size: 11,
+      color: n.fontColor || cfg.border, maxWorldWidth: n.w - 42,
+      bg: tc.surface   // 축소 시 자식 노드 위에 겹쳐도 읽히게
+    });
+  }
+}
+
+function drawGroupLabels(nodes) {
+  nodes.filter(n => n.type === 'group' && !n._groupHidden).forEach(drawGroupLabel);
+}
+
+// 세로쓰기: 글자를 한 자씩 아래로 쌓아 (cx, cy) 중심에 그린다.
+// maxChars를 넘으면 잘라내고 말줄임표를 붙인다.
+function drawStackedText(text, cx, cy, size, maxChars) {
+  let chars = Array.from(text || '');
+  if(maxChars > 0 && chars.length > maxChars) chars = chars.slice(0, Math.max(1, maxChars-1)).concat(['…']);
+  if(!chars.length) return;
+  const lineH = fs(size) + 2;
+  const prevAlign = ctx.textAlign, prevBase = ctx.textBaseline;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  let ty = cy - (lineH*chars.length)/2 + lineH/2;
+  chars.forEach(c => { ctx.fillText(c, cx, ty); ty += lineH; });
+  ctx.textAlign = prevAlign;
+  ctx.textBaseline = prevBase;
+}
+
+// ── Mermaid 실제 렌더링 (라이브러리는 처음 필요할 때만 불러온다) ──
+var _mermaidLibPromise = null;
+var _mermaidImgCache = {};
+var _mermaidRenderSeq = 0;
+
+function loadMermaidLib() {
+  if(window.mermaid) return Promise.resolve(window.mermaid);
+  if(_mermaidLibPromise) return _mermaidLibPromise;
+  _mermaidLibPromise = new Promise(function(resolve, reject) {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js';
+    s.onload = function() {
+      try {
+        // htmlLabels를 끄는 게 핵심이다. 켜져 있으면 라벨을 <foreignObject> 안의
+        // HTML로 내보내는데, 거기 <br>처럼 닫히지 않는 태그가 섞인다.
+        // <img>로 불러오는 SVG는 엄격한 XML로 파싱되므로 그 순간 디코딩이 실패한다.
+        window.mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: 'strict',
+          theme: (loomTheme === 'light') ? 'default' : 'dark',
+          htmlLabels: false,
+          flowchart: { htmlLabels: false },
+          suppressErrorRendering: true   // 파싱 실패 시 에러 그래픽을 페이지에 심지 않도록
+        });
+        resolve(window.mermaid);
+      } catch(err) { reject(err); }
+    };
+    s.onerror = function() { reject(new Error('CDN load failed')); };
+    document.head.appendChild(s);
+  });
+  return _mermaidLibPromise;
+}
+
+// SVG 문자열을 <img>로 쓸 수 있게 크기를 명시하고, XML로 깨지는 부분을 손본다.
+// (htmlLabels를 껐어도 다이어그램 종류에 따라 HTML 조각이 남을 수 있어 안전망으로 둔다)
+function normalizeMermaidSvg(svg) {
+  // 닫히지 않는 void 태그 self-close
+  svg = svg.replace(/<(br|hr|img|input)((?:\s[^<>]*?)?)\s*(?<!\/)>/gi, '<$1$2/>');
+  // XML에 정의되지 않은 named entity를 숫자 참조로
+  var ENT = { nbsp:'#160', amp:'#38', lt:'#60', gt:'#62', quot:'#34', apos:'#39',
+              copy:'#169', reg:'#174', hellip:'#8230', mdash:'#8212', ndash:'#8211' };
+  svg = svg.replace(/&([a-zA-Z][a-zA-Z0-9]*);/g, function(m0, name) {
+    return ENT[name] ? '&' + ENT[name] + ';' : '&#38;' + name + ';';
+  });
+  if(!/xmlns=/.test(svg)) svg = svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+
+  var vw = 800, vh = 600;
+  var vb = svg.match(/viewBox="([-\d.\s]+)"/);
+  if(vb) {
+    var p = vb[1].trim().split(/\s+/).map(Number);
+    if(p.length === 4 && p[2] > 0 && p[3] > 0) { vw = p[2]; vh = p[3]; }
+  }
+  svg = svg.replace(/<svg([^>]*)>/, function(m0, attrs) {
+    attrs = attrs.replace(/\swidth="[^"]*"/g, '').replace(/\sheight="[^"]*"/g, '');
+    return '<svg width="' + vw + '" height="' + vh + '"' + attrs + '>';
+  });
+  return { svg: svg, w: vw, h: vh };
+}
+
+// 노드별 렌더 결과 캐시. 원문/테마가 바뀌면 키가 달라져 자동으로 다시 그린다.
+function getMermaidImage(n) {
+  var src = String(n.mermaid || '');
+  var key = n.id + '|' + loomTheme + '|' + src;
+  var entry = _mermaidImgCache[key];
+  if(entry) return entry;
+
+  var keys = Object.keys(_mermaidImgCache);
+  if(keys.length > 40) delete _mermaidImgCache[keys[0]];   // 캐시 상한
+
+  entry = { status: 'loading' };
+  _mermaidImgCache[key] = entry;
+  loadMermaidLib().then(function(m) {
+    // 렌더링용 임시 DOM은 화면 밖 컨테이너에 가둔다.
+    // 컨테이너를 주지 않으면 mermaid가 실패 시 body에 에러 그래픽을 붙여 버린다.
+    return m.render('loom-mmd-' + (++_mermaidRenderSeq), src, mermaidSandbox());
+  }).then(function(res) {
+    mermaidSandbox().innerHTML = '';
+    var norm = normalizeMermaidSvg(res.svg);
+    // <img>는 SVG를 엄격한 XML로 읽는다. 미리 검사해서 원인을 알려준다.
+    var perr = new DOMParser().parseFromString(norm.svg, 'image/svg+xml').querySelector('parsererror');
+    if(perr) {
+      entry.status = 'error';
+      var line = (perr.textContent.match(/error on line \d+ at column \d+: [^\n]+/) || ['invalid SVG'])[0];
+      entry.error = line.replace(/^error on line \d+ at column \d+: /, '').slice(0, 70);
+      render();
+      return;
+    }
+    var img = new Image();
+    img.onload = function() { entry.status = 'ok'; entry.img = img; entry.w = norm.w; entry.h = norm.h; render(); };
+    img.onerror = function() { entry.status = 'error'; entry.error = 'SVG decode failed'; render(); };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(norm.svg);
+  }).catch(function(err) {
+    mermaidSandbox().innerHTML = '';   // 실패해도 흔적을 남기지 않는다
+    entry.status = 'error';
+    entry.error = String((err && err.message) || err).replace(/\s+/g, ' ').slice(0, 70);
+    render();
+  });
+  return entry;
+}
+
+// mermaid가 렌더링 중 만드는 임시 DOM을 담아둘 화면 밖 컨테이너
+function mermaidSandbox() {
+  var el = document.getElementById('mermaid-sandbox');
+  if(!el) {
+    el = document.createElement('div');
+    el.id = 'mermaid-sandbox';
+    el.setAttribute('aria-hidden', 'true');
+    el.style.cssText = 'position:absolute;left:-99999px;top:-99999px;width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+// Mermaid 패널 — 원문을 그대로 보관해 보여준다 (도형으로 변환하지 않은 형태)
+function drawMermaidPanel(n) {
+  const cfg = NODE_TYPES.mermaid;
+  const isSel = state.selected === n.id || state.multiSelect.includes(n.id);
+  ctx.save();
+  ctx.fillStyle = n.color || cfg.color;
+  ctx.strokeStyle = isSel ? '#fff' : cfg.border;
+  ctx.lineWidth = isSel ? 2.5 : 1.5;
+  ctx.beginPath(); roundRect(ctx, n.x, n.y, n.w, n.h, 8);
+  ctx.fill(); ctx.stroke();
+  // 헤더 바
+  const hdr = 22;
+  ctx.fillStyle = 'rgba(88,166,255,0.16)';
+  ctx.beginPath(); roundRect(ctx, n.x, n.y, n.w, hdr, [8,8,0,0]); ctx.fill();
+  ctx.fillStyle = cfg.border;
+  ctx.font = font('700', 10);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText((n.mermaidRender ? '▣ ' : '◆ ') + (n.label || 'Mermaid'), n.x + 8, n.y + 15);
+
+  const src = String(n.mermaid || '');
+  const availW = n.w - 12, availH = n.h - hdr - 8;
+  let statusNote = null;
+
+  if(n.mermaidRender) {
+    const entry = getMermaidImage(n);
+    if(entry.status === 'ok' && entry.img && entry.w > 0 && entry.h > 0) {
+      // 비율 유지하며 패널 안에 맞춘다
+      const sc = Math.min(availW/entry.w, availH/entry.h);
+      const dw = entry.w*sc, dh = entry.h*sc;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(n.x, n.y+hdr, n.w, n.h-hdr); ctx.clip();
+      ctx.drawImage(entry.img, n.x + (n.w-dw)/2, n.y + hdr + (availH-dh)/2, dw, dh);
+      ctx.restore();
+      ctx.restore();
+      return;
+    }
+    statusNote = (entry.status === 'error')
+      ? (loomLang === 'en' ? 'Render failed: ' : '렌더 실패: ') + (entry.error || '')
+      : (loomLang === 'en' ? 'Rendering…' : '렌더링 중…');
+  }
+
+  // 원문을 고정폭으로, 박스 밖으로 넘치지 않게 잘라서
+  const lineH = fs(10) + 3;
+  let top = n.y + hdr + 12;
+  if(statusNote) {
+    ctx.font = font('600', 10);
+    ctx.fillStyle = (n.mermaidRender && statusNote.indexOf('…') < 0) ? '#f85149' : tc.accent;
+    ctx.fillText(statusNote, n.x + 8, top);
+    top += lineH + 2;
+  }
+  const maxLines = Math.max(0, Math.floor((n.y + n.h - 6 - top) / lineH) + 1);
+  const lines = src.split(/\r?\n/);
+  ctx.font = fs(10) + "px ui-monospace, Menlo, Consolas, monospace";
+  ctx.fillStyle = tc.text2;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(n.x, n.y + hdr, n.w, n.h - hdr); ctx.clip();
+  for(let i = 0; i < Math.min(lines.length, maxLines); i++) {
+    let ln = lines[i];
+    if(i === maxLines-1 && lines.length > maxLines) ln = '… (+' + (lines.length-maxLines+1) + ' lines)';
+    ctx.fillText(ln, n.x + 8, top + i*lineH);
+  }
+  ctx.restore();
+  // 리사이즈 핸들
+  if(isSel) {
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.beginPath();
+    ctx.moveTo(n.x+n.w-10, n.y+n.h); ctx.lineTo(n.x+n.w, n.y+n.h); ctx.lineTo(n.x+n.w, n.y+n.h-10);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
 function drawNode(n) {
+  if(n.type === 'mermaid') { drawMermaidPanel(n); return; }
   const { x, y, w, h, type, label, color, desc, alert } = n;
   const cfg = NODE_TYPES[type] || NODE_TYPES.server;
   const bgColor = color || cfg.color;
@@ -2964,11 +3347,7 @@ function drawNode(n) {
       roundRect(ctx, x, y, w, h, 8);
       ctx.fill();
       ctx.stroke();
-      // 라벨
-      ctx.fillStyle = textColor;
-      ctx.font = font('600', 11);
-      const childCount = (n._hiddenChildren || []).length;
-      ctx.fillText('[ ' + label + ' ] (' + childCount + ')', x + 10, y + 23);
+      // 라벨은 모든 노드를 그린 뒤 별도 패스에서 (자식 노드에 가려지지 않게)
       // 펼치기 버튼 (우측 상단)
       const bx = x + w - 26, by = y + 4, bw = 22, bh = 22;
       ctx.fillStyle = 'rgba(88,166,255,0.2)';
@@ -3004,10 +3383,7 @@ function drawNode(n) {
     ctx.fill();
     ctx.stroke();
     ctx.setLineDash([]);
-    // Group label top
-    ctx.fillStyle = n.fontColor || cfg.border;
-    ctx.font = font('600', 11);
-    ctx.fillText('[ '+label+' ]', x+12, y+16);
+    // Group label은 모든 노드를 그린 뒤 별도 패스에서 (자식 노드에 가려지지 않게)
     // 접기 버튼 (우측 상단)
     const bx = x + w - 30, by = y + 4, bw = 22, bh = 22;
     ctx.fillStyle = (state.hovered === n.id) ? 'rgba(88,166,255,0.15)' : 'rgba(88,166,255,0.08)';
@@ -3191,10 +3567,15 @@ function drawNode(n) {
   const iconW = (n.svgIcon && SVG_ICONS[n.svgIcon]) ? 40 : 36;
   ctx.fillStyle = textColor;
   ctx.font = font('600', 12);
-  ctx.fillText(truncate(label, Math.floor((w-iconW-14)/7)), x+iconW, y+h/2-3);
+  if(n.labelVertical) {
+    // 세로쓰기: 아이콘 오른쪽 남은 영역의 중앙에 글자를 쌓는다
+    drawStackedText(label, (x+iconW + x+w-8)/2, y+h/2, 12, Math.floor((h-8)/(fs(12)+2)));
+  } else {
+    ctx.fillText(truncate(label, Math.floor((w-iconW-14)/7)), x+iconW, y+h/2-3);
+  }
 
   // Desc
-  if(desc) {
+  if(desc && !n.labelVertical) {
     ctx.fillStyle = tc.text2;
     ctx.font = font('400', 10);
     ctx.fillText(truncate(desc, Math.floor((w-iconW-14)/6)), x+iconW, y+h/2+11);
@@ -3313,8 +3694,7 @@ function drawEdge(e) {
   // 리다이렉트된 엣지는 offset 무시 (원래 노드의 offset이 그룹에 맞지 않음)
   const srcRedirected = rawSrc && rawSrc.id !== src.id;
   const dstRedirected = rawDst && rawDst.id !== dst.id;
-  const [sx2,sy2] = nodeEdgePoint(src, ex, ey, srcRedirected ? null : e.fromOffset);
-  const [ex2,ey2] = nodeEdgePoint(dst, sx, sy, dstRedirected ? null : e.toOffset);
+  const [sx2,sy2,ex2,ey2] = edgeAnchors(e);
 
   const isSelected = (state.selectedEdge === e.id);
   const color = e.color || tc.accent;
@@ -3336,11 +3716,9 @@ function drawEdge(e) {
   ctx.lineWidth = isSelected ? 2.5 : (isRedirected ? 1.4 : 1.8);
   if(!isRedirected && e.style === 'dashed') ctx.setLineDash([8,4]);
 
-  const wps = e.waypoints || [];
-
-  if(wps.length > 0) {
-    // Polyline path: from → wp[0] → wp[1] → ... → to
-    const pts = [{x:sx2,y:sy2}, ...wps, {x:ex2,y:ey2}];
+  {
+    // 직각 경로 폴리라인 (waypoint 유무와 무관하게 동일 경로 사용)
+    const pts = edgePath(e) || [{x:sx2,y:sy2}, {x:ex2,y:ey2}];
     ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for(let i=1; i<pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
@@ -3355,62 +3733,106 @@ function drawEdge(e) {
     }
 
     // Label: at midpoint of total path
-    if(e.label) {
-      let totalLen = 0;
-      for(let i=1; i<pts.length; i++) totalLen += Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y);
-      let half = totalLen / 2, lx = pts[0].x, ly = pts[0].y;
-      for(let i=1; i<pts.length; i++) {
-        const segLen = Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y);
-        if(half <= segLen) {
-          const t = segLen > 0 ? half / segLen : 0;
-          lx = pts[i-1].x + (pts[i].x-pts[i-1].x)*t;
-          ly = pts[i-1].y + (pts[i].y-pts[i-1].y)*t;
-          break;
-        }
-        half -= segLen;
-      }
-      ly -= 8;
-      ctx.fillStyle = isSelected ? '#fff' : tc.text2;
-      ctx.font = font('500', 10);
-      ctx.textAlign = 'center';
-      const tw = ctx.measureText(e.label).width;
-      ctx.fillStyle = tc.surface;
-      ctx.fillRect(lx-tw/2-3, ly-10, tw+6, 14);
-      ctx.fillStyle = isSelected ? '#fff' : tc.text2;
-      ctx.fillText(e.label, lx, ly);
-      ctx.textAlign = 'left';
-    }
-  } else {
-    // Original Bezier path
-    const dx = ex2-sx2, dy = ey2-sy2;
-    const cx1 = sx2 + dx*0.3, cy1 = sy2 + dy*0.3;
-    const cx2 = ex2 - dx*0.3, cy2 = ey2 - dy*0.3;
-
-    ctx.beginPath();
-    ctx.moveTo(sx2,sy2);
-    ctx.bezierCurveTo(cx1,cy1,cx2,cy2,ex2,ey2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Arrowhead
-    drawArrow(ctx, cx2, cy2, ex2, ey2, color, isSelected);
-    if(e.style === 'both') drawArrow(ctx, cx1, cy1, sx2, sy2, color, isSelected);
-
-    // Label
-    if(e.label) {
-      ctx.fillStyle = isSelected ? '#fff' : tc.text2;
-      ctx.font = font('500', 10);
-      ctx.textAlign = 'center';
-      const lx = (sx2+ex2)/2, ly = (sy2+ey2)/2 - 8;
-      const tw = ctx.measureText(e.label).width;
-      ctx.fillStyle = tc.surface;
-      ctx.fillRect(lx-tw/2-3, ly-10, tw+6, 14);
-      ctx.fillStyle = isSelected ? '#fff' : tc.text2;
-      ctx.fillText(e.label, lx, ly);
-      ctx.textAlign = 'left';
-    }
+    if(e.label) drawEdgeLabel(e, pts, isSelected);
   }
 
+  ctx.restore();
+}
+
+const LABEL_GAP = 5;         // 선과 라벨 사이 간격
+const LABEL_SIDE_MAX = 48;   // 이보다 두꺼워지면 옆으로 못 비키고 선 위 중앙에 놓는다
+
+// 엣지 라벨의 기본 위치와 크기. 선 위에 겹쳐 글자가 묻히지 않도록 "선분에 수직인"
+// 방향으로 비켜 놓는다. 가로 선분이면 위로, 세로 선분이면 옆으로.
+// 글자가 많아지면 중앙으로 되돌린다. e.labelOffset이 있으면 기본 위치에서 그만큼 이동.
+// 그리기와 히트 테스트가 같은 값을 쓰도록 한 곳에서 계산한다.
+// 라벨 방향: 'h' 가로 | 'v' 세로쓰기(글자 쌓기) | 'along' 선을 따라 회전
+// 예전 파일의 labelVertical(boolean)도 그대로 읽는다
+function labelDirOf(e) { return e.labelDir || (e.labelVertical ? 'v' : 'h'); }
+
+function edgeLabelBox(e, pts) {
+  if(!e.label) return null;
+  pts = pts || edgePath(e);
+  if(!pts || pts.length < 2) return null;
+
+  // 경로 전체 길이의 중간 지점과, 그 지점이 놓인 선분을 찾는다
+  let totalLen = 0;
+  for(let i=1; i<pts.length; i++) totalLen += Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y);
+  let half = totalLen/2, lx = pts[0].x, ly = pts[0].y, seg = 1;
+  for(let i=1; i<pts.length; i++) {
+    const segLen = Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y);
+    if(half <= segLen) {
+      const t = segLen > 0 ? half/segLen : 0;
+      lx = pts[i-1].x + (pts[i].x-pts[i-1].x)*t;
+      ly = pts[i-1].y + (pts[i].y-pts[i-1].y)*t;
+      seg = i;
+      break;
+    }
+    half -= segLen;
+  }
+  const p = pts[seg-1], q = pts[seg];
+  const isVerticalSeg = Math.abs(q.x-p.x) < 0.5 && Math.abs(q.y-p.y) > 0.5;
+  const dir = labelDirOf(e);
+
+  ctx.save();
+  ctx.font = font('500', 10);
+  const lineH = fs(10) + 2;
+  const chars = (dir === 'v') ? Array.from(e.label) : null;
+  const bw = chars ? Math.max(...chars.map(c => ctx.measureText(c).width)) : ctx.measureText(e.label).width;
+  ctx.restore();
+  const bh = chars ? lineH*chars.length : fs(10);
+
+  let ox = 0, oy = 0, angle = 0;
+  if(dir === 'along') {
+    // 선분 각도로 회전. 오프셋도 선분에 수직인 방향으로 밀어 선 위에 겹치지 않게.
+    const segAngle = Math.atan2(q.y-p.y, q.x-p.x);
+    const nx = Math.sin(segAngle), ny = -Math.cos(segAngle);   // 왼쪽(화면상 위) 법선
+    const d = bh/2 + LABEL_GAP;
+    ox = nx*d; oy = ny*d;
+    // 글자가 뒤집히지 않도록 render 각도만 180° 돌린다 (놓이는 쪽은 그대로)
+    angle = (Math.abs(segAngle) > Math.PI/2) ? segAngle + Math.PI : segAngle;
+  } else {
+    // 선분에 수직인 방향의 두께가 기준 — 너무 두꺼우면 비켜도 선에서 멀어지기만 한다
+    const thickness = isVerticalSeg ? bw : bh;
+    if(thickness <= LABEL_SIDE_MAX) {
+      if(isVerticalSeg) ox = bw/2 + LABEL_GAP;   // 세로 선분 → 오른쪽으로
+      else              oy = -(bh/2 + LABEL_GAP); // 가로 선분 → 위로
+    }
+  }
+  const off = e.labelOffset;
+  // 회전 시 클릭 판정용 외접 사각형
+  const ca = Math.abs(Math.cos(angle)), sa = Math.abs(Math.sin(angle));
+  return {
+    cx: lx + ox + (off ? off.x : 0),
+    cy: ly + oy + (off ? off.y : 0),
+    bw, bh, chars, lineH, angle,
+    hitW: bw*ca + bh*sa,
+    hitH: bw*sa + bh*ca,
+    baseX: lx + ox, baseY: ly + oy   // 기본 위치 (오프셋 계산 기준)
+  };
+}
+
+function drawEdgeLabel(e, pts, isSelected) {
+  const box = edgeLabelBox(e, pts);
+  if(!box) return;
+  const { cx, cy, bw, bh, chars, lineH, angle } = box;
+
+  ctx.save();
+  ctx.font = font('500', 10);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  // 회전 라벨은 라벨 중심을 원점으로 옮겨 놓고 그린다
+  ctx.translate(cx, cy);
+  if(angle) ctx.rotate(angle);
+  ctx.fillStyle = tc.surface;
+  ctx.fillRect(-bw/2 - 3, -bh/2 - 2, bw + 6, bh + 4);
+  ctx.fillStyle = isSelected ? '#fff' : tc.text2;
+  if(chars) {
+    const startY = -bh/2 + lineH/2;
+    chars.forEach((c, i) => ctx.fillText(c, 0, startY + i*lineH));
+  } else {
+    ctx.fillText(e.label, 0, 0);
+  }
   ctx.restore();
 }
 
@@ -3426,6 +3848,444 @@ function drawArrow(ctx, x1, y1, x2, y2, color, sel) {
   ctx.closePath();
   ctx.fill();
   ctx.restore();
+}
+
+// ════════════════════════════════════════════════════════
+// EDGE ANCHORS — 네 면 중 최단 연결 지점 선택 + 중복 슬롯 분산
+// ════════════════════════════════════════════════════════
+// 노드의 네 면 중심점
+function sideAnchorPoint(n, side) {
+  const cx = n.x+n.w/2, cy = n.y+n.h/2;
+  if(side === 'top')    return { x: cx,     y: n.y };
+  if(side === 'bottom') return { x: cx,     y: n.y+n.h };
+  if(side === 'left')   return { x: n.x,    y: cy };
+  return                       { x: n.x+n.w, y: cy };  // right
+}
+
+// 임의의 점(tx,ty)에 대해 가장 가까운 면의 중심점 — 드래그 프리뷰가
+// 놓았을 때의 최종 앵커와 같은 위치를 그리도록 사용
+// 직각 배선이므로 거리는 맨해튼 기준. 면의 바깥 방향이 목표 반대쪽을 향하면
+// 선이 노드를 돌아가야 하므로 가산한다.
+function backPenalty(side, p, target) {
+  const d = SIDE_DIR[side];
+  return ((target.x-p.x)*d[0] + (target.y-p.y)*d[1] < 0) ? ANCHOR_BACK_PENALTY : 0;
+}
+
+function nearestSide(n, tx, ty) {
+  let best = null;
+  const target = { x: tx, y: ty };
+  for(const s of ANCHOR_SIDES) {
+    const p = sideAnchorPoint(n, s);
+    const d = Math.abs(tx-p.x) + Math.abs(ty-p.y) + backPenalty(s, p, target);
+    if(!best || d < best.d - 1e-9) best = { d, side: s };
+  }
+  return best.side;
+}
+
+// 노드 테두리 위의 임의 점(수동 핀)이 어느 면에 있는지
+function sideOfPoint(n, x, y) {
+  const d = { left: Math.abs(x-n.x), right: Math.abs(x-(n.x+n.w)),
+              top: Math.abs(y-n.y), bottom: Math.abs(y-(n.y+n.h)) };
+  return Object.keys(d).reduce((a,b) => d[b] < d[a] ? b : a);
+}
+function nearestSideAnchor(n, tx, ty) {
+  const p = sideAnchorPoint(n, nearestSide(n, tx, ty));
+  return [p.x, p.y];
+}
+
+// 두 노드 사이에서 가장 짧은 연결선을 만드는 (면, 면) 조합 선택
+function bestSidePair(src, dst) {
+  let best = null;
+  for(const s of ANCHOR_SIDES) {
+    const p = sideAnchorPoint(src, s);
+    for(const t of ANCHOR_SIDES) {
+      const q = sideAnchorPoint(dst, t);
+      const d = Math.abs(q.x-p.x) + Math.abs(q.y-p.y)
+              + backPenalty(s, p, q) + backPenalty(t, q, p);
+      if(!best || d < best.d - 1e-9) best = { d, srcSide: s, dstSide: t };
+    }
+  }
+  return best;
+}
+
+// 그려지는 엣지 집합으로부터 앵커 맵을 만든다.
+// 1) 각 엣지마다 최단 (면,면) 조합 선택
+// 2) 같은 (노드,면)에 모인 지점들을 면 축을 따라 분산 (좌/우면=위아래, 상/하면=좌우)
+// 배선 결과에 영향을 주는 값만 모은 서명. 같으면 재계산할 필요가 없다.
+function routeSignature(edges) {
+  let s = '';
+  for(const n of state.nodes) {
+    if(n._groupHidden || !isLayerVisible(n.layer||1)) continue;
+    s += n.id+','+Math.round(n.x)+','+Math.round(n.y)+','+Math.round(n.w)+','+Math.round(n.h)
+       + ','+n.type+','+(n.collapsed?1:0)+';';
+  }
+  s += '|';
+  for(const e of edges) {
+    s += e.id+','+e.from+','+e.to+','+(e.fromSide||'')+','+(e.toSide||'')+','+(e.routeType||'')+',';
+    if(e.fromOffset) s += Math.round(e.fromOffset.x)+':'+Math.round(e.fromOffset.y);
+    s += ',';
+    if(e.toOffset) s += Math.round(e.toOffset.x)+':'+Math.round(e.toOffset.y);
+    s += ',';
+    if(e.waypoints) for(const w of e.waypoints) s += Math.round(w.x)+':'+Math.round(w.y)+'/';
+    s += ';';
+  }
+  return s;
+}
+
+function rebuildAnchorMap(edges) {
+  const sig = routeSignature(edges);
+  if(_anchorCache && _anchorSig === sig) return _anchorCache;   // 지오메트리 불변 → 재사용
+
+  const map = new Map();
+  const buckets = new Map();
+  const routed = [];   // 슬롯 분산이 끝난 뒤 직각 경로를 계산하기 위해 보관
+
+  for(const e of edges) {
+    const src = resolveEdgeNode(e.from);
+    const dst = resolveEdgeNode(e.to);
+    if(!src || !dst || src.id === dst.id) continue;   // self-loop / 내부 엣지 제외
+
+    const rawSrc = state.nodes.find(n=>n.id===e.from);
+    const rawDst = state.nodes.find(n=>n.id===e.to);
+    // 리다이렉트된 엣지는 수동 offset 무시 (drawEdge와 동일 규칙)
+    const srcOff = (rawSrc && rawSrc.id !== src.id) ? null : e.fromOffset;
+    const dstOff = (rawDst && rawDst.id !== dst.id) ? null : e.toOffset;
+
+    // waypoint가 있으면 실제로 선이 향하는 다음 지점을 기준으로 면을 고른다
+    const wps = e.waypoints || [];
+    let srcSide, dstSide;
+    if(wps.length) {
+      srcSide = nearestSide(src, wps[0].x, wps[0].y);
+      dstSide = nearestSide(dst, wps[wps.length-1].x, wps[wps.length-1].y);
+    } else {
+      const pair = bestSidePair(src, dst);
+      srcSide = pair.srcSide; dstSide = pair.dstSide;
+    }
+    // 사용자가 지정한 면이 있으면 자동 선택보다 우선.
+    // 리다이렉트(접힌 그룹)된 쪽은 원래 노드 기준 값이라 무시한다 — offset과 같은 규칙.
+    const srcRedirected = rawSrc && rawSrc.id !== src.id;
+    const dstRedirected = rawDst && rawDst.id !== dst.id;
+    if(!srcRedirected && e.fromSide && SIDE_DIR[e.fromSide]) srcSide = e.fromSide;
+    if(!dstRedirected && e.toSide   && SIDE_DIR[e.toSide])   dstSide = e.toSide;
+
+    // 슬롯 정렬 기준점 (분산 전 위치라 순서가 안정적)
+    const srcAim = wps.length ? wps[0] : sideAnchorPoint(dst, dstSide);
+    const dstAim = wps.length ? wps[wps.length-1] : sideAnchorPoint(src, srcSide);
+
+    const rec = {
+      from: srcOff ? { x: srcOff.x, y: srcOff.y, manual: true }
+                   : Object.assign(sideAnchorPoint(src, srcSide), { side: srcSide }),
+      to:   dstOff ? { x: dstOff.x, y: dstOff.y, manual: true }
+                   : Object.assign(sideAnchorPoint(dst, dstSide), { side: dstSide })
+    };
+    // 수동 핀도 어느 면에 붙었는지 알아야 직각으로 빠져나올 수 있다
+    if(rec.from.manual) rec.from.side = sideOfPoint(src, rec.from.x, rec.from.y);
+    if(rec.to.manual)   rec.to.side   = sideOfPoint(dst, rec.to.x, rec.to.y);
+    map.set(e.id, rec);
+    routed.push({ e, rec, src, dst });
+
+    // 수동 offset 지점은 슬롯 분산에서 제외 (사용자가 직접 놓은 위치 보존)
+    if(!rec.from.manual) bucketPush(buckets, src, srcSide, rec.from, srcAim);
+    if(!rec.to.manual)   bucketPush(buckets, dst, dstSide, rec.to,   dstAim);
+  }
+
+  spreadBuckets(buckets);
+
+  // 2차: 확정된 앵커로 직각 경로 계산. 순차 처리하며 이미 쓴 선분을 기록해
+  // 뒤 엣지가 같은 직선 위에 겹치지 않도록 한다.
+  const obstacles = routeObstacles();
+  // 아주 큰 다이어그램에서는 후보 수를 줄여 프레임 시간을 지킨다
+  const simple = routed.length * obstacles.length > ROUTE_BUDGET;
+  const used = [];
+  for(const r of routed) {
+    const wps = r.e.waypoints || [];
+    const type = r.e.routeType || 'ortho';
+    if(type === 'straight') {
+      r.rec.path = simplifyPath([r.rec.from].concat(wps, [r.rec.to]));
+    } else if(type === 'curve') {
+      r.rec.path = curvePath(r.rec.from, r.rec.to, wps);
+    } else if(wps.length) {
+      r.rec.path = orthogonalizeThrough([r.rec.from].concat(wps, [r.rec.to]));
+    } else {
+      const obs = obstacles.filter(o => o.id !== r.src.id && o.id !== r.dst.id);
+      r.rec.path = routeOrthogonal(r.rec.from, r.rec.to, obs, used, simple, [r.src, r.dst]);
+    }
+    // 겹침 레지스트리는 축 정렬 선분 전제라 직각 경로만 등록한다
+    if(type === 'ortho') pushUsed(used, r.rec.path);
+  }
+
+  _anchorCache = map;
+  _anchorSig = sig;
+  return map;
+}
+
+function bucketPush(buckets, node, side, point, otherPoint) {
+  const key = node.id + ':' + side;
+  if(!buckets.has(key)) buckets.set(key, { node, side, items: [] });
+  buckets.get(key).items.push({ point, otherPoint });
+}
+
+// 한 면에 여러 지점이 겹치면 면 축을 따라 고르게 분산
+function spreadBuckets(buckets) {
+  for(const b of buckets.values()) {
+    if(b.items.length < 2) continue;
+    const vertical = (b.side === 'left' || b.side === 'right');  // 면을 따라 위아래로
+    const n = b.node;
+    const span = (vertical ? n.h : n.w) - ANCHOR_SIDE_PAD*2;
+    if(span <= 0) continue;
+
+    // 상대 지점 위치 순으로 정렬 → 연결선이 서로 교차하지 않게
+    b.items.sort((p,q) => vertical ? (p.otherPoint.y - q.otherPoint.y)
+                                   : (p.otherPoint.x - q.otherPoint.x));
+
+    const count = b.items.length;
+    const gap = Math.min(ANCHOR_SLOT_GAP, span/(count-1));  // 면 길이를 넘지 않게 클램프
+    const total = gap*(count-1);
+    const center = vertical ? (n.y + n.h/2) : (n.x + n.w/2);
+    const start = center - total/2;
+
+    b.items.forEach((it, i) => {
+      if(vertical) it.point.y = start + gap*i;
+      else         it.point.x = start + gap*i;
+    });
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// ORTHOGONAL ROUTING — 직각 경로 + 노드/엣지 회피
+// ════════════════════════════════════════════════════════
+
+// 장애물로 볼 노드 (펼쳐진 그룹 박스는 내부 연결을 막으므로 제외)
+function routeObstacles() {
+  return state.nodes.filter(n => !n._groupHidden && isLayerVisible(n.layer||1) &&
+                                 !(n.type === 'group' && !n.collapsed));
+}
+
+// 축 정렬 선분이 사각형(여백 포함)을 실제로 통과하는지.
+// margin=0이면 "내부를 실제로 관통하는가"만 본다 — 테두리에서 바깥으로 나가는
+// 스텁은 걸리지 않고, 노드를 가로지르는 선만 걸린다.
+function segHitsRect(p, q, r, margin) {
+  const m = (margin == null) ? ROUTE_MARGIN : margin, eps = 0.5;
+  const rx1 = r.x-m, ry1 = r.y-m, rx2 = r.x+r.w+m, ry2 = r.y+r.h+m;
+  if(Math.abs(p.y-q.y) < 0.5) {
+    if(p.y <= ry1+eps || p.y >= ry2-eps) return false;
+    return Math.max(Math.min(p.x,q.x), rx1) < Math.min(Math.max(p.x,q.x), rx2) - eps;
+  }
+  if(p.x <= rx1+eps || p.x >= rx2-eps) return false;
+  return Math.max(Math.min(p.y,q.y), ry1) < Math.min(Math.max(p.y,q.y), ry2) - eps;
+}
+
+// 이미 지나간 선분과 같은 직선 위에서 겹치는지
+function segOverlapsUsed(p, q, used) {
+  const horiz = Math.abs(p.y-q.y) < 0.5;
+  const c = horiz ? p.y : p.x;
+  const a = horiz ? Math.min(p.x,q.x) : Math.min(p.y,q.y);
+  const b = horiz ? Math.max(p.x,q.x) : Math.max(p.y,q.y);
+  for(const o of used) {
+    if(o.horiz !== horiz || Math.abs(o.c-c) > ROUTE_OVERLAP_TOL) continue;
+    if(Math.max(a,o.a) < Math.min(b,o.b) - 8) return true;
+  }
+  return false;
+}
+
+function pushUsed(used, pts) {
+  for(let i=1;i<pts.length;i++) {
+    const p = pts[i-1], q = pts[i];
+    const horiz = Math.abs(p.y-q.y) < 0.5;
+    used.push({ horiz,
+      c: horiz ? p.y : p.x,
+      a: horiz ? Math.min(p.x,q.x) : Math.min(p.y,q.y),
+      b: horiz ? Math.max(p.x,q.x) : Math.max(p.y,q.y) });
+  }
+}
+
+// 중복점 제거 + 일직선상의 불필요한 꺾임점 제거
+function simplifyPath(pts) {
+  const out = [];
+  for(const p of pts) {
+    const last = out[out.length-1];
+    if(last && Math.abs(last.x-p.x) < 0.5 && Math.abs(last.y-p.y) < 0.5) continue;
+    out.push({x:p.x, y:p.y});
+  }
+  for(let i=1;i<out.length-1;) {
+    const a=out[i-1], b=out[i], c=out[i+1];
+    const collinear = (Math.abs(a.x-b.x)<0.5 && Math.abs(b.x-c.x)<0.5) ||
+                      (Math.abs(a.y-b.y)<0.5 && Math.abs(b.y-c.y)<0.5);
+    if(collinear) out.splice(i,1); else i++;
+  }
+  return out;
+}
+
+function scoreRoute(pts, obstacles, used, selfNodes) {
+  let hits=0, selfHits=0, overlap=0, len=0;
+  for(let i=1;i<pts.length;i++) {
+    const p=pts[i-1], q=pts[i];
+    len += Math.abs(q.x-p.x) + Math.abs(q.y-p.y);
+    for(const o of obstacles) if(segHitsRect(p,q,o)) { hits++; break; }
+    // 양 끝 노드 자신도 관통하면 안 된다 (면을 수동 지정하면 반대쪽으로 나가는
+    // 경로가 생겨 자기 노드를 가로지를 수 있다). 여백 0으로 내부 관통만 검사.
+    if(selfNodes) for(const o of selfNodes) if(segHitsRect(p,q,o,0)) { selfHits++; break; }
+    if(segOverlapsUsed(p,q,used)) overlap++;
+  }
+  const turns = Math.max(0, pts.length-2);
+  // 우선순위: 자기 노드 관통 회피 > 다른 노드 관통 회피 > 굴곡 최소 > 겹침 > 길이.
+  // 자기 노드를 지나면 선이 노드 밑으로 사라져 보이므로 남의 노드를 지나는 것보다 나쁘다.
+  return selfHits*1000000 + hits*100000 + turns*3000 + overlap*600 + len;
+}
+
+// s→t 사이의 기본 직각 후보.
+// L 2종 + 중간 트렁크. 트렁크는 겹침을 피해 옆 레인으로 비켜설 수 있게 여러 개 낸다.
+// k=0(정중앙)을 먼저 넣어 동점일 때 가운데가 선택되게 한다.
+function baseRouteCandidates(s, t, simple) {
+  const mx = (s.x+t.x)/2, my = (s.y+t.y)/2;
+  const out = [
+    [s, {x:t.x, y:s.y}, t],
+    [s, {x:s.x, y:t.y}, t]
+  ];
+  for(const k of (simple ? [0] : [0,-1,1,-2,2,-3,3])) {
+    const ox = mx + k*ROUTE_LANE, oy = my + k*ROUTE_LANE;
+    out.push([s, {x:ox, y:s.y}, {x:ox, y:t.y}, t]);
+    out.push([s, {x:s.x, y:oy}, {x:t.x, y:oy}, t]);
+  }
+  return out;
+}
+
+// 막힌 경우: 장애물 테두리 바깥으로 도는 트렁크 후보 추가
+function detourCandidates(s, t, blockers) {
+  const out = [];
+  for(const o of blockers) {
+    const xs = [o.x-ROUTE_MARGIN*2, o.x+o.w+ROUTE_MARGIN*2];
+    const ys = [o.y-ROUTE_MARGIN*2, o.y+o.h+ROUTE_MARGIN*2];
+    for(const x of xs) out.push([s, {x:x, y:s.y}, {x:x, y:t.y}, t]);
+    for(const y of ys) out.push([s, {x:s.x, y:y}, {x:t.x, y:y}, t]);
+  }
+  return out;
+}
+
+// 두 끝 노드를 통째로 감싸는 바깥 라인 후보.
+// 면을 수동 지정해 반대쪽으로 나가는 경우, 자기 노드를 피해 크게 도는 경로가 필요하다.
+function aroundNodesCandidates(s, t, nodes) {
+  if(!nodes || !nodes.length) return [];
+  const m = ROUTE_MARGIN*2;
+  const x1 = Math.min(...nodes.map(n=>n.x)) - m, x2 = Math.max(...nodes.map(n=>n.x+n.w)) + m;
+  const y1 = Math.min(...nodes.map(n=>n.y)) - m, y2 = Math.max(...nodes.map(n=>n.y+n.h)) + m;
+  const out = [];
+  for(const y of [y1,y2]) out.push([s, {x:s.x, y}, {x:t.x, y}, t]);
+  for(const x of [x1,x2]) out.push([s, {x, y:s.y}, {x, y:t.y}, t]);
+  return out;
+}
+
+// 한 엣지의 직각 경로를 고른다. a,b = {x,y,side}
+function routeOrthogonal(a, b, obstacles, used, simple, selfNodes) {
+  const sd = SIDE_DIR[a.side] || [0,0];
+  const td = SIDE_DIR[b.side] || [0,0];
+  const s = { x: a.x + sd[0]*ROUTE_STUB, y: a.y + sd[1]*ROUTE_STUB };
+  const t = { x: b.x + td[0]*ROUTE_STUB, y: b.y + td[1]*ROUTE_STUB };
+
+  const evaluate = (cands) => {
+    let best = null;
+    for(const mid of cands) {
+      const pts = simplifyPath([a, ...mid, b]);
+      const sc = scoreRoute(pts, obstacles, used, selfNodes);
+      if(!best || sc < best.sc) best = { sc, pts };
+    }
+    return best;
+  };
+
+  let best = evaluate(baseRouteCandidates(s, t, simple));
+  // 노드를 통과하는 경로밖에 없으면 우회 후보를 더 시도
+  if(best && best.sc >= 100000 && !simple) {
+    const blockers = obstacles.concat(selfNodes || []).filter(o => {
+      for(let i=1;i<best.pts.length;i++) if(segHitsRect(best.pts[i-1], best.pts[i], o, 0)) return true;
+      return false;
+    });
+    if(blockers.length) {
+      const alt = evaluate(baseRouteCandidates(s,t,simple)
+        .concat(detourCandidates(s, t, blockers))
+        .concat(aroundNodesCandidates(s, t, selfNodes)));
+      if(alt && alt.sc < best.sc) best = alt;
+    }
+  }
+  return best ? best.pts : simplifyPath([a, b]);
+}
+
+// 수동 waypoint는 사용자의 의도이므로 회피하지 않고 직각으로만 이어준다
+function orthogonalizeThrough(points) {
+  const out = [points[0]];
+  for(let i=1;i<points.length;i++) {
+    const p = out[out.length-1], q = points[i];
+    if(Math.abs(p.x-q.x) > 0.5 && Math.abs(p.y-q.y) > 0.5) {
+      out.push(Math.abs(q.x-p.x) > Math.abs(q.y-p.y) ? {x:q.x, y:p.y} : {x:p.x, y:q.y});
+    }
+    out.push({x:q.x, y:q.y});
+  }
+  return simplifyPath(out);
+}
+
+const CURVE_SAMPLES = 24;   // 곡선을 폴리라인으로 근사할 때의 분할 수
+
+// 면 바깥 방향으로 제어점을 빼서, 면에서 자연스럽게 빠져나오는 3차 베지어.
+// 결과를 폴리라인으로 돌려주므로 그리기·클릭판정·애니메이션·라벨이 모두 그대로 동작한다.
+function curvePath(a, b, wps) {
+  if(wps && wps.length) return splinePath([a].concat(wps, [b]));
+  const ad = SIDE_DIR[a.side] || [0,0];
+  const bd = SIDE_DIR[b.side] || [0,0];
+  const d = Math.max(40, Math.hypot(b.x-a.x, b.y-a.y) * 0.4);
+  const c1 = { x: a.x + ad[0]*d, y: a.y + ad[1]*d };
+  const c2 = { x: b.x + bd[0]*d, y: b.y + bd[1]*d };
+  const out = [];
+  for(let i=0; i<=CURVE_SAMPLES; i++) {
+    const t = i/CURVE_SAMPLES, u = 1-t;
+    out.push({
+      x: u*u*u*a.x + 3*u*u*t*c1.x + 3*u*t*t*c2.x + t*t*t*b.x,
+      y: u*u*u*a.y + 3*u*u*t*c1.y + 3*u*t*t*c2.y + t*t*t*b.y
+    });
+  }
+  return out;
+}
+
+// waypoint를 지나는 부드러운 곡선 (Catmull-Rom)
+function splinePath(pts) {
+  if(pts.length < 3) return pts.map(p => ({x:p.x, y:p.y}));
+  const P = [pts[0]].concat(pts, [pts[pts.length-1]]);
+  const out = [];
+  for(let i=1; i<P.length-2; i++) {
+    const p0=P[i-1], p1=P[i], p2=P[i+1], p3=P[i+2];
+    for(let j=0; j<CURVE_SAMPLES; j++) {
+      const t=j/CURVE_SAMPLES, t2=t*t, t3=t2*t;
+      out.push({
+        x: 0.5*((2*p1.x) + (-p0.x+p2.x)*t + (2*p0.x-5*p1.x+4*p2.x-p3.x)*t2 + (-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+        y: 0.5*((2*p1.y) + (-p0.y+p2.y)*t + (2*p0.y-5*p1.y+4*p2.y-p3.y)*t2 + (-p0.y+3*p1.y-3*p2.y+p3.y)*t3)
+      });
+    }
+  }
+  out.push({x: pts[pts.length-1].x, y: pts[pts.length-1].y});
+  return out;
+}
+
+// 엣지의 최종 경로(점 배열). 캐시에 없으면 앵커 직선으로 폴백.
+function edgePath(e) {
+  const rec = _anchorCache && _anchorCache.get(e.id);
+  if(rec && rec.path) return rec.path;
+  const a = edgeAnchors(e);
+  if(!a) return null;
+  return [{x:a[0],y:a[1]}, {x:a[2],y:a[3]}];
+}
+
+// 엣지의 양끝 앵커 좌표. 맵에 없으면 기존 ray 방식으로 폴백.
+function edgeAnchors(e) {
+  const rec = _anchorCache && _anchorCache.get(e.id);
+  if(rec) return [rec.from.x, rec.from.y, rec.to.x, rec.to.y];
+  const src = resolveEdgeNode(e.from);
+  const dst = resolveEdgeNode(e.to);
+  if(!src || !dst) return null;
+  const rawSrc = state.nodes.find(n=>n.id===e.from);
+  const rawDst = state.nodes.find(n=>n.id===e.to);
+  const srcOff = (rawSrc && rawSrc.id !== src.id) ? null : e.fromOffset;
+  const dstOff = (rawDst && rawDst.id !== dst.id) ? null : e.toOffset;
+  const [sx2,sy2] = nodeEdgePoint(src, dst.x+dst.w/2, dst.y+dst.h/2, srcOff);
+  const [ex2,ey2] = nodeEdgePoint(dst, src.x+src.w/2, src.y+src.h/2, dstOff);
+  return [sx2,sy2,ex2,ey2];
 }
 
 function nodeEdgePoint(n, tx, ty, offset) {
@@ -3503,7 +4363,7 @@ function createNode(type, wx, wy) {
   const n = {
     id: state.nextId++,
     type, label: defaultLabels[type]||type,
-    x: wx - cfg.w/2, y: wy - cfg.h/2,
+    x: snapCenter(wx - cfg.w/2, cfg.w), y: snapCenter(wy - cfg.h/2, cfg.h),
     w: cfg.w, h: cfg.h,
     color: cfg.color, desc:'', alert:'',
     layer: state.activeLayer || 1,
@@ -3601,6 +4461,34 @@ function findCollapsedParent(n) {
     .sort((a, b) => (a._origW * a._origH) - (b._origW * b._origH))[0] || null;
 }
 
+// 실제로 화면에 그려지는 엣지 목록 (앵커 계산과 렌더가 동일 집합을 쓰도록 추출)
+function getDrawableEdges(layerFilter) {
+  const drawnEdgePairs = new Set();
+  return state.edges.filter(e => !isEdgeHiddenByCollapse(e)).filter(e => {
+    const rSrc = resolveEdgeNode(e.from);
+    const rDst = resolveEdgeNode(e.to);
+    if(!rSrc || !rDst || rSrc.id === rDst.id) return false;
+    // 숨겨진 레이어의 엣지 제외
+    const srcNode = state.nodes.find(n=>n.id===e.from);
+    const dstNode = state.nodes.find(n=>n.id===e.to);
+    if(layerFilter) {
+      if(!srcNode || !dstNode || !layerFilter(srcNode) || !layerFilter(dstNode)) return false;
+    } else {
+      if(srcNode && !isLayerVisible(srcNode.layer||1)) return false;
+      if(dstNode && !isLayerVisible(dstNode.layer||1)) return false;
+    }
+    // (presentation mode: all edges always visible, animation overlay only)
+    // 리다이렉트된 엣지 중복 방지
+    const srcId = rSrc.id, dstId = rDst.id;
+    if(srcId !== e.from || dstId !== e.to) {
+      const key = Math.min(srcId,dstId) + ':' + Math.max(srcId,dstId);
+      if(drawnEdgePairs.has(key)) return false;
+      drawnEdgePairs.add(key);
+    }
+    return true;
+  });
+}
+
 function isEdgeHiddenByCollapse(e) {
   const src = state.nodes.find(n => n.id === e.from);
   const dst = state.nodes.find(n => n.id === e.to);
@@ -3681,8 +4569,10 @@ function toggleGroupCollapse(groupId) {
     ctx.font = font('600', 11);
     const titleText = '[ ' + g.label + ' ] (' + children.length + ')';
     const titleW = ctx.measureText(titleText).width;
-    g.w = Math.max(titleW + 52, 160); // 52 = 좌패딩(10) + 버튼(26) + 여백(16)
+    // 텍스트 폭에서 나온 값이라 스텝 배수로 올림 — 접힌 그룹도 중심이 라인에 걸리게
+    g.w = Math.max(Math.ceil((titleW + 52)/CENTER_STEP)*CENTER_STEP, 160); // 52 = 좌패딩(10) + 버튼(26) + 여백(16)
   }
+  alignNodeCenter(g);   // 접기/펼치기 후에도 중심 정렬 유지
   clearSelection();
   render();
 }
@@ -3748,20 +4638,12 @@ function hitEdge(wx, wy) {
     const rawDst = state.nodes.find(n=>n.id===e.to);
     const srcRedir = rawSrc && rawSrc.id !== src.id;
     const dstRedir = rawDst && rawDst.id !== dst.id;
-    const [sx2,sy2] = nodeEdgePoint(src, ex, ey, srcRedir ? null : e.fromOffset);
-    const [ex2,ey2] = nodeEdgePoint(dst, sx, sy, dstRedir ? null : e.toOffset);
+    const [sx2,sy2,ex2,ey2] = edgeAnchors(e);
 
-    const wps = e.waypoints || [];
-    if(wps.length > 0) {
-      const pts = [{x:sx2,y:sy2}, ...wps, {x:ex2,y:ey2}];
-      let hit = false;
-      for(let i=1; i<pts.length; i++) {
-        if(pointToSegDist(wx,wy,pts[i-1].x,pts[i-1].y,pts[i].x,pts[i].y) < 8) { hit=true; break; }
-      }
-      if(hit) return e;
-    } else {
-      const d = pointToSegDist(wx,wy,sx2,sy2,ex2,ey2);
-      if(d < 8) return e;
+    // 실제로 그려진 직각 경로 위에서 판정
+    const pts = edgePath(e) || [{x:sx2,y:sy2}, {x:ex2,y:ey2}];
+    for(let i=1; i<pts.length; i++) {
+      if(pointToSegDist(wx,wy,pts[i-1].x,pts[i-1].y,pts[i].x,pts[i].y) < 8) return e;
     }
   }
   return null;
@@ -3775,8 +4657,9 @@ function hitEdgeHandle(wx, wy) {
   const src = state.nodes.find(n=>n.id===se.from);
   const dst = state.nodes.find(n=>n.id===se.to);
   if(!src||!dst) return null;
-  const [sx,sy] = nodeEdgePoint(src, dst.x+dst.w/2, dst.y+dst.h/2, se.fromOffset);
-  const [ex,ey] = nodeEdgePoint(dst, src.x+src.w/2, src.y+src.h/2, se.toOffset);
+  const seA = edgeAnchors(se);
+  if(!seA) return null;
+  const [sx,sy,ex,ey] = seA;
   if(Math.hypot(wx-sx, wy-sy) < 10) return { edge: se, end: 'from' };
   if(Math.hypot(wx-ex, wy-ey) < 10) return { edge: se, end: 'to' };
   return null;
@@ -3793,9 +4676,18 @@ function getEdgeEndpoints(e) {
   const rawDst = state.nodes.find(n=>n.id===e.to);
   const srcRedir = rawSrc && rawSrc.id !== src.id;
   const dstRedir = rawDst && rawDst.id !== dst.id;
-  const [sx2,sy2] = nodeEdgePoint(src, ex, ey, srcRedir ? null : e.fromOffset);
-  const [ex2,ey2] = nodeEdgePoint(dst, sx, sy, dstRedir ? null : e.toOffset);
+  const [sx2,sy2,ex2,ey2] = edgeAnchors(e);
   return {sx2,sy2,ex2,ey2};
+}
+
+// 라벨 박스 안을 클릭했는지 (여유 3px)
+function hitEdgeLabel(edge, wx, wy) {
+  const box = edgeLabelBox(edge);
+  if(!box) return null;
+  const hw = (box.hitW != null ? box.hitW : box.bw)/2 + 4;
+  const hh = (box.hitH != null ? box.hitH : box.bh)/2 + 4;
+  if(wx >= box.cx-hw && wx <= box.cx+hw && wy >= box.cy-hh && wy <= box.cy+hh) return box;
+  return null;
 }
 
 function hitWaypoint(edge, wx, wy) {
@@ -3860,6 +4752,8 @@ canvas.addEventListener('mousedown', e => {
     if(node) {
       if(!state.connectFrom) {
         state.connectFrom = node.id;
+        // 클릭한 지점에서 가장 가까운 면을 시작 면으로 고정
+        state.connectFromSide = nearestSide(node, w.x, w.y);
         document.getElementById('statusTool').textContent = t('conn_pick_end');
       } else if(node.id !== state.connectFrom) {
         // Create edge
@@ -3872,9 +4766,12 @@ canvas.addEventListener('mousedown', e => {
           style: state.arrowStyle,
           color: '#58a6ff',
           waypoints: [],
-          animIndex: 1
+          animIndex: 1,
+          fromSide: state.connectFromSide,          // 시작 면 고정
+          toSide: nearestSide(node, w.x, w.y)       // 끝 면도 클릭 지점 기준
         });
         state.connectFrom = null;
+        state.connectFromSide = null;
         document.getElementById('statusTool').textContent = (loomLang==='en'?'Tool: Connect':'도구: 연결');
         render();
       }
@@ -3887,6 +4784,18 @@ canvas.addEventListener('mousedown', e => {
     if(state.selectedEdge) {
       const selEdge = state.edges.find(ed=>ed.id===state.selectedEdge);
       if(selEdge) {
+        // 라벨을 잡아 기본 위치에서 상대 이동
+        const lblHit = hitEdgeLabel(selEdge, w.x, w.y);
+        if(lblHit) {
+          saveHistory();
+          state.labelDragging = {
+            edgeId: selEdge.id,
+            grabX: w.x, grabY: w.y,
+            startX: (selEdge.labelOffset ? selEdge.labelOffset.x : 0),
+            startY: (selEdge.labelOffset ? selEdge.labelOffset.y : 0)
+          };
+          return;
+        }
         const wpHit = hitWaypoint(selEdge, w.x, w.y);
         if(wpHit) {
           saveHistory();
@@ -4098,6 +5007,23 @@ canvas.addEventListener('mousemove', e => {
     return;
   }
 
+  if(state.labelDragging) {
+    const ld = state.labelDragging;
+    const edge = state.edges.find(ed=>ed.id===ld.edgeId);
+    if(edge) {
+      const nx = ld.startX + (w.x - ld.grabX);
+      const ny = ld.startY + (w.y - ld.grabY);
+      // 기본 위치와 사실상 같으면 오프셋을 지워 기본값으로 되돌린다
+      if(Math.abs(nx) < 2 && Math.abs(ny) < 2) delete edge.labelOffset;
+      else edge.labelOffset = { x: Math.round(nx), y: Math.round(ny) };
+      // 드래그 중에도 숫자 입력칸을 같이 갱신 (두 조작 방식이 항상 같은 값을 보여주도록)
+      document.getElementById('edgeLabelOffX').value = edge.labelOffset ? edge.labelOffset.x : 0;
+      document.getElementById('edgeLabelOffY').value = edge.labelOffset ? edge.labelOffset.y : 0;
+      render();
+    }
+    return;
+  }
+
   if(state.wpDragging) {
     const edge = state.edges.find(ed=>ed.id===state.wpDragging.edgeId);
     if(edge && edge.waypoints && edge.waypoints[state.wpDragging.index]) {
@@ -4116,8 +5042,17 @@ canvas.addEventListener('mousemove', e => {
 
   if(state.resizing) {
     const n = state.resizing;
-    n.w = Math.max(80, w.x - n.x);
-    n.h = Math.max(40, w.y - n.y);
+    // 시작 시점의 좌상단을 기준으로 고정한다. n.x를 매 프레임 다시 읽으면
+    // 중심 정렬로 옮겨진 x가 다음 프레임 크기 계산에 되먹여져 계속 줄어든다.
+    if(!state.resizeOrigin) state.resizeOrigin = { x: n.x, y: n.y, w: n.w, h: n.h };
+    const o = state.resizeOrigin;
+    // 크기 "변화량"을 스텝의 2배 단위로 맞춘다. 중심 = x + w/2 이므로 w가 2*STEP
+    // 변하면 중심은 정확히 STEP 만큼 움직여 스텝 위에 그대로 머문다.
+    // 덕분에 놓을 때 위치를 보정할 필요가 없어 좌상단이 전혀 이동하지 않는다.
+    const q = CENTER_STEP * 2;
+    n.x = o.x; n.y = o.y;
+    n.w = Math.max(80, o.w + Math.round(((w.x - o.x) - o.w) / q) * q);
+    n.h = Math.max(40, o.h + Math.round(((w.y - o.y) - o.h) / q) * q);
     state.didResize = true;
     render();
     return;
@@ -4131,22 +5066,27 @@ canvas.addEventListener('mousemove', e => {
       // 앵커 노드를 그리드에 맞추고, 나머지도 같은 오프셋 적용
       const anchorOrigin = state.multiDragOrigins[state.dragNode.id];
       if(anchorOrigin) {
-        const snappedX = snapGrid(anchorOrigin.x + rawDx);
-        const snappedY = snapGrid(anchorOrigin.y + rawDy);
+        const snappedX = snapCenter(anchorOrigin.x + rawDx, state.dragNode.w);
+        const snappedY = snapCenter(anchorOrigin.y + rawDy, state.dragNode.h);
         const dx = snappedX - anchorOrigin.x;
         const dy = snappedY - anchorOrigin.y;
         if(dx !== 0 || dy !== 0) state.dragMoved = true;
         state.multiSelect.forEach(id => {
           const nd = state.nodes.find(n => n.id === id);
           const origin = state.multiDragOrigins[id];
-          if(nd && origin) { nd.x = origin.x + dx; nd.y = origin.y + dy; }
+          // 델타만 적용하면 이미 어긋나 있던 노드는 영원히 어긋난 채로 남는다.
+          // 각 노드를 개별로 스텝에 맞춰 어긋난 것도 이동 중에 교정되게 한다.
+          if(nd && origin) {
+            nd.x = snapCenter(origin.x + dx, nd.w);
+            nd.y = snapCenter(origin.y + dy, nd.h);
+          }
         });
       }
     } else {
       // 단일 드래그
       const n = state.dragNode;
-      const nx = snapGrid(w.x - state.dragOffX);
-      const ny = snapGrid(w.y - state.dragOffY);
+      const nx = snapCenter(w.x - state.dragOffX, n.w);
+      const ny = snapCenter(w.y - state.dragOffY, n.h);
       if(nx !== n.x || ny !== n.y) {
         n.x = nx; n.y = ny;
         state.dragMoved = true;
@@ -4190,7 +5130,7 @@ canvas.addEventListener('mousemove', e => {
   else if(state.tool === 'connect') canvas.style.cursor = 'crosshair';
   else if(state.edgeDragging) canvas.style.cursor = 'crosshair';
   else if(state.edgePinDragging) canvas.style.cursor = 'cell';
-  else if(state.wpDragging) canvas.style.cursor = 'grabbing';
+  else if(state.wpDragging || state.labelDragging) canvas.style.cursor = 'grabbing';
   else if(hitGroupCollapseBtn(w.x, w.y)) canvas.style.cursor = 'pointer';
   else if(state.selectedEdge && (() => {
     const se = state.edges.find(ed=>ed.id===state.selectedEdge);
@@ -4208,6 +5148,12 @@ canvas.addEventListener('mousemove', e => {
 canvas.addEventListener('mouseup', e => {
   if(state.presenting) return;
   // Waypoint drag 완료
+  if(state.labelDragging) {
+    state.labelDragging = null;
+    updateEdgePropPanel();
+    render();
+    return;
+  }
   if(state.wpDragging) {
     state.wpDragging = null;
     render();
@@ -4219,11 +5165,15 @@ canvas.addEventListener('mouseup', e => {
     const targetNode = hitNode(state.edgeDragPos.x, state.edgeDragPos.y);
     const fixedNodeId = state.edgeDragEnd === 'to' ? state.edgeDragEdge.from : state.edgeDragEdge.to;
     if(targetNode && targetNode.id !== fixedNodeId) {
+      // 놓은 지점에서 가장 가까운 면으로 붙인다 (연결 모드와 같은 규칙)
+      const dropSide = nearestSide(targetNode, state.edgeDragPos.x, state.edgeDragPos.y);
       if(state.edgeDragEnd === 'to') {
         state.edgeDragEdge.to = targetNode.id;
+        state.edgeDragEdge.toSide = dropSide;
         delete state.edgeDragEdge.toOffset;
       } else {
         state.edgeDragEdge.from = targetNode.id;
+        state.edgeDragEdge.fromSide = dropSide;
         delete state.edgeDragEdge.fromOffset;
       }
     } else {
@@ -4346,12 +5296,21 @@ canvas.addEventListener('mouseup', e => {
       }
     });
   }
+  // 어떤 경로로 옮겼든 놓는 순간에는 반드시 스텝에 맞아 있게 (마지막 안전망)
+  if(state.dragging && state.dragNode && state.dragMoved) {
+    const moved = state.multiSelect.length > 0
+      ? state.nodes.filter(n => state.multiSelect.includes(n.id))
+      : [state.dragNode];
+    moved.forEach(alignNodeCenter);
+  }
   if(state.dragging && state.dragNode) updatePropPanel();
   state.dragging = false;
   state.dragNode = null;
   state.dragMoved = false;
   state.multiDragOrigins = null;
+  if(state.resizing && state.didResize) { alignNodeCenter(state.resizing); render(); }  // 놓을 때 중심 정렬 복원
   state.resizing = null;
+  state.resizeOrigin = null;
   state.didResize = false;
   state.panning = false;
   if(state.tool !== 'pan') canvas.style.cursor = 'default';
@@ -4615,6 +5574,27 @@ function drawNodeAnimation(n, progress) {
   ctx.restore();
 }
 
+// 경로상의 비율 위치에 발광 헤드를 찍는다 (선이 자라나는 끝 표시)
+function drawAnimHead(pts, segLens, totalLen, frac, color) {
+  if(!(frac > 0) || frac > 1 || totalLen <= 0) return;
+  var idx = 0;
+  for(var i=1; i<pts.length; i++) {
+    if(segLens[i] / totalLen >= frac) { idx = i; break; }
+  }
+  if(idx < 1) return;
+  var fp = segLens[idx-1] / totalLen, fc = segLens[idx] / totalLen;
+  var t = fc > fp ? (frac - fp) / (fc - fp) : 0;
+  var hx = pts[idx-1].x + (pts[idx].x - pts[idx-1].x) * t;
+  var hy = pts[idx-1].y + (pts[idx].y - pts[idx-1].y) * t;
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 18;
+  ctx.beginPath();
+  ctx.arc(hx, hy, 3, 0, Math.PI*2);
+  ctx.fill();
+}
+
 function drawEdgeAnimation(e, progress) {
   var src = resolveEdgeNode(e.from);
   var dst = resolveEdgeNode(e.to);
@@ -4626,25 +5606,12 @@ function drawEdgeAnimation(e, progress) {
   var rawDst = state.nodes.find(function(n){return n.id===e.to;});
   var srcRedirected = rawSrc && rawSrc.id !== src.id;
   var dstRedirected = rawDst && rawDst.id !== dst.id;
-  var p1 = nodeEdgePoint(src, ex, ey, srcRedirected ? null : e.fromOffset);
-  var p2 = nodeEdgePoint(dst, sx, sy, dstRedirected ? null : e.toOffset);
+  var _a = edgeAnchors(e);
+  var p1 = [_a[0], _a[1]];
+  var p2 = [_a[2], _a[3]];
 
-  var wps = e.waypoints || [];
-  var pts;
-  if(wps.length > 0) {
-    pts = [{x:p1[0],y:p1[1]}].concat(wps).concat([{x:p2[0],y:p2[1]}]);
-  } else {
-    var sx2=p1[0], sy2=p1[1], ex2=p2[0], ey2=p2[1];
-    var dx=ex2-sx2, dy=ey2-sy2;
-    var cx1=sx2+dx*0.3, cy1=sy2+dy*0.3, cx2=ex2-dx*0.3, cy2=ey2-dy*0.3;
-    pts = [];
-    for(var t=0; t<=1; t+=0.015) {
-      var u=1-t;
-      var px = u*u*u*sx2 + 3*u*u*t*cx1 + 3*u*t*t*cx2 + t*t*t*ex2;
-      var py = u*u*u*sy2 + 3*u*u*t*cy1 + 3*u*t*t*cy2 + t*t*t*ey2;
-      pts.push({x:px, y:py});
-    }
-  }
+  // 그려진 직각 경로를 그대로 따라간다 (모서리를 가로지르지 않도록)
+  var pts = edgePath(e) || [{x:p1[0],y:p1[1]}, {x:p2[0],y:p2[1]}];
 
   // Precompute cumulative lengths
   var segLens = [0];
@@ -4657,18 +5624,10 @@ function drawEdgeAnimation(e, progress) {
   if(totalLen === 0) return;
 
   var color = e.color || tc.accent;
-  // Head leads fast, tail starts at 0 then catches up at the end
-  // Head: easeOut (fast start, slows near end, arrives at ~80% progress)
-  // Tail: stays at 0, then easeIn to catch up and arrive at 1.0 at 100% progress
-  var headPos = Math.min(1, progress * 1.25);  // arrives at 1.0 when progress=0.8
-  headPos = 1 - Math.pow(1 - headPos, 2);     // easeOut
-  var tailPos;
-  if(progress < 0.2) {
-    tailPos = 0;  // tail stays at start while head stretches out
-  } else {
-    var tailProgress = (progress - 0.2) / 0.8;  // 0->1 over remaining 80%
-    tailPos = tailProgress * tailProgress;       // easeIn (slow start, fast end)
-  }
+  // 시작점에 붙어 있는 채로 끝점까지 선이 자라나는 연출.
+  // 꼬리를 0에 고정하면 그려진 구간이 계속 남아 "선이 길어지는" 것으로 보인다.
+  var headPos = 1 - Math.pow(1 - Math.min(1, Math.max(0, progress)), 2);  // easeOut 0→1
+  var tailPos = 0;
 
   ctx.save();
   ctx.lineCap = 'round';
@@ -4696,11 +5655,12 @@ function drawEdgeAnimation(e, progress) {
     var x2 = pts[i-1].x + (pts[i].x - pts[i-1].x) * endT;
     var y2 = pts[i-1].y + (pts[i].y - pts[i-1].y) * endT;
 
-    // Alpha: 0 at tail, 1 at head (dynamic range)
+    // 이미 그려진 구간은 또렷하게 유지하고, 자라나는 끝쪽만 더 밝게.
+    // (예전처럼 꼬리를 0까지 떨어뜨리면 시작 부분이 사라져 보인다)
     var midFrac = (segStart + segEnd) / 2;
     var range = headPos - tailPos;
-    var alpha = range > 0 ? (midFrac - tailPos) / range : 1;
-    alpha = Math.max(0.05, Math.min(1, alpha));
+    var alpha = range > 0 ? 0.55 + 0.45 * ((midFrac - tailPos) / range) : 1;
+    alpha = Math.max(0.55, Math.min(1, alpha));
 
     ctx.beginPath();
     ctx.moveTo(x1, y1);
@@ -4713,38 +5673,16 @@ function drawEdgeAnimation(e, progress) {
     ctx.stroke();
   }
 
-  // Bright head glow
-  if(headPos > 0 && headPos <= 1) {
-    var headIdx = 0;
-    for(var i=1; i<pts.length; i++) {
-      if(segLens[i] / totalLen >= headPos) { headIdx = i; break; }
-    }
-    var fracPrev = segLens[headIdx-1] / totalLen;
-    var fracCurr = segLens[headIdx] / totalLen;
-    var t = fracCurr > fracPrev ? (headPos - fracPrev) / (fracCurr - fracPrev) : 0;
-    var hx = pts[headIdx-1].x + (pts[headIdx].x - pts[headIdx-1].x) * t;
-    var hy = pts[headIdx-1].y + (pts[headIdx].y - pts[headIdx-1].y) * t;
-
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#fff';
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 18;
-    ctx.beginPath();
-    ctx.arc(hx, hy, 3, 0, Math.PI*2);
-    ctx.fill();
-  }
+  // 자라나는 끝에 발광 헤드
+  drawAnimHead(pts, segLens, totalLen, headPos, color);
 
   ctx.restore();
 
   // Bidirectional: reverse flow (same stretch/shrink easing, reversed direction)
   if(e.style === 'both') {
-    var revHeadRaw = Math.min(1, progress * 1.25);
-    revHeadRaw = 1 - Math.pow(1 - revHeadRaw, 2);
-    var revHead = 1 - revHeadRaw;  // goes from 1 -> 0
-    var revTailRaw;
-    if(progress < 0.2) { revTailRaw = 0; }
-    else { var rtp = (progress-0.2)/0.8; revTailRaw = rtp*rtp; }
-    var revTail = 1 - revTailRaw;  // goes from 1 -> 0
+    // 반대 방향도 같은 방식 — 끝점(1)에 붙은 채 시작점(0)을 향해 자란다
+    var revHead = 1 - (1 - Math.pow(1 - Math.min(1, Math.max(0, progress)), 2));  // 1→0
+    var revTail = 1;
 
     ctx.save();
     ctx.lineCap = 'round';
@@ -4768,8 +5706,8 @@ function drawEdgeAnimation(e, progress) {
       var midFrac = (segStart + segEnd) / 2;
       // Reverse: head is at revHead (lower), tail is at revTail (higher)
       var range = revTail - revHead;
-      var alpha = range > 0 ? (revTail - midFrac) / range : 1;
-      alpha = Math.max(0.05, Math.min(1, alpha));
+      var alpha = range > 0 ? 0.55 + 0.45 * ((revTail - midFrac) / range) : 1;
+      alpha = Math.max(0.55, Math.min(1, alpha));
 
       ctx.beginPath();
       ctx.moveTo(x1, y1);
@@ -4781,6 +5719,9 @@ function drawEdgeAnimation(e, progress) {
       ctx.shadowBlur = alpha * 14;
       ctx.stroke();
     }
+
+    // 반대 방향의 자라나는 끝에도 같은 발광 헤드
+    drawAnimHead(pts, segLens, totalLen, revHead, color);
 
     ctx.restore();
   }
@@ -4812,7 +5753,7 @@ function animateStep(step) {
 
 // Ctrl 키 누름/뗌에 따라 커서 즉시 반영
 document.addEventListener('keydown', ev => {
-  if(ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA' || ev.target.tagName === 'SELECT') return;
+  if(ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA' || ev.target.tagName === 'SELECT' || ev.target.isContentEditable) return;
   if(state.presenting) {
     if(ev.key === 'Escape') { stopPresentation(); ev.preventDefault(); return; }
     if(ev.key === 'ArrowRight' || ev.key === ' ') { ev.preventDefault(); presentNext(); return; }
@@ -4824,7 +5765,8 @@ document.addEventListener('keydown', ev => {
   if((ev.ctrlKey || ev.metaKey) && ev.key==='d') { ev.preventDefault(); ctxDuplicate(); }
   if((ev.ctrlKey || ev.metaKey) && ev.key==='x') { ev.preventDefault(); clipboardCopy(true); }
   if((ev.ctrlKey || ev.metaKey) && ev.key==='c' && (state.selected || state.multiSelect.length)) { ev.preventDefault(); clipboardCopy(false); }
-  if((ev.ctrlKey || ev.metaKey) && ev.key==='v' && state.clipboard) { ev.preventDefault(); clipboardPaste(); }
+  // Ctrl+V는 paste 이벤트에서 처리한다 — 거기서만 실제 클립보드 텍스트를 볼 수 있어
+  // "내부 노드 붙여넣기"인지 "Mermaid 텍스트 붙여넣기"인지 구분할 수 있다.
   if((ev.ctrlKey || ev.metaKey) && ev.key==='a') {
     ev.preventDefault();
     state.multiSelect = state.nodes
@@ -4835,20 +5777,13 @@ document.addEventListener('keydown', ev => {
     render();
   }
   if(ev.key === 'Delete' || ev.key === 'Backspace') {
-    if(document.activeElement === document.body || document.activeElement === canvas) {
-      if(state.multiSelect.length > 0) ctxDeleteMulti();
-      else if(state.selected) ctxDelete();
-      else if(state.selectedEdge !== null) {
-        saveHistory();
-        state.edges = state.edges.filter(e => e.id !== state.selectedEdge);
-        state.selectedEdge = null;
-        render();
-      }
+    if(state.multiSelect.length > 0 || state.selected || state.selectedEdge !== null) {
+      ev.preventDefault();
+      deleteSelected();
     }
   }
   if((ev.key === 'ArrowLeft'||ev.key==='ArrowRight'||ev.key==='ArrowUp'||ev.key==='ArrowDown') &&
-     (state.selected||state.multiSelect.length>0) &&
-     (document.activeElement===document.body||document.activeElement===canvas)) {
+     (state.selected||state.multiSelect.length>0)) {
     ev.preventDefault();
     const dx = ev.key==='ArrowLeft'?-20:ev.key==='ArrowRight'?20:0;
     const dy = ev.key==='ArrowUp'?-20:ev.key==='ArrowDown'?20:0;
@@ -4928,6 +5863,36 @@ function getPos(e) {
 
 function snapGrid(v) { return Math.round(v/20)*20; }
 
+// 중심 좌표 자체를 CENTER_STEP 배수로 양자화 (2 → 0, 7 → 10)
+function snapCenterVal(v) { return Math.round(v/CENTER_STEP)*CENTER_STEP; }
+
+// 노드 "중심"을 스텝 라인에 맞추기 위한 좌상단 좌표.
+// 크기가 다른 도형끼리 이어도 앵커(면 중심)가 같은 라인에 놓여 1자 선이 된다.
+function snapCenter(topLeft, size) { return snapCenterVal(topLeft + size/2) - size/2; }
+
+// 크기도 스텝 배수로 (중심 정렬 후 좌표가 정수로 유지되도록)
+function snapSize(v, min) { return Math.max(min, Math.round(v/CENTER_STEP)*CENTER_STEP); }
+
+// 노드 하나의 중심을 그리드에 정렬
+function alignNodeCenter(n) {
+  n.x = snapCenter(n.x, n.w);
+  n.y = snapCenter(n.y, n.h);
+  return n;
+}
+
+// 전체(또는 주어진) 노드의 중심을 일괄 정렬. 최대 이동량은 축당 10px.
+// 멀티 드래그는 앵커 노드만 스냅하고 나머지는 같은 델타를 적용하므로,
+// 한 번 어긋난 노드는 드래그만으로는 절대 정렬되지 않는다. 그래서 일괄 정렬이 필요하다.
+function normalizeNodeCenters(nodes) {
+  (nodes || state.nodes).forEach(n => {
+    if(n.collapsed && n._origW != null) {   // 접힌 그룹은 원본 크기도 같이 맞춘다
+      n._origX = snapCenter(n._origX, n._origW);
+      n._origY = snapCenter(n._origY, n._origH);
+    }
+    alignNodeCenter(n);
+  });
+}
+
 // ════════════════════════════════════════════════════════
 // DRAG FROM PALETTE
 // ════════════════════════════════════════════════════════
@@ -4975,6 +5940,7 @@ document.addEventListener('keydown', e => {
       return;
     }
     state.connectFrom = null;
+    state.connectFromSide = null;
     state.marquee = null;
     clearSelection();
     setTool('select');
@@ -4987,6 +5953,7 @@ document.addEventListener('keydown', e => {
 function setTool(t) {
   state.tool = t;
   state.connectFrom = null;
+  state.connectFromSide = null;
   document.querySelectorAll('#topbar .tbtn').forEach(b => b.classList.remove('active'));
   const map = { select:'btnSelect', connect:'btnConnect', pan:'btnPan' };
   if(map[t]) document.getElementById(map[t]).classList.add('active');
@@ -5021,6 +5988,14 @@ function updatePropPanel() {
   document.getElementById('propDesc').value = n.desc||'';
   document.getElementById('propType').value = n.type;
   document.getElementById('propAlert').value = n.alert||'';
+  document.getElementById('propLabelDir').value = n.labelVertical ? 'v' : 'h';
+  // Mermaid 패널일 때만 원문 편집 영역을 보여준다
+  var isMmd = n.type === 'mermaid';
+  document.getElementById('mermaidPanelSection').style.display = isMmd ? 'block' : 'none';
+  if(isMmd) {
+    document.getElementById('propMermaid').value = n.mermaid || '';
+    document.getElementById('propMermaidRender').checked = !!n.mermaidRender;
+  }
   document.getElementById('propFontColor').value = n.fontColor || contrastTextColor(n.color || (NODE_TYPES[n.type]||NODE_TYPES.server).color);
   document.getElementById('propW').value = n.w;
   document.getElementById('propH').value = n.h;
@@ -5055,11 +6030,22 @@ function updateEdgePropPanel() {
   document.getElementById('edgePropSection').style.display = 'block';
   document.getElementById('edgeLabel').value = e.label||'';
   document.getElementById('edgeStyle').value = e.style||'solid';
+  document.getElementById('edgeRouteType').value = e.routeType || 'ortho';
   document.getElementById('edgeAnimIndex').value = e.animIndex != null ? e.animIndex : 1;
+  document.getElementById('edgeFromSide').value = e.fromSide || '';
+  document.getElementById('edgeToSide').value = e.toSide || '';
+  document.getElementById('edgeLabelDir').value = labelDirOf(e);
+  // 드래그로 옮긴 값도 그대로 보이게 (드래그 ↔ 숫자 입력 동기화)
+  document.getElementById('edgeLabelOffX').value = e.labelOffset ? e.labelOffset.x : 0;
+  document.getElementById('edgeLabelOffY').value = e.labelOffset ? e.labelOffset.y : 0;
+  // 라벨을 옮긴 적이 있을 때만 되돌리기 버튼을 활성화
+  var lrBtn = document.getElementById('edgeLabelReset');
+  lrBtn.disabled = !e.labelOffset;
+  lrBtn.style.opacity = e.labelOffset ? '1' : '0.45';
 }
 
 // Live property updates
-['propName','propDesc','propType','propAlert','propW','propH','propLayer','propAnimIndex'].forEach(id => {
+['propName','propDesc','propType','propAlert','propW','propH','propLayer','propAnimIndex','propLabelDir','propMermaid','propMermaidRender'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => {
     const n = state.nodes.find(n=>n.id===state.selected);
     if(!n) return;
@@ -5067,8 +6053,12 @@ function updateEdgePropPanel() {
     if(id==='propDesc') n.desc = document.getElementById(id).value;
     if(id==='propType') { n.type = document.getElementById(id).value; const cfg=NODE_TYPES[n.type]; if(cfg) n.color=cfg.color; }
     if(id==='propAlert') n.alert = document.getElementById(id).value;
-    if(id==='propW') n.w = parseInt(document.getElementById(id).value)||n.w;
-    if(id==='propH') n.h = parseInt(document.getElementById(id).value)||n.h;
+    if(id==='propLabelDir') { if(document.getElementById(id).value === 'v') n.labelVertical = true; else delete n.labelVertical; }
+    if(id==='propMermaid') n.mermaid = document.getElementById(id).value;
+    if(id==='propMermaidRender') { if(document.getElementById(id).checked) n.mermaidRender = true; else delete n.mermaidRender; }
+    // 크기를 바꾸면 중심이 어긋나므로 스텝에 맞추고 중심을 다시 정렬한다
+    if(id==='propW') { n.w = snapSize(parseInt(document.getElementById(id).value)||n.w, CENTER_STEP); alignNodeCenter(n); }
+    if(id==='propH') { n.h = snapSize(parseInt(document.getElementById(id).value)||n.h, CENTER_STEP); alignNodeCenter(n); }
     if(id==='propLayer') n.layer = parseInt(document.getElementById(id).value)||1;
     if(id==='propAnimIndex') { var v = document.getElementById(id).value; n.animIndex = v === '' ? undefined : parseInt(v); }
     render();
@@ -5080,13 +6070,31 @@ document.getElementById('propFontColor').addEventListener('input', function() {
   if(n) { n.fontColor = this.value; render(); }
 });
 
-['edgeLabel','edgeStyle','edgeAnimIndex'].forEach(id => {
+['edgeLabel','edgeStyle','edgeAnimIndex','edgeFromSide','edgeToSide','edgeLabelDir','edgeRouteType',
+ 'edgeLabelOffX','edgeLabelOffY'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => {
     const e = state.edges.find(e=>e.id===state.selectedEdge);
     if(!e) return;
     if(id==='edgeLabel') e.label = document.getElementById(id).value;
     if(id==='edgeStyle') e.style = document.getElementById(id).value;
     if(id==='edgeAnimIndex') { var v = document.getElementById(id).value; e.animIndex = v === '' ? undefined : parseInt(v); }
+    // 빈 값 = 자동 (최단 면 자동 선택으로 되돌림)
+    if(id==='edgeFromSide') { var sideF = document.getElementById(id).value; if(sideF) e.fromSide = sideF; else delete e.fromSide; }
+    if(id==='edgeToSide')   { var sideT = document.getElementById(id).value; if(sideT) e.toSide = sideT; else delete e.toSide; }
+    if(id==='edgeLabelDir') {
+      var dv = document.getElementById(id).value;
+      delete e.labelVertical;                       // 예전 키는 정리하고 labelDir로 통일
+      if(dv === 'h') delete e.labelDir; else e.labelDir = dv;
+    }
+    // 숫자 입력으로도 위치 조정 (드래그와 같은 오프셋을 쓴다). 0,0이면 기본 위치로 되돌림
+    if(id==='edgeLabelOffX' || id==='edgeLabelOffY') {
+      var ox = parseInt(document.getElementById('edgeLabelOffX').value) || 0;
+      var oy = parseInt(document.getElementById('edgeLabelOffY').value) || 0;
+      if(ox === 0 && oy === 0) delete e.labelOffset;
+      else e.labelOffset = { x: ox, y: oy };
+    }
+    // 'ortho'가 기본이라 값을 저장하지 않는다 (기존 파일과 호환)
+    if(id==='edgeRouteType') { var rt = document.getElementById(id).value; if(rt && rt!=='ortho') e.routeType = rt; else delete e.routeType; }
     render();
   });
 });
@@ -5099,6 +6107,15 @@ function applyColor(c) {
 function applyFontColor(c) {
   const n = state.nodes.find(n=>n.id===state.selected);
   if(n) { n.fontColor = c; document.getElementById('propFontColor').value = c; render(); }
+}
+
+function resetEdgeLabelOffset() {
+  const e = state.edges.find(ed => ed.id === state.selectedEdge);
+  if(!e || !e.labelOffset) return;
+  saveHistory();
+  delete e.labelOffset;
+  updateEdgePropPanel();
+  render();
 }
 
 function applyEdgeColor(c) {
@@ -5130,7 +6147,8 @@ function ctxDuplicate() {
   const n = state.nodes.find(n=>n.id===state.selected);
   if(!n) return;
   saveHistory();
-  const copy = {...n, id: state.nextId++, x: n.x+30, y: n.y+30, label: n.label+t('copy_suffix')};
+  // 40 = 그리드(20)의 배수라 복제본도 중심 정렬이 유지된다
+  const copy = {...n, id: state.nextId++, x: n.x+40, y: n.y+40, label: n.label+t('copy_suffix')};
   state.nodes.push(copy);
   selectNode(copy.id);
   render();
@@ -5156,6 +6174,308 @@ function clipboardCopy(cut) {
   }
 }
 
+// ════════════════════════════════════════════════════════
+// MERMAID IMPORT — flowchart/graph 텍스트를 붙여넣으면 도형으로 변환
+// ════════════════════════════════════════════════════════
+// [여는 괄호, 닫는 괄호, loom 타입] — 긴 패턴을 먼저 검사해야 한다
+var MERMAID_SHAPES = [
+  ['[(', ')]', 'database'], ['[[', ']]', 'process'], ['((', '))', 'start'],
+  ['{{', '}}', 'gateway'],  ['([', '])', 'start'],   ['[/', '/]', 'process'],
+  ['[\\', '\\]', 'process'], ['[', ']', 'process'],  ['(', ')', 'process'],
+  ['{', '}', 'decision'],   ['>', ']', 'process']
+];
+
+function stripMermaidFence(text) {
+  return String(text || '').replace(/^\s*```\s*mermaid\s*/i, '').replace(/```\s*$/, '');
+}
+
+function looksLikeMermaid(text) {
+  return /^\s*(graph|flowchart)\s+(TB|TD|BT|LR|RL)\b/i.test(stripMermaidFence(text));
+}
+
+// "A[Web Server]" → {id:'A', label:'Web Server', type:'process'}
+function parseMermaidNodeToken(tok) {
+  tok = String(tok || '').trim();
+  if(!tok) return null;
+  for(var i=0; i<MERMAID_SHAPES.length; i++) {
+    var open = MERMAID_SHAPES[i][0], close = MERMAID_SHAPES[i][1], type = MERMAID_SHAPES[i][2];
+    var oi = tok.indexOf(open);
+    if(oi > 0 && tok.slice(-close.length) === close) {
+      var id = tok.slice(0, oi).trim();
+      var label = tok.slice(oi + open.length, tok.length - close.length).trim();
+      label = label.replace(/^["'`]|["'`]$/g, '');
+      if(id) return { id: id, label: label || id, type: type };
+    }
+  }
+  return /^[A-Za-z0-9_.\-]+$/.test(tok) ? { id: tok, label: null, type: null } : null;
+}
+
+function parseMermaid(text) {
+  var lines = stripMermaidFence(text).split(/\r?\n/);
+  var dir = 'TD', nodes = {}, order = [], edges = [], groups = [], stack = [];
+
+  function ensure(tok) {
+    var p = parseMermaidNodeToken(tok);
+    if(!p) return null;
+    if(!nodes[p.id]) { nodes[p.id] = { id: p.id, label: p.label || p.id, type: p.type || 'process' }; order.push(p.id); }
+    else { if(p.label) nodes[p.id].label = p.label; if(p.type) nodes[p.id].type = p.type; }
+    if(stack.length) stack[stack.length-1].members.push(p.id);
+    return p.id;
+  }
+
+  var LINK = /(<-->|<-\.->|-\.->|-\.-|-->|---|==>|===|--o|--x)\s*(?:\|([^|]*)\|)?/;
+
+  lines.forEach(function(raw) {
+    var line = raw.replace(/%%.*$/, '').trim();          // 주석 제거
+    if(!line) return;
+    var mDir = line.match(/^(?:graph|flowchart)\s+(TB|TD|BT|LR|RL)\b/i);
+    if(mDir) { dir = mDir[1].toUpperCase(); return; }
+    var mSub = line.match(/^subgraph\s+(.*)$/i);
+    if(mSub) {
+      var title = mSub[1].trim().replace(/^[A-Za-z0-9_.\-]+\s*\[(.*)\]$/, '$1').replace(/^["']|["']$/g, '');
+      stack.push({ name: title || 'Group', members: [] });
+      return;
+    }
+    if(/^end$/i.test(line)) { if(stack.length) groups.push(stack.pop()); return; }
+    if(/^(classDef|class|style|linkStyle|click|direction)\b/i.test(line)) return;
+
+    // "-- text -->" 같은 표기를 "-->|text|" 로 정규화
+    line = line.replace(/--\s+([^->|][^-]*?)\s+-->/g, '-->|$1|')
+               .replace(/-\.\s*([^.|]+?)\s*\.->/g, '-.->|$1|')
+               .replace(/==\s+([^=|]+?)\s+==>/g, '==>|$1|');
+
+    var parts = [], ops = [], rest = line, guard = 0;
+    while(guard++ < 200) {
+      var m = rest.match(LINK);
+      if(!m) break;
+      parts.push(rest.slice(0, m.index));
+      ops.push({ op: m[1], label: (m[2] || '').trim() });
+      rest = rest.slice(m.index + m[0].length);
+    }
+    parts.push(rest);
+
+    if(!ops.length) { ensure(line.replace(/;$/, '')); return; }
+    var ids = parts.map(function(p) { return ensure(p.replace(/;$/, '')); });
+    for(var i = 0; i < ops.length; i++) {
+      if(ids[i] && ids[i+1]) {
+        var op = ops[i].op;
+        edges.push({
+          from: ids[i], to: ids[i+1], label: ops[i].label,
+          style: /-\./.test(op) ? 'dashed' : (/^<-/.test(op) ? 'both' : 'solid')
+        });
+      }
+    }
+  });
+  while(stack.length) groups.push(stack.pop());
+  return { dir: dir, nodes: nodes, order: order, edges: edges, groups: groups };
+}
+
+// 방향에 따라 레이어를 나눠 배치한다 (진입 간선 기준 최장경로 레이어링)
+function layoutMermaid(parsed) {
+  var ids = parsed.order, layer = {};
+  ids.forEach(function(id) { layer[id] = 0; });
+  for(var iter = 0; iter < ids.length; iter++) {
+    var changed = false;
+    parsed.edges.forEach(function(e) {
+      if(layer[e.to] != null && layer[e.from] != null && layer[e.to] < layer[e.from] + 1) {
+        layer[e.to] = layer[e.from] + 1; changed = true;
+      }
+    });
+    if(!changed) break;   // 순환이 있으면 ids.length 회에서 멈춘다
+  }
+  // 같은 subgraph 멤버끼리 붙여 놓아야 그룹 박스가 남의 노드를 삼키지 않는다
+  var groupOf = {};
+  (parsed.groups || []).forEach(function(g, gi) {
+    g.members.forEach(function(id) { if(groupOf[id] == null) groupOf[id] = gi; });
+  });
+  var buckets = {};
+  ids.forEach(function(id) { (buckets[layer[id]] = buckets[layer[id]] || []).push(id); });
+  Object.keys(buckets).forEach(function(k) {
+    buckets[k].sort(function(a, b) {
+      var ga = groupOf[a] == null ? 999 : groupOf[a], gb = groupOf[b] == null ? 999 : groupOf[b];
+      return ga - gb;
+    });
+  });
+  var maxLayer = Math.max.apply(null, ids.map(function(id) { return layer[id]; }).concat([0]));
+  var GAP_MAIN = 200, GAP_CROSS = 240;
+  var horizontal = (parsed.dir === 'LR' || parsed.dir === 'RL');
+  var pos = {};
+  Object.keys(buckets).forEach(function(k) {
+    var L = parseInt(k), list = buckets[k];
+    list.forEach(function(id, i) {
+      var main = L * GAP_MAIN;                       // 레이어 진행 방향
+      var cross = (i - (list.length-1)/2) * GAP_CROSS; // 같은 레이어 내 분산
+      if(parsed.dir === 'BT') main = (maxLayer - L) * GAP_MAIN;
+      if(parsed.dir === 'RL') main = (maxLayer - L) * GAP_MAIN;
+      pos[id] = horizontal ? { x: main, y: cross } : { x: cross, y: main };
+    });
+  });
+  return pos;
+}
+
+function importMermaidText(text, skipHistory) {
+  var parsed = parseMermaid(text);
+  if(!parsed.order.length) return 0;
+  var pos = layoutMermaid(parsed);
+
+  // 기존 내용 아래쪽에 배치
+  var startX = 200, startY = 200;
+  if(state.nodes.length) {
+    var maxY = 0;
+    state.nodes.forEach(function(n) { if(n.y + n.h > maxY) maxY = n.y + n.h; });
+    startY = maxY + 160;
+  }
+  var xs = parsed.order.map(function(id) { return pos[id].x; });
+  var minX = Math.min.apply(null, xs);
+
+  if(!skipHistory) saveHistory();
+  var idMap = {}, created = [];
+  parsed.order.forEach(function(id) {
+    var spec = parsed.nodes[id];
+    var cfg = NODE_TYPES[spec.type] || NODE_TYPES.process;
+    var cx = startX + (pos[id].x - minX), cy = startY + pos[id].y;
+    var n = {
+      id: state.nextId++, type: spec.type, label: spec.label,
+      x: snapCenter(cx - cfg.w/2, cfg.w), y: snapCenter(cy - cfg.h/2, cfg.h),
+      w: cfg.w, h: cfg.h, color: cfg.color, desc: '', alert: '',
+      layer: state.activeLayer || 1, namespace: 'default',
+      tolerations: [], nodeSelector: {}, animIndex: 1
+    };
+    idMap[id] = n.id;
+    state.nodes.push(n); created.push(n);
+  });
+  parsed.edges.forEach(function(e) {
+    if(idMap[e.from] == null || idMap[e.to] == null || idMap[e.from] === idMap[e.to]) return;
+    state.edges.push({
+      id: state.nextId++, from: idMap[e.from], to: idMap[e.to],
+      label: e.label || '', style: e.style, color: '#58a6ff',
+      waypoints: [], animIndex: 1
+    });
+  });
+  // subgraph → 멤버를 감싸는 그룹 박스
+  parsed.groups.forEach(function(g) {
+    var members = g.members.filter(function(id, i, arr) { return arr.indexOf(id) === i; })
+                           .map(function(id) { return state.nodes.find(function(n) { return n.id === idMap[id]; }); })
+                           .filter(Boolean);
+    if(members.length < 1) return;
+    var pad = 40;
+    var gx = Math.min.apply(null, members.map(function(n) { return n.x; })) - pad;
+    var gy = Math.min.apply(null, members.map(function(n) { return n.y; })) - pad - 10;
+    var gx2 = Math.max.apply(null, members.map(function(n) { return n.x + n.w; })) + pad;
+    var gy2 = Math.max.apply(null, members.map(function(n) { return n.y + n.h; })) + pad;
+    // 멤버가 아닌 노드가 박스 안에 들어가면 그룹을 만들지 않는다.
+    // loom은 그룹 소속을 "기하학적 포함"으로 판단하므로, 접었을 때 남의 노드가 사라진다.
+    var swallows = created.some(function(n) {
+      return members.indexOf(n) < 0 && n.x >= gx && n.y >= gy && n.x+n.w <= gx2 && n.y+n.h <= gy2;
+    });
+    if(swallows) return;
+    var grp = {
+      id: state.nextId++, type: 'group', label: g.name,
+      x: gx, y: gy, w: gx2-gx, h: gy2-gy,
+      color: NODE_TYPES.group.color, desc: '', alert: '',
+      layer: state.activeLayer || 1, namespace: 'default',
+      tolerations: [], nodeSelector: {}, animIndex: 1
+    };
+    alignNodeCenter(grp);
+    state.nodes.unshift(grp);   // 그룹은 뒤에 깔리도록 앞쪽에
+  });
+
+  clearSelection();
+  document.getElementById('hint').style.opacity = '0';
+  state.dirty = true;
+  render();
+  return created.length;
+}
+
+// Mermaid 원문을 그대로 담는 패널 노드를 만든다
+function addMermaidPanel(text) {
+  var src = stripMermaidFence(text).replace(/^\n+|\n+$/g, '');
+  var cfg = NODE_TYPES.mermaid;
+  var lines = src.split(/\r?\n/);
+  // 내용에 맞춰 크기 결정 (너무 커지지 않게 상한)
+  ctx.save();
+  ctx.font = fs(10) + "px ui-monospace, Menlo, Consolas, monospace";
+  var textW = Math.max.apply(null, lines.map(function(l) { return ctx.measureText(l).width; }).concat([120]));
+  ctx.restore();
+  // 기본은 그래프 렌더. 그리기 전까지는 원문이 보이고, CDN을 못 받으면 원문으로 남는다.
+  var w = Math.min(680, Math.max(420, Math.ceil(textW) + 24));
+  var h = Math.min(560, Math.max(300, 30 + lines.length * (fs(10) + 3) + 8));
+
+  var startX = 200, startY = 200;
+  if(state.nodes.length) {
+    var maxY = 0;
+    state.nodes.forEach(function(n) { if(n.y + n.h > maxY) maxY = n.y + n.h; });
+    startY = maxY + 160;
+  }
+  saveHistory();
+  var n = {
+    id: state.nextId++, type: 'mermaid', label: 'Mermaid', mermaid: src, mermaidRender: true,
+    x: startX, y: startY, w: w, h: h,
+    color: cfg.color, desc: '', alert: '',
+    layer: state.activeLayer || 1, namespace: 'default',
+    tolerations: [], nodeSelector: {}, animIndex: 1
+  };
+  alignNodeCenter(n);
+  state.nodes.push(n);
+  clearSelection();
+  selectNode(n.id);
+  document.getElementById('hint').style.opacity = '0';
+  state.dirty = true;
+  render();
+  return n;
+}
+
+// 패널을 실제 도형으로 변환 (패널은 없어지고 그 자리에 노드들이 생긴다)
+function convertMermaidPanel() {
+  var n = state.nodes.find(function(nd) { return nd.id === state.selected && nd.type === 'mermaid'; });
+  if(!n) return;
+  var src = n.mermaid;
+  if(!looksLikeMermaid(src)) { alert(t_mermaidEmpty()); return; }
+  saveHistory();
+  state.nodes = state.nodes.filter(function(nd) { return nd.id !== n.id; });
+  var count = importMermaidText(src, true);   // skipHistory — 위에서 이미 저장했다
+  if(count) showImportNotice(count);
+}
+
+var _mermaidChoiceResolve = null;
+function askMermaidChoice() {
+  return new Promise(function(resolve) {
+    _mermaidChoiceResolve = resolve;
+    var ov = document.getElementById('mermaid-choice-overlay');
+    ov.style.display = 'flex';
+  });
+}
+function resolveMermaidChoice(choice) {
+  document.getElementById('mermaid-choice-overlay').style.display = 'none';
+  var r = _mermaidChoiceResolve; _mermaidChoiceResolve = null;
+  if(r) r(choice);
+}
+
+// 붙여넣기 단일 진입점 — Mermaid면 어떻게 추가할지 묻고, 아니면 내부 클립보드
+document.addEventListener('paste', function(ev) {
+  var t = ev.target;
+  if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  var text = '';
+  try { text = (ev.clipboardData || window.clipboardData).getData('text') || ''; } catch(err) {}
+  if(looksLikeMermaid(text)) {
+    ev.preventDefault();
+    askMermaidChoice().then(function(choice) {
+      if(choice === 'shapes') {
+        var count = importMermaidText(text);
+        if(count) showImportNotice(count); else alert(t_mermaidEmpty());
+      } else if(choice === 'panel') {
+        addMermaidPanel(text);
+      }
+    });
+    return;
+  }
+  if(state.clipboard) { ev.preventDefault(); clipboardPaste(); }
+});
+
+function t_mermaidEmpty() {
+  return loomLang === 'en' ? 'No nodes found in the Mermaid text.' : 'Mermaid 텍스트에서 노드를 찾지 못했습니다.';
+}
+
 function clipboardPaste() {
   if(!state.clipboard || state.clipboard.nodes.length === 0) return;
   saveHistory();
@@ -5164,8 +6484,9 @@ function clipboardPaste() {
   state.clipboard.nodes.forEach(function(orig) {
     const newId = state.nextId++;
     idMap[orig.id] = newId;
-    newNodes.push({...orig, id: newId, x: orig.x + 30, y: orig.y + 30, layer: state.activeLayer || orig.layer});
+    newNodes.push({...orig, id: newId, x: orig.x + 40, y: orig.y + 40, layer: state.activeLayer || orig.layer});
   });
+  normalizeNodeCenters(newNodes);
   newNodes.forEach(function(n) { state.nodes.push(n); });
   // 엣지 복원 (ID 매핑)
   state.clipboard.edges.forEach(function(orig) {
@@ -5278,8 +6599,14 @@ function newDiagram() {
 // ════════════════════════════════════════════════════════
 // HISTORY
 // ════════════════════════════════════════════════════════
+// 되돌리기 단위. 레이어까지 포함해야 레이어 삭제/복제를 되돌릴 때
+// 노드가 존재하지 않는 레이어를 가리키는 상태로 남지 않는다.
+function historySnapshot() {
+  return JSON.stringify({nodes:state.nodes, edges:state.edges, nextId:state.nextId, layers:state.layers});
+}
+
 function saveHistory() {
-  const snap = JSON.stringify({nodes:state.nodes,edges:state.edges,nextId:state.nextId});
+  const snap = historySnapshot();
   // 현재 상태와 마지막 히스토리가 같으면 중복 저장하지 않음
   if(state.history.length && state.history[state.history.length-1] === snap) return;
   state.history.push(snap);
@@ -5305,19 +6632,23 @@ window.addEventListener('beforeunload', function(e) {
 
 function undo() {
   if(!state.history.length) return;
-  state.future.push(JSON.stringify({nodes:state.nodes,edges:state.edges,nextId:state.nextId}));
+  state.future.push(historySnapshot());
   const s = JSON.parse(state.history.pop());
   state.nodes = s.nodes; state.edges = s.edges; state.nextId = s.nextId;
+  if(s.layers) state.layers = s.layers;   // 레이어 추가/삭제/이름변경도 되돌린다
   syncSubInfraParent();
+  updateLayerList();
   clearSelection(); render();
 }
 
 function redo() {
   if(!state.future.length) return;
-  state.history.push(JSON.stringify({nodes:state.nodes,edges:state.edges,nextId:state.nextId}));
+  state.history.push(historySnapshot());
   const s = JSON.parse(state.future.pop());
   state.nodes = s.nodes; state.edges = s.edges; state.nextId = s.nextId;
+  if(s.layers) state.layers = s.layers;
   syncSubInfraParent();
+  updateLayerList();
   clearSelection(); render();
 }
 
@@ -5349,6 +6680,7 @@ function autoLayout() {
     n.x = 60 + (i%cols) * padX;
     n.y = 60 + Math.floor(i/cols) * padY;
   });
+  normalizeNodeCenters();   // 자동 배치 결과도 중심 정렬
   render();
 }
 
@@ -5372,7 +6704,7 @@ function updateStats() {
 // ════════════════════════════════════════════════════════
 // NOTE: k8sConfig, DEFAULT_RESOURCES, CURRENT_VERSION are declared near top (before resizeCanvas)
 
-var NON_INFRA_TYPES = ['group','note','start','end','process','decision'];
+var NON_INFRA_TYPES = ['group','note','start','end','process','decision','mermaid'];
 var ZERO_RESOURCES = { minCpu:0, maxCpu:0, minMem:0, maxMem:0, minDisk:0, maxDisk:0, gpu:0, replicas:0 };
 
 function getNodeResources(n) {
@@ -7138,14 +8470,21 @@ function addLayer() {
 
 function removeLayer(id) {
   if(state.layers.length <= 1) return;
-  if(!confirm(t('layer_confirm_del'))) return;
-  // Find the first remaining layer to move nodes into
-  var targetLayer = state.layers.find(l => l.id !== id);
-  var targetId = targetLayer ? targetLayer.id : 1;
-  state.nodes.forEach(n => { if((n.layer || 1) === id) n.layer = targetId; });
+  // 레이어에 속한 노드도 함께 삭제된다 — 몇 개가 사라지는지 먼저 알린다
+  var doomed = state.nodes.filter(n => (n.layer || 1) === id);
+  var msg = t('layer_confirm_del');
+  if(doomed.length) msg += '\n\n' + doomed.length + t('layer_confirm_del_count');
+  if(!confirm(msg)) return;
+  saveHistory();   // 변경 "전" 상태를 저장해야 Undo로 되돌릴 수 있다
+  var ids = new Set(doomed.map(n => n.id));
+  state.edges = state.edges.filter(e => !ids.has(e.from) && !ids.has(e.to));
+  state.nodes = state.nodes.filter(n => !ids.has(n.id));
   state.layers = state.layers.filter(l => l.id !== id);
   if(state.activeLayer === id) state.activeLayer = null;
-  saveHistory();
+  syncSubInfraParent();
+  clearSelection();
+  updateLayerList();
+  updateStats();
   render();
 }
 
@@ -7173,6 +8512,7 @@ function duplicateLayer(id) {
     if(l.name === baseName && idx === 1) idx = 2;
   });
   var newName = baseName + ' (' + idx + ')';
+  saveHistory();   // 변경 "전" 상태를 저장해야 Undo가 동작한다
   state.layers.push({id: newId, name: newName, visible: true});
   // Duplicate all nodes in the source layer
   var nodeMap = {};
@@ -7196,7 +8536,7 @@ function duplicateLayer(id) {
     }
   });
   state.activeLayer = newId;
-  saveHistory();
+  updateLayerList();
   render();
 }
 
@@ -7408,13 +8748,16 @@ function renderToCanvas(targetCanvas, filterLayerId) {
   // Draw
   state.nodes.filter(function(n){return n.type==='group' && !n._groupHidden && layerFilter(n);}).forEach(function(n){ drawNode(n); });
   state.nodes.filter(function(n){return n.type!=='group' && !n._groupHidden && layerFilter(n);}).forEach(function(n){ drawNode(n); });
-  state.edges.filter(function(e){
+  drawGroupLabels(state.nodes.filter(layerFilter));
+  var exportEdges = state.edges.filter(function(e){
     if(isEdgeHiddenByCollapse(e)) return false;
     if(filterLayerId == null) return true;
     var srcNode = state.nodes.find(function(n){return n.id===e.from;});
     var dstNode = state.nodes.find(function(n){return n.id===e.to;});
     return (srcNode && (srcNode.layer||1)===filterLayerId) || (dstNode && (dstNode.layer||1)===filterLayerId);
-  }).forEach(function(e){ drawEdge(e); });
+  });
+  rebuildAnchorMap(exportEdges);   // export 대상 집합 기준으로 앵커 재계산
+  exportEdges.forEach(function(e){ drawEdge(e); });
 
   // Restore
   ctx = origCtx;
@@ -7422,6 +8765,7 @@ function renderToCanvas(targetCanvas, filterLayerId) {
   state.multiSelect = origMulti; state.hovered = origHover;
   state.activeLayer = origActiveLayer;
   state.panX = origPanX; state.panY = origPanY; state.zoom = origZoom;
+  rebuildAnchorMap(getDrawableEdges());   // 화면 기준 앵커로 복원 (export 집합이 남지 않게)
 }
 
 function createExportCanvas(filterLayerId) {
@@ -7529,12 +8873,12 @@ var SHARE_NODE_KEYS = {
   resMinCpu:'rc', resMaxCpu:'rC', resMinMem:'rm', resMaxMem:'rM',
   resMinDisk:'rd', resMaxDisk:'rD', resGpu:'rg', resReplicas:'rp',
   fontColor:'fc', icon:'ic', waypoints:'wp', customIcon:'ci',
-  subNodes:'sn', subEdges:'se', animIndex:'ai'
+  subNodes:'sn', subEdges:'se', animIndex:'ai', labelVertical:'lv', mermaid:'mm', mermaidRender:'mr'
 };
 var SHARE_NODE_KEYS_REV = {};
 Object.keys(SHARE_NODE_KEYS).forEach(function(k) { SHARE_NODE_KEYS_REV[SHARE_NODE_KEYS[k]] = k; });
 
-var SHARE_EDGE_KEYS = { id:'i', from:'f', to:'t', style:'s', color:'c', label:'l', waypoints:'w', bidir:'b', animIndex:'ai' };
+var SHARE_EDGE_KEYS = { id:'i', from:'f', to:'t', style:'s', color:'c', label:'l', waypoints:'w', bidir:'b', animIndex:'ai', fromSide:'fs', toSide:'ts', labelVertical:'lv', labelOffset:'lo', routeType:'rt', labelDir:'ld' };
 var SHARE_EDGE_KEYS_REV = {};
 Object.keys(SHARE_EDGE_KEYS).forEach(function(k) { SHARE_EDGE_KEYS_REV[SHARE_EDGE_KEYS[k]] = k; });
 
@@ -7744,6 +9088,7 @@ function loadFromUrlParam() {
     if(d.layers && d.layers.length) { state.layers = d.layers; } else { state.layers = [{id:1, name:'Layer 1'}]; }
     state.activeLayer = null;
     state.nodes.forEach(function(n) { if(n.layer == null) n.layer = 1; });
+    normalizeNodeCenters();   // 공유 링크로 받은 다이어그램도 중심 정렬
     state.nextId = Math.max.apply(null, [].concat(state.nodes, state.edges).map(function(x) { return x.id || 0; }).concat([0])) + 1;
     state.dirty = false;
     sharedTab.state = snapshotTabState();
@@ -8462,6 +9807,7 @@ function importLoomJSON() {
         state.activeLayer = null;
         state.filters = { namespace: null, toleration: null, nodeSelector: null };
         state.nodes.forEach(function(n) { if(n.layer == null) n.layer = 1; });
+        normalizeNodeCenters();   // 기존 파일도 중심 정렬 (축당 최대 10px)
         state.nextId=Math.max(...[...state.nodes,...state.edges].map(x=>x.id||0),0)+1;
         clearSelection();
         state.dirty = false;
@@ -8534,6 +9880,7 @@ function applyImportedNodes(newNodes) {
     n.color = n.color || cfg.color;
     n.layer = 1;
     n.alert = 'ok';
+    alignNodeCenter(n);
     state.nodes.push(n);
   });
   clearSelection(); render();
