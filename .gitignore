@@ -1,0 +1,5 @@
+.DS_Store
+
+# vendor/ 재생성용 도구. 산출물이 아니므로 커밋하지 않는다.
+vendor/.venv/
+vendor/.build/

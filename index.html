@@ -9,8 +9,11 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<!-- 웹폰트 로컬 사본. Pretendard는 Google Fonts에 없는 패밀리라 예전 @import로는 끝내
+     안 받아졌고(요청에서 조용히 빠짐) 본문이 시스템 산세리프로 떨어져 있었다.
+     이제 여기서 같이 받는다. 파일이 없으면 CSS fallback 글꼴로 조용히 넘어간다. -->
+<link rel="stylesheet" href="vendor/fonts.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Pretendard:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap');
 
   :root {
     --bg: #0b0e14;
@@ -765,11 +768,30 @@
   .export-dropdown-item .exp-desc { font-size:10px; color:var(--text3); margin-left:28px; margin-top:-2px; }
   .export-dropdown-sep { height:1px; background:var(--border); margin:4px 0; }
 </style>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/gitbrent/PptxGenJS@3.12.0/dist/pptxgen.bundle.js"></script>
+<!-- xlsx + lz-string + jspdf + jspdf-autotable + pptxgen 을 이어 붙인 번들.
+     vendor/build-vendor.py 가 만든다. 버전을 바꿀 땐 그 스크립트와 아래 CDN 주소를 같이 맞출 것. -->
+<script src="vendor/lib.bundle.js"></script>
+<script>
+(function() {
+  // index.html만 떼어 복사해 간 경우를 위한 안전망. 번들이 통째로 빠지므로 보통 다섯 개가
+  // 다 걸리지만, 판정은 전역별로 한다 — 번들이 반만 실행된 경우에도 맞게 메운다.
+  // 이 라이브러리들은 부팅 중(LZString은 공유 링크 복원)에 이미 필요하므로 순서와 동기 로딩을
+  // 그대로 지켜야 한다. document.write라야 파싱을 멈춘 채 원래 순서대로 이어 붙는다.
+  var jsPDF = window.jspdf && window.jspdf.jsPDF;
+  var CANDIDATES = [
+    [!window.XLSX,      'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js'],
+    [!window.LZString,  'https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js'],
+    [!jsPDF,            'https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js'],
+    [!(jsPDF && jsPDF.API && jsPDF.API.autoTable),
+                        'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.2/jspdf.plugin.autotable.min.js'],
+    [!window.PptxGenJS, 'https://cdn.jsdelivr.net/gh/gitbrent/PptxGenJS@3.12.0/dist/pptxgen.bundle.js']
+  ];
+  var missing = CANDIDATES.filter(function(c) { return c[0]; });
+  if (!missing.length) return;
+  console.warn('[loom] vendor 로컬 사본 ' + missing.length + '개를 못 받아 CDN으로 대체합니다.');
+  missing.forEach(function(c) { document.write('<script src="' + c[1] + '"><\/script>'); });
+})();
+</script>
 </head>
 <body>
 
@@ -2247,6 +2269,40 @@ const gridCanvas = document.getElementById('gridCanvas');
 const gctx = gridCanvas.getContext('2d');
 const wrap = document.getElementById('canvasWrap');
 
+// ── 캔버스 웹폰트 예열 ──────────────────────────────────
+// DOM 텍스트와 달리 캔버스는 그린다고 웹폰트를 받아오지 않는다. Pretendard는 동적 서브셋이라
+// UI에 안 쓰인 글자(사용자가 입력한 드문 음절 등)는 서브셋이 안 받아진 상태고, 그러면
+// fillText가 조용히 대체 글꼴로 확정해버린다 — measureText 폭까지 같이 어긋난다.
+// 그리려는 글자를 직접 요청해 두는 수밖에 없는데, fillText를 한 겹 감싸면 28군데 호출부와
+// 내보내기용 임시 캔버스까지 한 번에 걸린다.
+(function() {
+  if (!window.CanvasRenderingContext2D || !document.fonts || !document.fonts.load) return;
+  var proto = CanvasRenderingContext2D.prototype;
+  var origFillText = proto.fillText;
+  var seen = {}, queued = '', scheduled = false;
+  function flush() {
+    scheduled = false;
+    var chars = queued; queued = '';
+    if (!chars) return;
+    Promise.all(['400', '600', '700'].map(function(w) {
+      return document.fonts.load(w + " 12px 'Pretendard'", chars).catch(function() {});
+    })).then(function() {
+      // 서브셋이 붙었으니 다시 그려야 글꼴과 글자 폭이 반영된다.
+      if (typeof render === 'function') render();
+    });
+  }
+  proto.fillText = function(text) {
+    var s = String(text);
+    for (var i = 0; i < s.length; i++) {
+      var ch = s.charAt(i);
+      // ASCII는 어떤 서브셋에든 들어 있어서 확인할 필요가 없다.
+      if (ch.charCodeAt(0) > 0x7f && !seen[ch]) { seen[ch] = 1; queued += ch; }
+    }
+    if (queued && !scheduled) { scheduled = true; setTimeout(flush, 0); }
+    return origFillText.apply(this, arguments);
+  };
+})();
+
 let state = {
   nodes: [],
   edges: [],
@@ -3133,31 +3189,50 @@ var _mermaidLibPromise = null;
 var _mermaidImgCache = {};
 var _mermaidRenderSeq = 0;
 
+// 로컬 사본(vendor/)을 먼저 쓰고, 없을 때만 CDN으로 넘어간다.
+// 상대 경로라 dev / dist / file:// 어디서 열어도 문서 위치 기준으로 풀린다.
+var MERMAID_LOCAL_SRC = 'vendor/mermaid.min.js';
+var MERMAID_CDN_SRC   = 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js';
+
+function injectScript(src) {
+  return new Promise(function(resolve, reject) {
+    var s = document.createElement('script');
+    s.src = src;
+    s.onload = function() { resolve(src); };
+    s.onerror = function() { reject(new Error('script load failed: ' + src)); };
+    document.head.appendChild(s);
+  });
+}
+
 function loadMermaidLib() {
   if(window.mermaid) return Promise.resolve(window.mermaid);
   if(_mermaidLibPromise) return _mermaidLibPromise;
-  _mermaidLibPromise = new Promise(function(resolve, reject) {
-    var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js';
-    s.onload = function() {
-      try {
-        // htmlLabels를 끄는 게 핵심이다. 켜져 있으면 라벨을 <foreignObject> 안의
-        // HTML로 내보내는데, 거기 <br>처럼 닫히지 않는 태그가 섞인다.
-        // <img>로 불러오는 SVG는 엄격한 XML로 파싱되므로 그 순간 디코딩이 실패한다.
-        window.mermaid.initialize({
-          startOnLoad: false,
-          securityLevel: 'strict',
-          theme: (loomTheme === 'light') ? 'default' : 'dark',
-          htmlLabels: false,
-          flowchart: { htmlLabels: false },
-          suppressErrorRendering: true   // 파싱 실패 시 에러 그래픽을 페이지에 심지 않도록
-        });
-        resolve(window.mermaid);
-      } catch(err) { reject(err); }
-    };
-    s.onerror = function() { reject(new Error('CDN load failed')); };
-    document.head.appendChild(s);
-  });
+  _mermaidLibPromise = injectScript(MERMAID_LOCAL_SRC)
+    .then(function() {
+      // 파일은 받았어도 평가 중 깨져 전역이 안 잡히는 경우가 있다(예: 문서 인코딩 불일치).
+      if(!window.mermaid) throw new Error('local copy did not define mermaid');
+    })
+    .catch(function(err) {
+      // vendor 파일을 빼고 index.html만 복사해 간 경우를 위한 안전망.
+      // 여기로 들어왔다는 건 로컬 사본이 없거나 망가졌다는 뜻이라 눈에 띄게 알린다.
+      console.warn('[loom] ' + MERMAID_LOCAL_SRC + ' 로드 실패 (' + err.message + ') — CDN으로 대체합니다.');
+      return injectScript(MERMAID_CDN_SRC);
+    })
+    .then(function() {
+      if(!window.mermaid) throw new Error('mermaid load failed');
+      // htmlLabels를 끄는 게 핵심이다. 켜져 있으면 라벨을 <foreignObject> 안의
+      // HTML로 내보내는데, 거기 <br>처럼 닫히지 않는 태그가 섞인다.
+      // <img>로 불러오는 SVG는 엄격한 XML로 파싱되므로 그 순간 디코딩이 실패한다.
+      window.mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        theme: (loomTheme === 'light') ? 'default' : 'dark',
+        htmlLabels: false,
+        flowchart: { htmlLabels: false },
+        suppressErrorRendering: true   // 파싱 실패 시 에러 그래픽을 페이지에 심지 않도록
+      });
+      return window.mermaid;
+    });
   return _mermaidLibPromise;
 }
 
@@ -6397,7 +6472,7 @@ function addMermaidPanel(text) {
   ctx.font = fs(10) + "px ui-monospace, Menlo, Consolas, monospace";
   var textW = Math.max.apply(null, lines.map(function(l) { return ctx.measureText(l).width; }).concat([120]));
   ctx.restore();
-  // 기본은 그래프 렌더. 그리기 전까지는 원문이 보이고, CDN을 못 받으면 원문으로 남는다.
+  // 기본은 그래프 렌더. 그리기 전까지는 원문이 보이고, 라이브러리를 못 받으면 원문으로 남는다.
   var w = Math.min(680, Math.max(420, Math.ceil(textW) + 24));
   var h = Math.min(560, Math.max(300, 30 + lines.length * (fs(10) + 3) + 8));
 
@@ -9353,12 +9428,24 @@ function exportExcel(layerIds) {
 // ════════════════════════════════════════════════════════
 var _pdfFontCache = null; // cached base64 font data
 
+// jsPDF는 woff2를 못 읽어서 vendor/fonts 와는 별개로 TTF 원본이 필요하다.
+var PDF_FONT_LOCAL = 'vendor/Pretendard-Regular.ttf';
+var PDF_FONT_CDN   = 'https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/public/static/alternative/Pretendard-Regular.ttf';
+
+function fetchFontBuffer(url) {
+  return fetch(url).then(function(res) {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.arrayBuffer();
+  });
+}
+
 function loadKoreanFont() {
   if (_pdfFontCache) return Promise.resolve(_pdfFontCache);
-  return fetch('https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/public/static/alternative/Pretendard-Regular.ttf')
-    .then(function(res) {
-      if (!res.ok) throw new Error('Font download failed');
-      return res.arrayBuffer();
+  return fetchFontBuffer(PDF_FONT_LOCAL)
+    .catch(function(err) {
+      // file:// 로 열면 상대 경로 fetch가 CORS로 막힌다. 그 경우까지 PDF를 살리려고 CDN을 남겨둔다.
+      console.warn('[loom] ' + PDF_FONT_LOCAL + ' 로드 실패 (' + err.message + ') — CDN으로 대체합니다.');
+      return fetchFontBuffer(PDF_FONT_CDN);
     })
     .then(function(buf) {
       var binary = '';
@@ -11274,6 +11361,10 @@ function fitView() {
 // ════════════════════════════════════════════════════════
 state.panX = 40; state.panY = 40;
 render();
+
+// 웹폰트는 비동기로 붙는다. 캔버스는 그리는 시점에 폰트가 없으면 대체 글꼴로 확정해버리고
+// 스스로 다시 그리지 않으므로, 준비되면 한 번 더 그려서 글자 폭까지 맞춘다.
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(function() { render(); });
 
 // Auto-load: restore tabs, then check URL params, then localStorage
 (function autoLoad() {
