@@ -1104,7 +1104,7 @@
             <textarea id="propMermaid" rows="8" spellcheck="false"
               style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;resize:vertical"></textarea>
           </div>
-          <div class="prop-row">
+          <div class="prop-row" id="mermaidConvertRow">
             <button class="tbtn" onclick="convertMermaidPanel()" style="flex:1;justify-content:center"
                     data-i18n="rp_mermaid_convert">📊 도형으로 변환</button>
           </div>
@@ -1568,11 +1568,11 @@
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;
        padding:20px;min-width:340px;max-width:420px;box-shadow:0 12px 40px rgba(0,0,0,0.5)">
     <h2 style="margin:0 0 6px;font-size:15px;color:var(--text)" data-i18n="mmd_title">Mermaid 텍스트 감지됨</h2>
-    <p style="margin:0 0 16px;font-size:12px;color:var(--text2);line-height:1.5" data-i18n="mmd_desc">
+    <p id="mmdChoiceDesc" style="margin:0 0 16px;font-size:12px;color:var(--text2);line-height:1.5" data-i18n="mmd_desc">
       어떻게 추가할까요?</p>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="mbtn primary" onclick="resolveMermaidChoice('shapes')" data-i18n="mmd_as_shapes">📊 도표로 그리기</button>
-      <button class="mbtn" onclick="resolveMermaidChoice('panel')" data-i18n="mmd_as_panel">📄 Mermaid 패널로 추가</button>
+      <button id="mmdChoiceShapes" class="mbtn primary" onclick="resolveMermaidChoice('shapes')" data-i18n="mmd_as_shapes">📊 도표로 그리기</button>
+      <button id="mmdChoicePanel" class="mbtn" onclick="resolveMermaidChoice('panel')" data-i18n="mmd_as_panel">📄 Mermaid 패널로 추가</button>
       <button class="mbtn" onclick="resolveMermaidChoice(null)" data-i18n="md_cancel">취소</button>
     </div>
   </div>
@@ -1909,6 +1909,7 @@ const T = {
     rp_node_label_dir: '텍스트 방향',
     rp_mermaid_src: 'Mermaid 원문', rp_mermaid_convert: '📊 도형으로 변환', rp_mermaid_render: '그래프로 보기',
     mmd_title: 'Mermaid 텍스트 감지됨', mmd_desc: '어떻게 추가할까요?',
+    mmd_desc_render_only: '도형 변환은 flowchart / graph 문법만 지원합니다. 이 다이어그램은 패널에 그대로 그려집니다.',
     mmd_as_shapes: '📊 도표로 그리기', mmd_as_panel: '📄 Mermaid 패널로 추가',
     rp_edge_route: '선 타입', rp_route_ortho: '직각', rp_route_straight: '직선', rp_route_curve: '곡선형',
     rp_side_auto: '자동', rp_side_top: '위', rp_side_right: '오른쪽',
@@ -2087,6 +2088,7 @@ const T = {
     rp_node_label_dir: 'Text direction',
     rp_mermaid_src: 'Mermaid source', rp_mermaid_convert: '📊 Convert to shapes', rp_mermaid_render: 'Show as graph',
     mmd_title: 'Mermaid text detected', mmd_desc: 'How would you like to add it?',
+    mmd_desc_render_only: 'Shape conversion supports flowchart / graph only. This diagram will be drawn as a panel.',
     mmd_as_shapes: '📊 Draw as diagram', mmd_as_panel: '📄 Add as Mermaid panel',
     rp_edge_route: 'Line type', rp_route_ortho: 'Orthogonal', rp_route_straight: 'Straight', rp_route_curve: 'Curved',
     rp_side_auto: 'Auto', rp_side_top: 'Top', rp_side_right: 'Right',
@@ -6070,6 +6072,9 @@ function updatePropPanel() {
   if(isMmd) {
     document.getElementById('propMermaid').value = n.mermaid || '';
     document.getElementById('propMermaidRender').checked = !!n.mermaidRender;
+    // 도형 변환은 flowchart/graph만 가능하다 — 안 되는 문법이면 버튼을 감춘다
+    document.getElementById('mermaidConvertRow').style.display =
+      looksLikeFlowchart(n.mermaid) ? '' : 'none';
   }
   document.getElementById('propFontColor').value = n.fontColor || contrastTextColor(n.color || (NODE_TYPES[n.type]||NODE_TYPES.server).color);
   document.getElementById('propW').value = n.w;
@@ -6264,8 +6269,35 @@ function stripMermaidFence(text) {
   return String(text || '').replace(/^\s*```\s*mermaid\s*/i, '').replace(/```\s*$/, '');
 }
 
+// 다이어그램 종류를 알려주는 첫 줄을 찾는다.
+// 헤더 앞에는 YAML 프런트매터(--- ... ---), %%{init:...}%% 지시자, %% 주석, 빈 줄이 올 수 있다.
+function mermaidHeaderLine(text) {
+  var src = stripMermaidFence(text).replace(/^\uFEFF/, '');
+  src = src.replace(/^\s*---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(\r?\n|$)/, '');
+  var lines = src.split(/\r?\n/);
+  for(var i = 0; i < lines.length; i++) {
+    var l = lines[i].trim();
+    if(!l || /^%%/.test(l)) continue;
+    return l;
+  }
+  return '';
+}
+
+// 도형으로 변환할 수 있는 건 flowchart/graph 뿐이다 (importMermaidText가 이 문법만 읽는다)
+var MERMAID_FLOW_RE = /^(?:graph|flowchart(?:-elk)?)\s+(?:TB|TD|BT|LR|RL)\b/i;
+// 이름이 고유해서 뒤에 인자가 붙어도 오인할 걱정이 없는 것들
+var MERMAID_LOOSE_RE = /^(?:sequenceDiagram|classDiagram(?:-v2)?|stateDiagram(?:-v2)?|erDiagram|quadrantChart|requirementDiagram|gitGraph|sankey-beta|xychart-beta|block-beta|packet-beta|architecture-beta|radar-beta|C4Context|C4Container|C4Component|C4Dynamic|C4Deployment)\b/i;
+// 평범한 문장에도 흔히 쓰이는 단어들 — 줄 전체가 키워드일 때만 인정한다
+var MERMAID_STRICT_RE = /^(?:pie(?:\s+showData)?(?:\s+title\s+.+)?|gantt|journey|mindmap|timeline|kanban|zenuml)$/i;
+
+function looksLikeFlowchart(text) {
+  return MERMAID_FLOW_RE.test(mermaidHeaderLine(text));
+}
+
+// 붙여넣기 감지용 — mermaid가 그릴 수 있는 다이어그램이면 모두 받는다
 function looksLikeMermaid(text) {
-  return /^\s*(graph|flowchart)\s+(TB|TD|BT|LR|RL)\b/i.test(stripMermaidFence(text));
+  var head = mermaidHeaderLine(text);
+  return MERMAID_FLOW_RE.test(head) || MERMAID_LOOSE_RE.test(head) || MERMAID_STRICT_RE.test(head);
 }
 
 // "A[Web Server]" → {id:'A', label:'Web Server', type:'process'}
@@ -6505,7 +6537,8 @@ function convertMermaidPanel() {
   var n = state.nodes.find(function(nd) { return nd.id === state.selected && nd.type === 'mermaid'; });
   if(!n) return;
   var src = n.mermaid;
-  if(!looksLikeMermaid(src)) { alert(t_mermaidEmpty()); return; }
+  // 변환기는 flowchart/graph 문법만 읽는다. 나머지는 패널 렌더링으로 두는 게 맞다.
+  if(!looksLikeFlowchart(src)) { alert(t_mermaidNotFlowchart()); return; }
   saveHistory();
   state.nodes = state.nodes.filter(function(nd) { return nd.id !== n.id; });
   var count = importMermaidText(src, true);   // skipHistory — 위에서 이미 저장했다
@@ -6513,9 +6546,15 @@ function convertMermaidPanel() {
 }
 
 var _mermaidChoiceResolve = null;
-function askMermaidChoice() {
+// canConvert=false면 도형 변환기가 읽을 수 없는 문법이라 패널로 추가하는 길만 남긴다
+function askMermaidChoice(canConvert) {
   return new Promise(function(resolve) {
     _mermaidChoiceResolve = resolve;
+    document.getElementById('mmdChoiceShapes').style.display = canConvert ? '' : 'none';
+    document.getElementById('mmdChoicePanel').classList.toggle('primary', !canConvert);
+    var desc = document.getElementById('mmdChoiceDesc');
+    desc.setAttribute('data-i18n', canConvert ? 'mmd_desc' : 'mmd_desc_render_only');
+    desc.textContent = t(canConvert ? 'mmd_desc' : 'mmd_desc_render_only');
     var ov = document.getElementById('mermaid-choice-overlay');
     ov.style.display = 'flex';
   });
@@ -6534,7 +6573,7 @@ document.addEventListener('paste', function(ev) {
   try { text = (ev.clipboardData || window.clipboardData).getData('text') || ''; } catch(err) {}
   if(looksLikeMermaid(text)) {
     ev.preventDefault();
-    askMermaidChoice().then(function(choice) {
+    askMermaidChoice(looksLikeFlowchart(text)).then(function(choice) {
       if(choice === 'shapes') {
         var count = importMermaidText(text);
         if(count) showImportNotice(count); else alert(t_mermaidEmpty());
@@ -6549,6 +6588,12 @@ document.addEventListener('paste', function(ev) {
 
 function t_mermaidEmpty() {
   return loomLang === 'en' ? 'No nodes found in the Mermaid text.' : 'Mermaid 텍스트에서 노드를 찾지 못했습니다.';
+}
+
+function t_mermaidNotFlowchart() {
+  return loomLang === 'en'
+    ? 'Only flowchart / graph diagrams can be converted to shapes. Other diagram types stay as a rendered panel.'
+    : '도형으로 바꿀 수 있는 건 flowchart / graph 문법뿐입니다. 다른 종류는 패널에 그려진 그대로 사용하세요.';
 }
 
 function clipboardPaste() {
