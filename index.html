@@ -3276,12 +3276,15 @@ function getMermaidImage(n) {
 
   entry = { status: 'loading' };
   _mermaidImgCache[key] = entry;
+  var cell = null;
   loadMermaidLib().then(function(m) {
     // 렌더링용 임시 DOM은 화면 밖 컨테이너에 가둔다.
     // 컨테이너를 주지 않으면 mermaid가 실패 시 body에 에러 그래픽을 붙여 버린다.
-    return m.render('loom-mmd-' + (++_mermaidRenderSeq), src, mermaidSandbox());
+    // 이 렌더 전용 칸을 써야 동시에 도는 다른 렌더와 서로 지우지 않는다.
+    cell = mermaidSandboxCell();
+    return m.render('loom-mmd-' + (++_mermaidRenderSeq), src, cell);
   }).then(function(res) {
-    mermaidSandbox().innerHTML = '';
+    releaseMermaidCell(cell);
     var norm = normalizeMermaidSvg(res.svg);
     // <img>는 SVG를 엄격한 XML로 읽는다. 미리 검사해서 원인을 알려준다.
     var perr = new DOMParser().parseFromString(norm.svg, 'image/svg+xml').querySelector('parsererror');
@@ -3297,7 +3300,7 @@ function getMermaidImage(n) {
     img.onerror = function() { entry.status = 'error'; entry.error = 'SVG decode failed'; render(); };
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(norm.svg);
   }).catch(function(err) {
-    mermaidSandbox().innerHTML = '';   // 실패해도 흔적을 남기지 않는다
+    releaseMermaidCell(cell);          // 실패해도 흔적을 남기지 않는다
     entry.status = 'error';
     entry.error = String((err && err.message) || err).replace(/\s+/g, ' ').slice(0, 70);
     render();
@@ -3316,6 +3319,20 @@ function mermaidSandbox() {
     document.body.appendChild(el);
   }
   return el;
+}
+
+// 렌더 한 건이 혼자 쓸 칸을 새로 떼어 준다.
+// mermaid.render()는 넘겨받은 컨테이너를 시작하면서 비운다. 그래서 패널 여러 개가
+// 동시에 그려질 때 컨테이너를 공유하면 나중에 시작한 렌더가 먼저 돌던 렌더의 작업용
+// DOM을 지워버리고, 먼저 돌던 쪽은 제 노드를 못 찾아 null.appendChild로 죽는다.
+function mermaidSandboxCell() {
+  var cell = document.createElement('div');
+  mermaidSandbox().appendChild(cell);
+  return cell;
+}
+
+function releaseMermaidCell(cell) {
+  if(cell && cell.parentNode) cell.parentNode.removeChild(cell);
 }
 
 // Mermaid 패널 — 원문을 그대로 보관해 보여준다 (도형으로 변환하지 않은 형태)
