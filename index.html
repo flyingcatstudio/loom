@@ -872,8 +872,12 @@
         <span class="exp-icon">📽</span> PowerPoint (.pptx)
       </button>
       <div class="export-dropdown-sep"></div>
-      <button class="export-dropdown-item" onclick="closeExportMenu();openExportLayerPicker(function(l){exportPNG(l)})">
+      <button class="export-dropdown-item" onclick="closeExportMenu();openExportLayerPicker(function(l,o){exportPNG(l,o&amp;&amp;o.scale)},{scale:true})">
         <span class="exp-icon">📷</span> <span data-i18n="tb_png">PNG (이미지)</span>
+      </button>
+      <button class="export-dropdown-item" onclick="closeExportMenu();openExportLayerPicker(function(l,o){exportSVG(l,o&amp;&amp;o.embedFont)},{font:true})">
+        <span class="exp-icon">◇</span> <span data-i18n="tb_svg">SVG (벡터)</span>
+        <div class="exp-desc" data-i18n="tb_svg_desc">확대해도 글자가 깨지지 않음</div>
       </button>
       <div class="export-dropdown-sep"></div>
       <button class="export-dropdown-item" onclick="closeExportMenu();openExportLayerPicker(function(l){generateK8sYAMLAll(l)})">
@@ -1788,6 +1792,18 @@
 .elp-layer input[type="checkbox"] { accent-color:var(--accent); cursor:pointer; width:14px; height:14px; }
 .elp-layer .elp-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .elp-layer .elp-cnt { font-size:9px; color:var(--text3); min-width:18px; text-align:right; }
+.elp-scale { border-top:1px solid var(--border); padding-top:12px; margin-bottom:14px; }
+.elp-scale-label { font-size:11px; font-weight:600; color:var(--text2); margin-bottom:7px; }
+.elp-scale-opts { display:flex; gap:6px; }
+.elp-scale-opts button {
+  flex:1; padding:7px 0; border:1px solid var(--border2); border-radius:6px;
+  background:var(--surface2); color:var(--text2); font-family:inherit; font-size:12px;
+  font-weight:600; cursor:pointer; transition:background .12s, border-color .12s, color .12s;
+}
+.elp-scale-opts button:hover:not(:disabled) { background:var(--surface3); color:var(--text); }
+.elp-scale-opts button.active { background:var(--accent2); border-color:var(--accent); color:#fff; }
+.elp-scale-opts button:disabled { opacity:.35; cursor:not-allowed; }
+.elp-scale-hint { font-size:10px; color:var(--text3); margin-top:7px; min-height:13px; }
 .elp-actions { display:flex; gap:8px; justify-content:flex-end; align-items:center; }
 .elp-actions button {
   height:30px; padding:0 14px; border-radius:6px; font-size:11.5px; font-weight:600;
@@ -2020,6 +2036,14 @@ const T = {
     elp_cancel: '취소',
     elp_export: 'Export',
     elp_no_layer: '레이어를 하나 이상 선택해 주세요.',
+    elp_title_img: '이미지 내보내기',
+    tb_svg: 'SVG (벡터)',
+    tb_svg_desc: '확대해도 글자가 깨지지 않음',
+    elp_embed_font: '폰트 포함',
+    elp_embed_font_desc: '다른 PC에서도 글자 모양이 그대로 유지됩니다. 파일이 약 600KB 커집니다.',
+    elp_scale: '해상도',
+    elp_scale_toobig: '이 배율은 브라우저 캔버스 한계를 넘습니다.',
+    export_too_big: '이미지가 너무 커서 만들지 못했습니다. 배율을 낮춰 주세요.',
     xlsx_loading: 'SheetJS 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.',
     pdf_loading: 'jsPDF 라이브러리 로딩 중입니다. 잠시 후 다시 시도해주세요.',
     pdf_font_fail: '폰트 로딩 실패. 기본 폰트로 생성합니다.',
@@ -2190,6 +2214,14 @@ const T = {
     elp_cancel: 'Cancel',
     elp_export: 'Export',
     elp_no_layer: 'Please select at least one layer.',
+    elp_title_img: 'Export Image',
+    tb_svg: 'SVG (Vector)',
+    tb_svg_desc: 'Text stays sharp at any zoom',
+    elp_embed_font: 'Embed font',
+    elp_embed_font_desc: 'Keeps text identical on other machines. Adds about 600KB.',
+    elp_scale: 'Resolution',
+    elp_scale_toobig: 'This scale exceeds the browser canvas limit.',
+    export_too_big: 'The image was too large to generate. Try a lower scale.',
     xlsx_loading: 'SheetJS library is loading. Please try again shortly.',
     pdf_loading: 'jsPDF library is loading. Please try again shortly.',
     pdf_font_fail: 'Font loading failed. Using default font.',
@@ -3116,7 +3148,13 @@ function render() {
 }
 
 function fs(base) { return Math.round(base * state.fontSize / 12); }
-function font(weight, base, family) { return weight + ' ' + fs(base) + "px '" + (family || 'Pretendard') + "'"; }
+function fontPx(weight, px, family) { return weight + ' ' + px + "px '" + (family || 'Pretendard') + "'"; }
+function font(weight, base, family) { return fontPx(weight, fs(base), family); }
+
+// 내보내기 배율. 캔버스는 월드 좌표 1:1로 그리므로 이 값이 곧 결과 이미지의 해상도 배수다.
+// 대부분의 그리기는 ctx 변환에 얹혀 저절로 커지지만, drawFixedText 처럼 변환을 초기화하고
+// 화면 픽셀로 직접 그리는 쪽은 이 값을 따로 곱해줘야 한다. 화면 렌더링 중에는 항상 1이다.
+var exportScale = 1;
 
 // 줌 배율과 무관하게 항상 같은 화면 크기로 그리는 텍스트.
 // (wx,wy)는 기준이 되는 월드 좌표(보통 박스 모서리)이고, dx/dy는 거기서부터의
@@ -3126,20 +3164,24 @@ function font(weight, base, family) { return weight + ' ' + fs(base) + "px '" + 
 function drawFixedText(text, wx, wy, opts) {
   const o = opts || {};
   const m = ctx.getTransform();
-  const sx = m.a*wx + m.c*wy + m.e + (o.dx || 0);
-  const sy = m.b*wx + m.d*wy + m.f + (o.dy || 0);
+  // 변환을 초기화하고 그리므로 배율이 저절로 반영되지 않는다. 글자 크기와 오프셋에
+  // 직접 곱해준다. fs()를 배율에 곱해 넣지 않고 결과에 곱하는 건, fs가 반올림이라
+  // fs(size*S)로 하면 확대가 아니라 살짝 다른 레이아웃이 되기 때문이다.
+  const S = exportScale;
+  const sx = m.a*wx + m.c*wy + m.e + (o.dx || 0) * S;
+  const sy = m.b*wx + m.d*wy + m.f + (o.dy || 0) * S;
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.font = font(o.weight || '600', o.size || 11);
+  ctx.font = fontPx(o.weight || '600', fs(o.size || 11) * S);
   ctx.textAlign = o.align || 'left';
   const maxPx = (o.maxWorldWidth != null) ? o.maxWorldWidth * Math.abs(m.a) : null;
   if(maxPx != null && maxPx <= 1) { ctx.restore(); return; }   // 박스가 너무 작으면 생략
   // 배경 칩 — 뒤에 무엇이 있든 읽히도록 (엣지 라벨과 같은 방식)
   if(o.bg) {
     const tw = Math.min(ctx.measureText(text).width, maxPx != null ? maxPx : Infinity);
-    const th = fs(o.size || 11);
+    const th = fs(o.size || 11) * S;
     ctx.fillStyle = o.bg;
-    ctx.fillRect(sx - 3, sy - th, tw + 6, th + 4);
+    ctx.fillRect(sx - 3*S, sy - th, tw + 6*S, th + 4*S);
   }
   ctx.fillStyle = o.color || '#fff';
   if(maxPx != null) ctx.fillText(text, sx, sy, maxPx);
@@ -7193,6 +7235,7 @@ function generateHelmValues(layerIds) {
 // ── IaC Modal controller ──
 
 function showIaCModal(title, code, filename, format) {
+  code = '# Generated by Loom — ' + WATERMARK_TEXT + '\n' + code;
   iacState = { code: code, filename: filename, format: format };
   document.getElementById('iacModalTitle').textContent = title;
   document.getElementById('iacModalCode').textContent = code;
@@ -8859,9 +8902,312 @@ function updateMinimap() {
 }
 
 // ════════════════════════════════════════════════════════
+// SVG EXPORT — 캔버스 호출을 받아적는 컨텍스트
+// ════════════════════════════════════════════════════════
+// renderToCanvas 가 이미 전역 ctx 를 갈아끼우는 구조라, 여기에 이 객체를 끼워 넣으면
+// 그리기 코드(drawNode/drawEdge…)를 한 줄도 안 고치고 벡터 출력이 나온다.
+//
+// 좌표는 "점을 추가하는 시점의" 변환을 즉시 먹여서 넣는다 — 캔버스와 같은 규칙이다.
+// 나중에 transform 속성으로 몰아 붙이면 경로 도중 변환이 바뀌는 경우가 틀어지는데,
+// drawFixedText 의 save/setTransform/restore 가 정확히 그 패턴이다.
+// 대신 좌표를 구워버린 만큼 선 두께와 점선 간격에는 배율을 직접 곱해줘야 한다.
+function svgNum(v) { return Math.round(v * 100) / 100; }
+function svgEsc(s) {
+  return String(s).replace(/[&<>"]/g, function(c) {
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c];
+  });
+}
+
+function SvgCtx(w, h, bg) {
+  this._w = w; this._h = h; this._bg = bg;
+  this._body = []; this._defs = []; this._filters = {};
+  this._uid = 0; this._groups = 0;
+  this._m = { a:1, b:0, c:0, d:1, e:0, f:0 };
+  this._stack = [];
+  this._d = '';
+  this._dash = [];
+  // 글자 폭은 진짜 캔버스에 물어본다. 박스 크기·말줄임·maxWidth 가 전부 여기 달려 있어서
+  // 근사치를 쓰면 레이아웃이 화면과 달라진다.
+  this._measure = document.createElement('canvas').getContext('2d');
+  this.fillStyle = '#000'; this.strokeStyle = '#000';
+  this.lineWidth = 1; this.lineCap = 'butt'; this.lineJoin = 'miter';
+  this.font = "10px 'Pretendard'";
+  this.textAlign = 'start'; this.textBaseline = 'alphabetic';
+  this.globalAlpha = 1;
+  this.shadowColor = 'rgba(0,0,0,0)'; this.shadowBlur = 0;
+}
+
+SvgCtx.prototype._pt = function(x, y) {
+  var m = this._m;
+  return [m.a*x + m.c*y + m.e, m.b*x + m.d*y + m.f];
+};
+SvgCtx.prototype._sc = function() {
+  var m = this._m;
+  return Math.sqrt(Math.abs(m.a*m.d - m.b*m.c)) || 1;
+};
+SvgCtx.prototype._mul = function(a, b, c, d, e, f) {
+  var m = this._m;
+  this._m = {
+    a: m.a*a + m.c*b,        b: m.b*a + m.d*b,
+    c: m.a*c + m.c*d,        d: m.b*c + m.d*d,
+    e: m.a*e + m.c*f + m.e,  f: m.b*e + m.d*f + m.f
+  };
+};
+SvgCtx.prototype._matrixAttr = function() {
+  var m = this._m;
+  return 'matrix(' + [m.a,m.b,m.c,m.d,m.e,m.f].map(svgNum).join(',') + ')';
+};
+
+SvgCtx.prototype.save = function() {
+  this._stack.push({
+    m: this._m, groups: this._groups, dash: this._dash,
+    fillStyle: this.fillStyle, strokeStyle: this.strokeStyle,
+    lineWidth: this.lineWidth, lineCap: this.lineCap, lineJoin: this.lineJoin,
+    font: this.font, textAlign: this.textAlign, textBaseline: this.textBaseline,
+    globalAlpha: this.globalAlpha, shadowColor: this.shadowColor, shadowBlur: this.shadowBlur
+  });
+};
+SvgCtx.prototype.restore = function() {
+  var s = this._stack.pop();
+  if(!s) return;
+  // clip() 이 열어둔 <g> 는 여기서 닫는다 — 캔버스의 clip 은 restore 로 풀리므로.
+  while(this._groups > s.groups) { this._body.push('</g>'); this._groups--; }
+  this._m = s.m; this._dash = s.dash;
+  this.fillStyle = s.fillStyle; this.strokeStyle = s.strokeStyle;
+  this.lineWidth = s.lineWidth; this.lineCap = s.lineCap; this.lineJoin = s.lineJoin;
+  this.font = s.font; this.textAlign = s.textAlign; this.textBaseline = s.textBaseline;
+  this.globalAlpha = s.globalAlpha; this.shadowColor = s.shadowColor; this.shadowBlur = s.shadowBlur;
+};
+
+SvgCtx.prototype.translate = function(x, y) { this._mul(1,0,0,1,x,y); };
+SvgCtx.prototype.scale = function(x, y) { this._mul(x,0,0,y,0,0); };
+SvgCtx.prototype.rotate = function(a) { this._mul(Math.cos(a), Math.sin(a), -Math.sin(a), Math.cos(a), 0, 0); };
+SvgCtx.prototype.setTransform = function(a,b,c,d,e,f) { this._m = {a:a,b:b,c:c,d:d,e:e,f:f}; };
+SvgCtx.prototype.resetTransform = function() { this._m = {a:1,b:0,c:0,d:1,e:0,f:0}; };
+SvgCtx.prototype.getTransform = function() {
+  var m = this._m;
+  return { a:m.a, b:m.b, c:m.c, d:m.d, e:m.e, f:m.f };
+};
+SvgCtx.prototype.setLineDash = function(arr) { this._dash = (arr || []).slice(); };
+
+SvgCtx.prototype.beginPath = function() { this._d = ''; };
+SvgCtx.prototype.moveTo = function(x, y) { var p = this._pt(x,y); this._d += 'M' + svgNum(p[0]) + ' ' + svgNum(p[1]); };
+SvgCtx.prototype.lineTo = function(x, y) { var p = this._pt(x,y); this._d += 'L' + svgNum(p[0]) + ' ' + svgNum(p[1]); };
+SvgCtx.prototype.quadraticCurveTo = function(cx, cy, x, y) {
+  var c = this._pt(cx,cy), p = this._pt(x,y);
+  this._d += 'Q' + svgNum(c[0]) + ' ' + svgNum(c[1]) + ' ' + svgNum(p[0]) + ' ' + svgNum(p[1]);
+};
+SvgCtx.prototype.closePath = function() { this._d += 'Z'; };
+SvgCtx.prototype.rect = function(x, y, w, h) {
+  this.moveTo(x,y); this.lineTo(x+w,y); this.lineTo(x+w,y+h); this.lineTo(x,y+h); this.closePath();
+};
+SvgCtx.prototype.roundRect = function(x, y, w, h, r) {
+  if(typeof r === 'number') r = [r,r,r,r];
+  if(!r) r = [0,0,0,0];
+  this.moveTo(x+r[0], y);
+  this.lineTo(x+w-r[1], y); this.quadraticCurveTo(x+w, y, x+w, y+r[1]);
+  this.lineTo(x+w, y+h-r[2]); this.quadraticCurveTo(x+w, y+h, x+w-r[2], y+h);
+  this.lineTo(x+r[3], y+h); this.quadraticCurveTo(x, y+h, x, y+h-r[3]);
+  this.lineTo(x, y+r[0]); this.quadraticCurveTo(x, y, x+r[0], y);
+};
+// 호는 90도 이하 3차 베지에로 쪼갠다. 제어점을 변환에 태우므로 비균등 배율에서도 맞는다.
+SvgCtx.prototype.arc = function(cx, cy, r, a0, a1, ccw) {
+  var sweep = a1 - a0;
+  if(ccw) { while(sweep > 0) sweep -= Math.PI*2; if(sweep < -Math.PI*2) sweep = -Math.PI*2; }
+  else    { while(sweep < 0) sweep += Math.PI*2; if(sweep >  Math.PI*2) sweep =  Math.PI*2; }
+  var segs = Math.max(1, Math.ceil(Math.abs(sweep) / (Math.PI/2)));
+  var step = sweep / segs;
+  var start = this._pt(cx + r*Math.cos(a0), cy + r*Math.sin(a0));
+  // 캔버스 arc 는 경로가 열려 있으면 시작점까지 선을 잇는다.
+  this._d += (this._d ? 'L' : 'M') + svgNum(start[0]) + ' ' + svgNum(start[1]);
+  var k = 4/3 * Math.tan(step/4);
+  for(var i = 0; i < segs; i++) {
+    var t0 = a0 + step*i, t1 = t0 + step;
+    var c1 = this._pt(cx + r*Math.cos(t0) - k*r*Math.sin(t0), cy + r*Math.sin(t0) + k*r*Math.cos(t0));
+    var c2 = this._pt(cx + r*Math.cos(t1) + k*r*Math.sin(t1), cy + r*Math.sin(t1) - k*r*Math.cos(t1));
+    var e  = this._pt(cx + r*Math.cos(t1), cy + r*Math.sin(t1));
+    this._d += 'C' + svgNum(c1[0]) + ' ' + svgNum(c1[1]) + ' ' + svgNum(c2[0]) + ' ' + svgNum(c2[1]) +
+               ' ' + svgNum(e[0]) + ' ' + svgNum(e[1]);
+  }
+};
+
+SvgCtx.prototype._alpha = function() { return this.globalAlpha < 1 ? ' opacity="' + svgNum(this.globalAlpha) + '"' : ''; };
+// 캔버스 그림자는 시그마 = blur/2 인 가우시안이다.
+SvgCtx.prototype._shadow = function() {
+  if(!(this.shadowBlur > 0) || !this.shadowColor || this.shadowColor === 'transparent') return '';
+  var key = this.shadowColor + '|' + this.shadowBlur;
+  var id = this._filters[key];
+  if(!id) {
+    id = 'sh' + (++this._uid);
+    this._filters[key] = id;
+    this._defs.push('<filter id="' + id + '" x="-50%" y="-50%" width="200%" height="200%">' +
+      '<feDropShadow dx="0" dy="0" stdDeviation="' + svgNum(this.shadowBlur / 2 * this._sc()) +
+      '" flood-color="' + svgEsc(this.shadowColor) + '"/></filter>');
+  }
+  return ' filter="url(#' + id + ')"';
+};
+SvgCtx.prototype._paint = function(v) {
+  return (typeof v === 'string') ? svgEsc(v) : '#000';
+};
+
+SvgCtx.prototype.fill = function() {
+  if(!this._d) return;
+  this._body.push('<path d="' + this._d + '" fill="' + this._paint(this.fillStyle) + '"' +
+                  this._alpha() + this._shadow() + '/>');
+};
+SvgCtx.prototype.stroke = function() {
+  if(!this._d) return;
+  var s = this._sc();
+  var dash = this._dash.length ? ' stroke-dasharray="' + this._dash.map(function(v){ return svgNum(v*s); }).join(',') + '"' : '';
+  var cap = this.lineCap && this.lineCap !== 'butt' ? ' stroke-linecap="' + this.lineCap + '"' : '';
+  this._body.push('<path d="' + this._d + '" fill="none" stroke="' + this._paint(this.strokeStyle) +
+                  '" stroke-width="' + svgNum(this.lineWidth * s) + '"' + dash + cap +
+                  this._alpha() + this._shadow() + '/>');
+};
+SvgCtx.prototype.fillRect = function(x, y, w, h) {
+  var keep = this._d; this._d = ''; this.rect(x,y,w,h); this.fill(); this._d = keep;
+};
+SvgCtx.prototype.strokeRect = function(x, y, w, h) {
+  var keep = this._d; this._d = ''; this.rect(x,y,w,h); this.stroke(); this._d = keep;
+};
+// 배경은 처음에 한 번 깔고 시작하므로 지우기는 할 일이 없다(export 경로에선 호출되지 않는다).
+SvgCtx.prototype.clearRect = function() {};
+SvgCtx.prototype.clip = function() {
+  if(!this._d) return;
+  var id = 'cp' + (++this._uid);
+  this._defs.push('<clipPath id="' + id + '"><path d="' + this._d + '"/></clipPath>');
+  this._body.push('<g clip-path="url(#' + id + ')">');
+  this._groups++;
+};
+
+SvgCtx.prototype.measureText = function(s) {
+  this._measure.font = this.font;
+  return this._measure.measureText(s);
+};
+SvgCtx.prototype._parseFont = function() {
+  var f = this.font || '';
+  var size = /(\d+(?:\.\d+)?)px/.exec(f);
+  var fam = /px\s+(.+)$/.exec(f);
+  var wt = /^\s*(\d{3}|bold|bolder|lighter|normal)\b/.exec(f);
+  var family = fam ? fam[1].replace(/['"]/g, '') : 'Pretendard';
+  // 받는 쪽에 Pretendard 가 없을 수 있으니 대체 스택을 붙인다. 이미 monospace·serif 처럼
+  // 어디에나 있는 계열을 지정한 텍스트는 건드리지 않는다.
+  if(/pretendard/i.test(family)) family += ', sans-serif';
+  return { size: size ? parseFloat(size[1]) : 10, family: family, weight: wt ? wt[1] : 'normal' };
+};
+SvgCtx.prototype.fillText = function(text, x, y, maxWidth) {
+  if(text == null || text === '') return;
+  var s = String(text);
+  var f = this._parseFont();
+  // 세로 정렬은 dominant-baseline 대신 직접 옮긴다 — 뷰어마다 해석이 갈리는 속성이라.
+  var dy = (this.textBaseline === 'middle') ? f.size * 0.355 : 0;
+  var anchor = (this.textAlign === 'center') ? 'middle'
+             : (this.textAlign === 'right' || this.textAlign === 'end') ? 'end' : 'start';
+  var tl = '';
+  if(maxWidth != null) {
+    this._measure.font = this.font;
+    // 이미 들어가는 글자에 textLength 를 걸면 멀쩡한 자간이 뭉개진다. 넘칠 때만.
+    if(this._measure.measureText(s).width > maxWidth) {
+      tl = ' textLength="' + svgNum(maxWidth) + '" lengthAdjust="spacingAndGlyphs"';
+    }
+  }
+  this._body.push('<text transform="' + this._matrixAttr() + '" x="' + svgNum(x) + '" y="' + svgNum(y + dy) +
+    '" font-family="' + svgEsc(f.family) + '" font-size="' + svgNum(f.size) + '" font-weight="' + f.weight +
+    '" fill="' + this._paint(this.fillStyle) + '" text-anchor="' + anchor + '"' + tl +
+    ' xml:space="preserve"' + this._alpha() + '>' + svgEsc(s) + '</text>');
+};
+SvgCtx.prototype.strokeText = function(text, x, y, maxWidth) { this.fillText(text, x, y, maxWidth); };
+
+// 아이콘과 mermaid 는 이미 SVG 데이터 URI 라서, <image> 로 넣어도 벡터로 남는다.
+SvgCtx.prototype.drawImage = function(img, dx, dy, dw, dh) {
+  var href = img && img.src;
+  if(!href) return;
+  if(dw == null) { dw = img.naturalWidth || img.width; dh = img.naturalHeight || img.height; }
+  var h = svgEsc(href);
+  this._body.push('<image transform="' + this._matrixAttr() + '" x="' + svgNum(dx) + '" y="' + svgNum(dy) +
+    '" width="' + svgNum(dw) + '" height="' + svgNum(dh) + '" preserveAspectRatio="none"' +
+    this._alpha() + ' href="' + h + '" xlink:href="' + h + '"/>');
+};
+
+SvgCtx.prototype.toSVG = function(fontCss) {
+  var tail = '';
+  for(var i = 0; i < this._groups; i++) tail += '</g>';   // 안 닫힌 clip 그룹 정리
+  var defs = this._defs.slice();
+  if(fontCss) defs.unshift('<style type="text/css"><![CDATA[' + fontCss + ']]></style>');
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" ' +
+    'width="' + svgNum(this._w) + '" height="' + svgNum(this._h) + '" ' +
+    'viewBox="0 0 ' + svgNum(this._w) + ' ' + svgNum(this._h) + '">\n' +
+    (defs.length ? '<defs>' + defs.join('') + '</defs>\n' : '') +
+    '<rect width="100%" height="100%" fill="' + this._paint(this._bg) + '"/>\n' +
+    this._body.join('\n') + tail + '\n</svg>\n';
+};
+
+// SVG 는 열리는 곳마다 폰트 사정이 달라서, 넣어두지 않으면 Pretendard 가 없는 뷰어에서
+// 대체 글꼴로 그려진다. 박스 크기는 Pretendard 기준으로 계산돼 있으므로 글자가 넘칠 수 있다.
+// 상용 한글(pretendard-common)만 싣는다 — KS X 1001 밖 음절은 드물고, 그 몇 자만
+// 뷰어 글꼴로 떨어지는 편이 파일을 1.3 MB 더 불리는 것보다 낫다.
+var _svgFontCss;
+function loadSvgFontCss() {
+  if(_svgFontCss !== undefined) return Promise.resolve(_svgFontCss);
+  return fetch('vendor/pretendard-common.woff2')
+    .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+    .then(function(buf){
+      var bytes = new Uint8Array(buf), s = '';
+      for(var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+      _svgFontCss = "@font-face{font-family:'Pretendard';font-style:normal;font-weight:45 920;" +
+                    "src:url(data:font/woff2;base64," + btoa(s) + ") format('woff2');}";
+      return _svgFontCss;
+    })
+    .catch(function(err){
+      // file:// 에서는 상대 경로 fetch 가 CORS 로 막힌다. 폰트 없이라도 내보내는 게 낫다.
+      console.warn('[loom] SVG 폰트 임베딩 실패 (' + err.message + ') — 폰트 없이 내보냅니다.');
+      _svgFontCss = '';
+      return '';
+    });
+}
+
+function buildSVG(layerIds) {
+  var origVis = null;
+  if(layerIds) {
+    origVis = state.layers.map(function(l){ return {id:l.id, vis:l.visible}; });
+    state.layers.forEach(function(l){ l.visible = layerIds.indexOf(l.id) >= 0; });
+  }
+  try {
+    var b = getExportBounds(null);
+    if(!b) return null;
+    var sc = new SvgCtx(b.w, b.h, themeColor('bg'));
+    sc.translate(-b.minX, -b.minY);
+    renderToCanvas(null, null, sc);
+    drawExportWatermark(sc, b.w, b.h, 1);
+    return sc;
+  } finally {
+    if(origVis) origVis.forEach(function(o){
+      var l = state.layers.find(function(ll){ return ll.id === o.id; });
+      if(l) l.visible = o.vis;
+    });
+  }
+}
+
+function exportSVG(layerIds, embedFont) {
+  if(!state.nodes.length) { alert(t('no_nodes')); return; }
+  var sc = buildSVG(layerIds);
+  if(!sc) return;
+  (embedFont ? loadSvgFontCss() : Promise.resolve('')).then(function(fontCss) {
+    var blob = new Blob([sc.toSVG(fontCss)], { type: 'image/svg+xml;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.download = 'loom-v' + CURRENT_VERSION + '_' + formatTimestamp() + '.svg';
+    link.href = url;
+    link.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  });
+}
+
+// ════════════════════════════════════════════════════════
 // EXPORT
 // ════════════════════════════════════════════════════════
-function renderToCanvas(targetCanvas, filterLayerId) {
+function renderToCanvas(targetCanvas, filterLayerId, customCtx) {
   // Swap ctx and state to render full-fidelity diagram on any canvas
   // If filterLayerId is provided, only render nodes/edges in that layer
   var origCtx = ctx;
@@ -8871,16 +9217,19 @@ function renderToCanvas(targetCanvas, filterLayerId) {
   var origPanX = state.panX, origPanY = state.panY, origZoom = state.zoom;
 
   // Neutralize interactive state
-  ctx = targetCanvas.getContext('2d');
+  // customCtx 를 주면 그쪽으로 그린다 — SVG 익스포터가 여기에 얹힌다.
+  ctx = customCtx || targetCanvas.getContext('2d');
   state.selected = null; state.selectedEdge = null;
   state.multiSelect = []; state.hovered = null;
   state.activeLayer = null;
   state.panX = 0; state.panY = 0; state.zoom = 1;
 
   // Filter function for layer
+  // 숨긴 레이어는 화면과 마찬가지로 내보내기에서도 빠져야 한다. 예전엔 filterLayerId 만
+  // 봐서, export 창에서 레이어를 골라도(= visible 을 잠깐 끄는 방식) 전부 그려졌다.
   var layerFilter = filterLayerId != null
     ? function(n) { return (n.layer || 1) === filterLayerId; }
-    : function() { return true; };
+    : function(n) { return isLayerVisible(n.layer || 1); };
 
   // Draw
   state.nodes.filter(function(n){return n.type==='group' && !n._groupHidden && layerFilter(n);}).forEach(function(n){ drawNode(n); });
@@ -8888,9 +9237,16 @@ function renderToCanvas(targetCanvas, filterLayerId) {
   drawGroupLabels(state.nodes.filter(layerFilter));
   var exportEdges = state.edges.filter(function(e){
     if(isEdgeHiddenByCollapse(e)) return false;
-    if(filterLayerId == null) return true;
     var srcNode = state.nodes.find(function(n){return n.id===e.from;});
     var dstNode = state.nodes.find(function(n){return n.id===e.to;});
+    if(filterLayerId == null) {
+      // 숨긴 레이어의 노드에 걸린 엣지는 그리지 않는다 (화면과 같은 규칙).
+      if(srcNode && !layerFilter(srcNode)) return false;
+      if(dstNode && !layerFilter(dstNode)) return false;
+      return true;
+    }
+    // 레이어를 콕 집은 그림(Excel·PDF의 레이어별 이미지)에서는 다른 레이어로 건너가는
+    // 엣지도 양쪽 그림에 남긴다 — 연결이 어디로 이어지는지가 보여야 하므로.
     return (srcNode && (srcNode.layer||1)===filterLayerId) || (dstNode && (dstNode.layer||1)===filterLayerId);
   });
   rebuildAnchorMap(exportEdges);   // export 대상 집합 기준으로 앵커 재계산
@@ -8905,47 +9261,114 @@ function renderToCanvas(targetCanvas, filterLayerId) {
   rebuildAnchorMap(getDrawableEdges());   // 화면 기준 앵커로 복원 (export 집합이 남지 않게)
 }
 
-function createExportCanvas(filterLayerId) {
-  var nodes = filterLayerId != null
+// ── 내보내기 워터마크 ──────────────────────────────────
+// 내보낸 결과물이 어디서 나온 것인지 남긴다. 형식마다 표현 수단이 달라서
+// 그림에는 글자로, 코드에는 주석으로, JSON 에는 meta 필드로 들어간다.
+var WATERMARK_NAME = 'FCStudio';
+var WATERMARK_URL = 'https://fc-studio.xyz';
+var WATERMARK_TEXT = WATERMARK_NAME + ' · ' + WATERMARK_URL;
+
+// 캔버스/SVG 공통. 그림 오른쪽 아래 여백(export 패딩 40px) 안에 얹는다.
+// ctx 변환이 어떤 상태든 상관없도록 초기화하고 장치 좌표로 그린다.
+function drawExportWatermark(c, wpx, hpx, scale) {
+  var s = scale || 1;
+  c.save();
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.globalAlpha = 0.55;
+  c.fillStyle = themeColor('text3');
+  c.font = fontPx('500', Math.max(9, Math.round(10 * s)));
+  c.textAlign = 'right';
+  c.textBaseline = 'alphabetic';
+  c.fillText(WATERMARK_TEXT, wpx - 12 * s, hpx - 12 * s);
+  c.restore();
+}
+
+// 브라우저 캔버스 상한. 크롬은 한 변 16384px / 총 약 2.68억 px 인데, 넘어가면 예외가
+// 아니라 toDataURL 이 빈 이미지를 돌려준다 — 조용히 망가진 파일이 나오는 게 최악이라
+// 사파리까지 안전한 선으로 넉넉히 낮춰 잡고, 배율 선택에서 아예 막는다.
+var EXPORT_MAX_DIM = 12000;
+var EXPORT_MAX_AREA = 64e6;
+
+// PDF·PPTX·Excel 에 박히는 래스터의 고정 배율. 문서 안에서 확대되거나 인쇄되므로
+// 1배로 넣으면 글자가 뭉갠다. 선택 UI를 따로 두기보다 여기서 올려둔다.
+var EMBED_EXPORT_SCALE = 2;
+
+function getExportBounds(filterLayerId) {
+  // 그리는 대상과 같은 기준으로 잡아야 한다 — 안 그리는 노드까지 재면 그만큼 여백이 남는다.
+  return boundsOfNodes(filterLayerId != null
     ? state.nodes.filter(function(n){ return (n.layer||1) === filterLayerId; })
-    : state.nodes;
+    : state.nodes.filter(function(n){ return isLayerVisible(n.layer||1); }));
+}
+
+function boundsOfNodes(nodes) {
   if(!nodes.length) return null;
   var pad = 40;
   var allX = nodes.flatMap(function(n){return [n.x,n.x+n.w];});
   var allY = nodes.flatMap(function(n){return [n.y,n.y+n.h];});
   var minX = Math.min.apply(null, allX) - pad, maxX = Math.max.apply(null, allX) + pad;
   var minY = Math.min.apply(null, allY) - pad, maxY = Math.max.apply(null, allY) + pad;
+  return { minX: minX, minY: minY, w: maxX - minX, h: maxY - minY };
+}
+
+function exportScaleFits(bounds, scale) {
+  if(!bounds) return false;
+  var w = Math.round(bounds.w * scale), h = Math.round(bounds.h * scale);
+  return w <= EXPORT_MAX_DIM && h <= EXPORT_MAX_DIM && w * h <= EXPORT_MAX_AREA;
+}
+
+// noWatermark: PDF·Excel 처럼 문서 자체에 워터마크가 따로 들어가는 경우, 그림에까지
+// 찍으면 같은 페이지에 두 번 나온다. 형식마다 한 번씩만 들어가도록 그때는 끈다.
+function createExportCanvas(filterLayerId, scale, noWatermark) {
+  var b = getExportBounds(filterLayerId);
+  if(!b) return null;
+  var s = scale || 1;
   var tmpCanvas = document.createElement('canvas');
-  tmpCanvas.width = maxX - minX; tmpCanvas.height = maxY - minY;
+  tmpCanvas.width = Math.round(b.w * s); tmpCanvas.height = Math.round(b.h * s);
   var tctx = tmpCanvas.getContext('2d');
   tctx.fillStyle = themeColor('bg'); tctx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
-  tctx.translate(-minX, -minY);
-  renderToCanvas(tmpCanvas, filterLayerId);
+  tctx.scale(s, s);
+  tctx.translate(-b.minX, -b.minY);
+  exportScale = s;
+  try { renderToCanvas(tmpCanvas, filterLayerId); }
+  finally { exportScale = 1; }   // 화면 렌더링이 배율을 물려받지 않도록 반드시 되돌린다
+  if(!noWatermark) drawExportWatermark(tctx, tmpCanvas.width, tmpCanvas.height, s);
   return tmpCanvas;
 }
 
-function exportPNG(layerIds) {
+// 큰 캔버스는 toDataURL 의 base64 문자열이 수백 MB까지 가므로 Blob 으로 내보낸다.
+function downloadCanvasPNG(cv, filename) {
+  if(cv.toBlob) {
+    cv.toBlob(function(blob) {
+      if(!blob) { alert(t('export_too_big')); return; }
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.download = filename; link.href = url;
+      link.click();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+    }, 'image/png');
+  } else {
+    var link = document.createElement('a');
+    link.download = filename; link.href = cv.toDataURL();
+    link.click();
+  }
+}
+
+function exportPNG(layerIds, scale) {
   if(!state.nodes.length) { alert(t('no_nodes')); return; }
+  var s = scale || 1;
+  var tmpCanvas;
   // layerIds 배열이면 각 레이어 ID로 필터, null이면 전체
   if(layerIds) {
     // 임시로 선택된 레이어만 visible
     var origVis = state.layers.map(function(l){ return {id:l.id, vis:l.visible}; });
     state.layers.forEach(function(l){ l.visible = layerIds.indexOf(l.id) >= 0; });
-    var tmpCanvas = createExportCanvas();
-    origVis.forEach(function(o){ var l = state.layers.find(function(ll){return ll.id===o.id;}); if(l) l.visible = o.vis; });
-    if(!tmpCanvas) return;
-    var link = document.createElement('a');
-    link.download = 'loom.png';
-    link.href = tmpCanvas.toDataURL();
-    link.click();
+    try { tmpCanvas = createExportCanvas(null, s); }
+    finally { origVis.forEach(function(o){ var l = state.layers.find(function(ll){return ll.id===o.id;}); if(l) l.visible = o.vis; }); }
   } else {
-    var tmpCanvas = createExportCanvas();
-    if(!tmpCanvas) return;
-    var link = document.createElement('a');
-    link.download = 'loom.png';
-    link.href = tmpCanvas.toDataURL();
-    link.click();
+    tmpCanvas = createExportCanvas(null, s);
   }
+  if(!tmpCanvas) return;
+  downloadCanvasPNG(tmpCanvas, 'loom-v' + CURRENT_VERSION + '_' + formatTimestamp() + (s > 1 ? '@' + s + 'x' : '') + '.png');
 }
 
 function exportJSON(layerIds) {
@@ -8985,7 +9408,9 @@ function exportJSON(layerIds) {
     meta: {
       exportedAt: now.toISOString(),
       editorVersion: CURRENT_VERSION,
-      tool: 'Loom'
+      tool: 'Loom',
+      by: WATERMARK_NAME,
+      url: WATERMARK_URL
     },
     nodes: exportNodes,
     edges: filteredEdges,
@@ -9279,14 +9704,68 @@ document.addEventListener('click', function() { closeImportMenu(); closeExportMe
 // EXPORT LAYER PICKER
 // ════════════════════════════════════════════════════════
 var _elpCallback = null;
+var _elpWantScale = false;
+var _elpWantFont = false;
 
-function openExportLayerPicker(callback) {
-  // 레이어가 1개면 선택 없이 바로 export (전체)
-  if (state.layers.length <= 1) { callback(null); return; }
+var EXPORT_SCALES = [1, 2, 3, 4];
+var _elpScale = 2;   // 기본 2배 — 1배는 문서에 넣거나 확대하면 글자가 뭉갠다
+
+// 배율 버튼을 현재 다이어그램 크기에 맞춰 다시 그린다. 캔버스 상한을 넘는 배율은
+// 눌리지 않게 막는다 — 넘어가면 예외 없이 빈 PNG 가 떨어지기 때문이다.
+// 창 안에서 고른 레이어 기준 크기. 아직 visible 을 건드리기 전이라 체크박스를 직접 본다.
+function elpSelectedBounds() {
+  var checks = document.querySelectorAll('#elpLayers input[type="checkbox"]');
+  if(!checks.length) return getExportBounds(null);
+  var ids = [];
+  checks.forEach(function(cb){ if(cb.checked) ids.push(parseInt(cb.dataset.layerId)); });
+  return boundsOfNodes(state.nodes.filter(function(n){ return ids.indexOf(n.layer||1) >= 0; }));
+}
+
+function elpRenderScales() {
+  var opts = document.getElementById('elpScaleOpts');
+  var hint = document.getElementById('elpScaleHint');
+  var b = elpSelectedBounds();
+  opts.innerHTML = '';
+  if(!b) { hint.textContent = ''; return; }
+  if(!exportScaleFits(b, _elpScale)) {
+    var ok = EXPORT_SCALES.filter(function(s){ return exportScaleFits(b, s); });
+    _elpScale = ok.length ? ok[ok.length - 1] : 1;
+  }
+  EXPORT_SCALES.forEach(function(s) {
+    var fits = exportScaleFits(b, s);
+    var btn = document.createElement('button');
+    btn.textContent = s + '×';
+    btn.disabled = !fits;
+    if(s === _elpScale) btn.className = 'active';
+    if(!fits) btn.title = t('elp_scale_toobig');
+    btn.onclick = function() { _elpScale = s; elpRenderScales(); };
+    opts.appendChild(btn);
+  });
+  hint.textContent = Math.round(b.w * _elpScale) + ' × ' + Math.round(b.h * _elpScale) + ' px';
+}
+
+function openExportLayerPicker(callback, opts) {
+  var wantScale = !!(opts && opts.scale);
+  var wantFont = !!(opts && opts.font);
+  // 레이어가 1개면 고를 게 없어 바로 export — 단 물어볼 옵션이 있으면 창은 띄운다
+  if (state.layers.length <= 1 && !wantScale && !wantFont) { callback(null, {}); return; }
   _elpCallback = callback;
+  _elpWantScale = wantScale;
+  _elpWantFont = wantFont;
   var overlay = document.getElementById('elpOverlay');
   var container = document.getElementById('elpLayers');
-  document.getElementById('elpTitle').textContent = t('elp_title');
+  var layersEmpty = state.layers.length <= 1;
+  container.style.display = layersEmpty ? 'none' : '';
+  document.getElementById('elpToggleBtn').style.display = layersEmpty ? 'none' : '';
+  document.getElementById('elpScale').style.display = wantScale ? '' : 'none';
+  document.getElementById('elpScaleLabel').textContent = t('elp_scale');
+  if(wantScale) elpRenderScales();
+  document.getElementById('elpFont').style.display = wantFont ? '' : 'none';
+  if(wantFont) {
+    document.getElementById('elpFontLabel').textContent = t('elp_embed_font');
+    document.getElementById('elpFontHint').textContent = t('elp_embed_font_desc');
+  }
+  document.getElementById('elpTitle').textContent = (wantScale || wantFont) && layersEmpty ? t('elp_title_img') : t('elp_title');
   document.getElementById('elpToggleBtn').textContent = t('elp_toggle');
   document.getElementById('elpCancelBtn').textContent = t('elp_cancel');
   document.getElementById('elpExportBtn').textContent = t('elp_export');
@@ -9300,6 +9779,7 @@ function openExportLayerPicker(callback) {
     cb.type = 'checkbox';
     cb.checked = true;
     cb.dataset.layerId = l.id;
+    cb.onchange = function() { if(_elpWantScale) elpRenderScales(); };
     row.appendChild(cb);
     var nameSpan = document.createElement('span');
     nameSpan.className = 'elp-name';
@@ -9324,11 +9804,15 @@ function confirmExportLayerPicker() {
   var checks = document.querySelectorAll('#elpLayers input[type="checkbox"]');
   var ids = [];
   checks.forEach(function(cb) { if (cb.checked) ids.push(parseInt(cb.dataset.layerId)); });
-  if (ids.length === 0) { alert(t('elp_no_layer')); return; }
+  if (state.layers.length > 1 && ids.length === 0) { alert(t('elp_no_layer')); return; }
   var fn = _elpCallback;
+  var opts = {
+    scale: _elpWantScale ? _elpScale : undefined,
+    embedFont: _elpWantFont ? document.getElementById('elpFontCb').checked : undefined
+  };
   closeExportLayerPicker();
   // 전체 선택 시 null (필터 없음)
-  if (fn) fn(ids.length === state.layers.length ? null : ids);
+  if (fn) fn(ids.length === state.layers.length ? null : ids, opts);
 }
 
 function elpToggleAll() {
@@ -9336,6 +9820,7 @@ function elpToggleAll() {
   var allChecked = true;
   checks.forEach(function(cb) { if (!cb.checked) allChecked = false; });
   checks.forEach(function(cb) { cb.checked = !allChecked; });
+  if(_elpWantScale) elpRenderScales();
 }
 
 // ── Shared layer-filtered export helpers ──
@@ -9423,6 +9908,8 @@ function exportExcel(layerIds) {
     var td = getExportTableData(layer.id);
     if(!td.rows.length) return;
     var wsData = [td.headers].concat(td.rows);
+    wsData.push([]);
+    wsData.push([WATERMARK_TEXT]);
     // Add empty rows as spacer before diagram image
     wsData.push([]);
     wsData.push(['[ Diagram ]']);
@@ -9431,16 +9918,17 @@ function exportExcel(layerIds) {
     ws['!autofilter'] = { ref: XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:td.rows.length,c:td.headers.length-1}}) };
 
     // Embed layer diagram image
-    var layerCanvas = createExportCanvas(layer.id);
+    var layerCanvas = createExportCanvas(layer.id, EMBED_EXPORT_SCALE, true);
     if(layerCanvas) {
       var dataUrl = layerCanvas.toDataURL('image/png');
       var base64 = dataUrl.split(',')[1];
       var binary = atob(base64);
       var bytes = new Uint8Array(binary.length);
       for(var bi = 0; bi < binary.length; bi++) bytes[bi] = binary.charCodeAt(bi);
-      // Calculate image dimensions (max 800px wide, keep aspect ratio)
-      var imgW = Math.min(layerCanvas.width, 800);
-      var imgH = Math.round(layerCanvas.height * (imgW / layerCanvas.width));
+      // 표시 크기는 배율과 무관하게 유지한다 — 배율은 픽셀 밀도만 올리는 것이므로
+      // 셀 위에 앉는 크기까지 커지면 안 된다.
+      var imgW = Math.min(layerCanvas.width / EMBED_EXPORT_SCALE, 800);
+      var imgH = Math.round(layerCanvas.height / EMBED_EXPORT_SCALE * (imgW / (layerCanvas.width / EMBED_EXPORT_SCALE)));
       if(!ws['!images']) ws['!images'] = [];
       ws['!images'].push({
         '!pos': { r: wsData.length - 1, c: 0, x: 0, y: 0, w: imgW, h: imgH },
@@ -9476,6 +9964,8 @@ function exportExcel(layerIds) {
     if (avail.gpu > 0 || totals.totalGpu > 0) {
       k8sData.push(['GPU', avail.gpu, totals.totalGpu, totals.totalGpu, avail.gpu > 0 ? Math.round(totals.totalGpu / avail.gpu * 100) + '%' : 'N/A']);
     }
+    k8sData.push([]);
+    k8sData.push([WATERMARK_TEXT]);
     var ws2 = XLSX.utils.aoa_to_sheet(k8sData);
     ws2['!cols'] = [{wch:22},{wch:12},{wch:12},{wch:12},{wch:14}];
     XLSX.utils.book_append_sheet(wb, ws2, 'k8s Summary');
@@ -9566,6 +10056,9 @@ function _buildPDF(fontBase64, layerIds) {
   var edgeCount = _pdfEdges.length;
   var groupCount = _pdfNodes.filter(function(n){return n.type==='group';}).length;
   doc.text('Nodes: ' + nodeCount + '  |  Edges: ' + edgeCount + '  |  Groups: ' + groupCount, 148.5, 100, { align: 'center' });
+  doc.setFontSize(10);
+  doc.setTextColor(110, 118, 129);
+  doc.text(WATERMARK_TEXT, 148.5, 120, { align: 'center' });
 
   // --- Per-Layer Diagram + Table Pages ---
   var _pdfLayers = layerIds ? state.layers.filter(function(l){ return layerIds.indexOf(l.id) >= 0; }) : state.layers;
@@ -9641,12 +10134,21 @@ function _buildPDF(fontBase64, layerIds) {
     });
   }
 
+  // 표 페이지의 didDrawPage 는 다이어그램 페이지엔 안 걸리므로, 다 만든 뒤 전체를 훑는다.
+  var pageCount = doc.internal.getNumberOfPages();
+  for (var pi = 1; pi <= pageCount; pi++) {
+    doc.setPage(pi);
+    doc.setFont(fontName); doc.setFontSize(7);
+    doc.setTextColor(150, 150, 150);
+    doc.text(WATERMARK_TEXT, 287, 205, { align: 'right' });
+  }
+
   var ts = formatTimestamp();
   doc.save('loom-v' + CURRENT_VERSION + '_' + ts + '.pdf');
 }
 
 function captureDiagramImage(filterLayerId) {
-  var tmpCanvas = createExportCanvas(filterLayerId);
+  var tmpCanvas = createExportCanvas(filterLayerId, EMBED_EXPORT_SCALE, true);
   return tmpCanvas ? tmpCanvas.toDataURL('image/png') : null;
 }
 
@@ -9738,6 +10240,11 @@ function exportPPTX(layerIds) {
       x: 0.3, y: 0.15, w: SLIDE_W - 0.6, h: 0.35,
       fontSize: 14, color: '8490A5', fontFace: 'Arial',
       bold: true
+    });
+    // 워터마크는 슬라이드 오른쪽 아래. 도형이 아니라 텍스트라 받는 쪽에서 지울 수 있다.
+    slide.addText(WATERMARK_TEXT, {
+      x: SLIDE_W - 3.6, y: SLIDE_H - 0.42, w: 3.3, h: 0.28,
+      fontSize: 9, color: '586174', fontFace: 'Arial', align: 'right'
     });
 
     // --- Draw groups first (bottom layer) ---
@@ -11559,6 +12066,18 @@ if(loomGrid === '0') { state.gridVisible = false; var gb = document.getElementBy
   <div class="elp-box">
     <div class="elp-title" id="elpTitle">Export Layers</div>
     <div class="elp-layers" id="elpLayers"></div>
+    <div class="elp-scale" id="elpScale" style="display:none">
+      <div class="elp-scale-label" id="elpScaleLabel">해상도</div>
+      <div class="elp-scale-opts" id="elpScaleOpts"></div>
+      <div class="elp-scale-hint" id="elpScaleHint"></div>
+    </div>
+    <div class="elp-scale" id="elpFont" style="display:none">
+      <label class="elp-layer" style="padding-left:0">
+        <input type="checkbox" id="elpFontCb">
+        <span class="elp-name" id="elpFontLabel">폰트 포함</span>
+      </label>
+      <div class="elp-scale-hint" id="elpFontHint"></div>
+    </div>
     <div class="elp-actions">
       <button class="elp-toggle" onclick="elpToggleAll()" id="elpToggleBtn">toggle</button>
       <button onclick="closeExportLayerPicker()" id="elpCancelBtn">Cancel</button>
