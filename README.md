@@ -59,10 +59,14 @@ Configure k8s cluster resources (CPU, Memory, Disk, GPU) per node and monitor th
 - **k8s resource dashboard** — Cluster hardware config, per-node CPU/Memory/Disk/GPU management (always shows root-level totals)
 - **Infrastructure completeness check** — Auto-detect missing components, network issues, resource overcommit
 - **AI diagram generation** — Generate architecture from text (Claude / OpenAI / Gemini / Ollama)
+- **Mermaid import** — Paste Mermaid text to convert it into editable shapes, or drop it in as a rendered diagram panel
 - **Share via URL** — Generate a shareable link containing the full diagram (LZ-String compressed hash fragment)
-- **Rich export options** — JSON, Excel (with resource sheet), PDF (cover + diagram + detail table), PNG
+- **Rich export options** — JSON, Excel (with resource sheet), PDF (cover + diagram + detail table), PowerPoint, PNG, SVG
+- **Vector & high-resolution images** — Export SVG for text that stays sharp at any zoom, or PNG at 1×–4×
+- **PowerPoint export** — Produces editable native shapes and text, not a flat image
 - **IaC code export** — k8s YAML, Terraform (HCL), Helm Values per node or full infrastructure
-- **Edge waypoints** — Bend connection paths for precise routing
+- **Edge routing & labels** — Orthogonal / straight / curved line types, pinned start and end sides, waypoints for precise paths, adjustable label position and text direction
+- **Fully offline** — Libraries and fonts are bundled; no external CDN required
 - **Auto layout** — Automatic node arrangement
 - **Dark / Light theme** — Node text color auto-adapts to background for readability across themes
 - **Session persistence** — Browser refresh restores the full state including pan, zoom, layers, and k8s config
@@ -123,9 +127,11 @@ git clone https://github.com/flyingcatstudio/loom.git
 open index.html
 ```
 
-Or simply download the single `index.html` file and open it in your browser.
+A single `index.html` file works on its own, but it fetches its libraries and fonts from a CDN, so it needs internet access.
 
-> **Air-gapped environment**: Copy the HTML file via USB and open in a browser. No external dependencies. (Fonts use CDN — falls back to system fonts when offline)
+> **Air-gapped environment**: Copy `index.html` together with the `vendor/` folder and everything works with no internet. The diagram library (Mermaid), the document export libraries, and the web fonts all live in `vendor/`, so no external request is ever made.
+>
+> When the file is opened directly in a browser (`file://`), browser security rules block only the Korean font used for PDF export, which falls back to a Latin font. Serving the folder from any simple local web server (e.g. `python3 -m http.server`) removes that limitation too.
 
 ### Option 3: AI Feature (Ollama Local LLM — On-Premise)
 
@@ -202,6 +208,10 @@ In Loom's **✦ AI Generate** panel, select `Ollama` as the service to generate 
 | **Add waypoint** | Select edge → drag midpoint (⊕) |
 | **Remove waypoint** | Double-click waypoint (●) |
 | **Edge style** | Choose solid/dashed/bidirectional in right panel |
+| **Line type** | Right panel `Line type` → orthogonal / straight / curved |
+| **Pin start & end side** | Right panel `Start side` / `End side` — fix which edge of the node the line leaves from |
+| **Add a label** | Select the edge, then type in the right panel `Label` field |
+| **Label position & direction** | Move the label in the right panel and set text direction to horizontal / vertical / along the line |
 
 ### k8s Resource Management
 
@@ -284,11 +294,38 @@ Use the **Import/Export** dropdown menu in the toolbar:
 | **JSON** 💾 | Save/load full diagram (includes k8s config) |
 | **Excel** 📊 | Node list + k8s resource summary sheet |
 | **PDF** 📄 | Cover + diagram + node detail table + resource summary |
-| **PNG** 📷 | Diagram image capture |
+| **PowerPoint** 📽 | One slide per layer, built from editable shapes and text rather than a flat image |
+| **PNG** 📷 | Diagram image at 1×–4× scale (redrawn at that resolution, so it is genuinely sharper) |
+| **SVG** ◇ | Vector image — text stays sharp at any zoom and remains editable in other tools |
 | **k8s YAML** ☸ | Deployment / StatefulSet / Service / PVC manifests |
 | **Terraform** ⛅ | HCL format kubernetes provider resource code |
 | **Helm Values** ⎈ | Per-service settings in values.yaml format |
 | **Share Link** 🔗 | Generate a shareable URL containing the full diagram |
+
+> Exports carry an attribution line (`FCStudio · https://fc-studio.xyz`), once each and in whatever form suits the format — a corner caption on images, the cover page and page footer in PDF, a text box on PowerPoint slides, a sheet row in Excel, a `meta` field in JSON, and a first-line comment in IaC code.
+
+#### Image Export (PNG / SVG)
+
+Choosing **PNG** lets you pick a scale from 1× to 4×. This redraws the diagram at that resolution rather than enlarging an existing image, so text really does get sharper. The resulting pixel size is shown in the dialog, and scales beyond the browser's canvas limit cannot be selected.
+
+**SVG** is vector, so there is no scale to choose. Icons and Mermaid diagrams stay vector too.
+
+> Turning on **Embed font** for SVG bundles the Pretendard font into the file, so text keeps its exact shape and line breaks on machines that don't have it — at the cost of roughly 600KB. With it off the file is around 28KB and text falls back to the viewer's system font, which can shift glyph widths slightly.
+
+The diagram images embedded in PDF and Excel are also rendered at 2× — the placed size is unchanged, so the difference only shows when printing or zooming in.
+
+#### Mermaid Import
+
+Just **paste** (`Ctrl+V`) Mermaid syntax onto the canvas. Loom detects it and offers two ways to bring it in.
+
+| Choice | Result |
+|--------|--------|
+| **📊 Draw as diagram** | Parses the Mermaid source into Loom nodes and edges. Afterwards they behave like any other node — editable, resource-configurable, and exportable. |
+| **📄 Add as Mermaid panel** | Adds a panel node holding the original source and renders it as a graph. The source stays editable. |
+
+Shape conversion supports `flowchart` / `graph` syntax only. Other diagram types (sequence, gantt, class, …) are added as panels, and the dialog tells you so up front.
+
+Select a panel node to edit its **Mermaid source** in the right panel, or turn off **Show as graph** to see the raw text. The **📊 Convert to shapes** button converts it later if you change your mind.
 
 #### Share Link
 
@@ -330,6 +367,10 @@ Planned features for future updates. Contributions and suggestions are welcome!
 - [x] Share diagram via URL link
 - [x] Sub-infrastructure drill-down with resource aggregation
 - [x] Unified drag-and-drop node creation
+- [x] PowerPoint (.pptx) export
+- [x] Mermaid text import
+- [x] SVG vector export and PNG resolution picker
+- [x] Fully offline operation with no external CDN
 
 ---
 
