@@ -11862,10 +11862,12 @@ function applyAIDiagram(diagram) {
     state.nextId = 1;
   }
 
-  var baseId = aiMode === 'new' ? 0 : state.nextId;
+  // ★ 예전에는 baseId 를 한 번 읽고 baseId + n.id 로 번호를 만들었다. 공동 편집에서는
+  //   그 덧셈이 **다른 사람의 번호 공간**으로 넘어갈 수 있다(어댑터가 사람마다 블록을
+  //   나눠 준다). 번호는 언제나 state.nextId 에서 하나씩 받는다.
   var idMap = {};
   diagram.nodes.forEach(function(n) {
-    var newId = baseId + n.id;
+    var newId = state.nextId++;
     idMap[n.id] = newId;
     state.nodes.push({
       id:     newId,
@@ -11887,7 +11889,7 @@ function applyAIDiagram(diagram) {
     var toId   = idMap[e.to];
     if(fromId === undefined || toId === undefined) return;
     state.edges.push({
-      id:    baseId + e.id,
+      id:    state.nextId++,
       from:  fromId,
       to:    toId,
       label: e.label || '',
@@ -11896,8 +11898,6 @@ function applyAIDiagram(diagram) {
     });
   });
 
-  var allIds = state.nodes.map(function(n){return n.id;}).concat(state.edges.map(function(e){return e.id;}));
-  state.nextId = Math.max.apply(null, allIds.concat([state.nextId])) + 1;
 
   state.selected = null;
   state.selectedEdge = null;
